@@ -1,17 +1,19 @@
 # MyHome CarCare
 
-Family vehicle maintenance and Fuelio-style fuel logging.
+Family vehicle maintenance and Fuelio-style fuel logging — **fast static app on GitHub Pages (v2.0.0)**.
 
-## GitHub Pages (standalone)
+## GitHub Pages (primary)
 
 | Item | Value |
 |------|-------|
 | **Live URL** | https://pongvitsam.github.io/Own_Car/ |
 | **Repo** | https://github.com/pongvitsam/Own_Car |
-| **Backend** | `localStorage` (browser-only, no server) |
+| **Backend** | `localStorage` key `myhome_carcare_state_v2.0` (browser-only, instant CRUD) |
 | **Admin passcode** | `1234` |
 
-Single-file `index.html` with **inline CSS** (fixes GAS `include('Styles')` leak). Data persists in the browser under key `myhome_carcare_state_v1.8`.
+Single-file `index.html` with **all CSS inside `<style>` tags** (fixes GAS raw CSS leak). No GAS template includes.
+
+**Enable Pages (one-time):** Repo → **Settings** → **Pages** → Source: **Deploy from a branch** → Branch **`main`** → Folder **`/ (root)`** → Save.
 
 Rebuild after editing the mockup:
 
@@ -19,7 +21,7 @@ Rebuild after editing the mockup:
 python tools/build_github_pages.py
 ```
 
-## Google Apps Script (legacy)
+## Google Apps Script (legacy — deprecated)
 
 Production web app backed by Google Sheets.
 
@@ -31,9 +33,8 @@ Production web app backed by Google Sheets.
 | **Deploy version** | `@14` (spreadsheet permission fix + Thai errors + ownerBootstrapOnce) |
 | **Receipts folder** | `1R-dpki8-nS17XAma6tyiQMEH66kEcf7U` |
 | **Timezone** | Asia/Bangkok |
-| **Admin passcode (default)** | `1234` |
 
-## Features
+## Features (both versions)
 
 - 3 tabs: Maintenance dashboard, Fuel (Fuelio), Admin
 - Google Spreadsheet backend (auto-created on first run) with **update-not-duplicate** CRUD
@@ -47,11 +48,11 @@ Production web app backed by Google Sheets.
 ## Project structure
 
 ```
-├── .clasp.json
+├── index.html            # GitHub Pages app (v2.0.0 — build via tools/build_github_pages.py)
 ├── package.json          # npm test script
 ├── lib/car-logic.js      # Shared formulas (npm test source of truth)
 ├── tests/car-logic.test.js
-├── gas/
+├── gas/                  # Legacy GAS backend (deprecated)
 │   ├── Code.gs           # doGet, getAppState API
 │   ├── Config.gs         # properties, constants
 │   ├── Sheets.gs         # spreadsheet CRUD
@@ -59,7 +60,8 @@ Production web app backed by Google Sheets.
 │   ├── Alerts.gs, LineNotify.gs, Drive.gs, Admin.gs, Export.gs
 │   ├── Index.html, Scripts.html, Styles.html
 │   └── appsscript.json   # ANYONE_ANONYMOUS webapp access
-├── tools/build_frontend.py
+├── tools/build_frontend.py       # Rebuild gas/ from mockup
+├── tools/build_github_pages.py   # Rebuild index.html for GitHub Pages
 ├── mockup/MyHome-CarCare-v1.8.html
 └── README.md
 ```
@@ -152,7 +154,7 @@ clasp push -f
 ## Troubleshooting
 
 - **403 / “ต้องการสิทธิ์เข้าถึง” / “You do not have permission to access the requested document”:** Deploy must use **Execute as: Me** (`USER_DEPLOYING` in `appsscript.json`) and **Who has access: Anyone** (`ANYONE_ANONYMOUS`). Redeploy after changing manifest. Then run `ownerBootstrapOnce` once in the Apps Script editor as owner (`rb2.emd@gmail.com`) to grant OAuth and create the spreadsheet.
-- **CSS shows as plain text:** Ensure `Index.html` uses `<?!= include('Styles'); ?>` and `Styles.html` wraps rules in `<style>...</style>` (fixed in v1.8).
+- **CSS shows as plain text (GAS only):** GAS `include()` strips `<style>` tags from partial HTML files. Use GitHub Pages (`index.html`) where CSS is inlined in `<head>`, or ensure GAS `Index.html` inlines styles (never `include('Styles')`).
 - **Drive upload fails:** Ensure the script owner has write access to folder `1R-dpki8-nS17XAma6tyiQMEH66kEcf7U`.
 - **PDF export empty:** Grant script authorization when prompted on first export.
 - **LINE not sending:** Verify `LINE_NOTIFY_TOKEN` in Script Properties; check LINE log modal in app (simulation mode when token is empty).
