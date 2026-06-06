@@ -1235,6 +1235,7 @@
             if (savedState) {
                 try {
                     state = JSON.parse(savedState);
+                    normalizeVehicleExpiryDates();
                 } catch (e) {
                     console.error("Failed to load persistent state, resetting...");
                 }
@@ -1391,9 +1392,67 @@
             return Math.max(...allOdos);
         }
 
-        // Helper to format Date to Thai Buddhist Era representation (Fixed missing function bug)
+        function isValidIsoDateParts(year, month, day) {
+            if (month < 1 || month > 12 || day < 1) return false;
+            return day <= new Date(year, month, 0).getDate();
+        }
+
+        function parseIsoDate(dateStr) {
+            const parts = String(dateStr).split('-');
+            if (parts.length !== 3) return new Date(dateStr);
+            const year = Number(parts[0]);
+            const month = Number(parts[1]);
+            const day = Number(parts[2]);
+            if (!isValidIsoDateParts(year, month, day)) return new Date(NaN);
+            return new Date(year, month - 1, day);
+        }
+
+        function normalizeIsoDate(dateStr) {
+            if (!dateStr) return '';
+            const s = String(dateStr).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+                const d = parseIsoDate(s);
+                if (isNaN(d.getTime())) return '';
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            }
+            const d = new Date(s);
+            if (isNaN(d.getTime())) return '';
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function normalizeVehicleExpiryDates() {
+            state.vehicles.forEach(v => {
+                if (v.prbExpiryDate) {
+                    const n = normalizeIsoDate(v.prbExpiryDate);
+                    if (n) v.prbExpiryDate = n;
+                    else delete v.prbExpiryDate;
+                }
+                if (v.insuranceExpiryDate) {
+                    const n = normalizeIsoDate(v.insuranceExpiryDate);
+                    if (n) v.insuranceExpiryDate = n;
+                    else delete v.insuranceExpiryDate;
+                }
+            });
+        }
+
+        function formatExpiryPreview(dateStr) {
+            const n = normalizeIsoDate(dateStr);
+            return n ? formatThaiDate(n) : 'ยังไม่ได้ตั้งค่า';
+        }
+
+        // Helper to format Date to Thai Buddhist Era representation
         function formatThaiDate(dateStr) {
-            const date = new Date(dateStr);
+            const date = dateStr instanceof Date
+                ? dateStr
+                : typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)
+                    ? parseIsoDate(dateStr)
+                    : new Date(dateStr);
             if (isNaN(date.getTime())) return '-';
             return `${date.getDate()} ${thaiMonthsShort[date.getMonth()]} ${date.getFullYear() + 543}`;
         }
@@ -1518,6 +1577,38 @@
                 rowEl.classList.add('border-rose-200', 'bg-rose-50');
             }
             return { urgent, days };
+        }
+
+        function openExpiryEditModal() {
+            const v = state.vehicles.find(x => x.id === state.selectedVehicleId);
+            if (!v) {
+                showToast('กรุณาเลือกรถก่อน', 'error');
+                return;
+            }
+            document.getElementById('expiry-edit-prb').value = normalizeIsoDate(v.prbExpiryDate) || '';
+            document.getElementById('expiry-edit-insurance').value = normalizeIsoDate(v.insuranceExpiryDate) || '';
+            document.getElementById('expiry-edit-modal').classList.remove('hidden');
+        }
+
+        function saveVehicleExpiryDates(e) {
+            e.preventDefault();
+            const id = state.selectedVehicleId;
+            const idx = state.vehicles.findIndex(v => v.id === id);
+            if (idx === -1) {
+                showToast('ไม่พบรถ', 'error');
+                return;
+            }
+            const prbDate = document.getElementById('expiry-edit-prb').value;
+            const insDate = document.getElementById('expiry-edit-insurance').value;
+            if (prbDate) state.vehicles[idx].prbExpiryDate = prbDate;
+            else delete state.vehicles[idx].prbExpiryDate;
+            if (insDate) state.vehicles[idx].insuranceExpiryDate = insDate;
+            else delete state.vehicles[idx].insuranceExpiryDate;
+            saveToLocalStorage();
+            selectVehicle(id);
+            renderAdminVehicles();
+            closeModal('expiry-edit-modal');
+            showToast('บันทึกวันหมดอายุ พรบ./ประกัน สำเร็จ');
         }
 
         function selectVehicle(id) {
@@ -2650,11 +2741,11 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุ พรบ.</label>
-                                    <input type="date" id="edit-car-prb-${v.id}" value="${v.prbExpiryDate || ''}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs">
+                                    <input type="date" id="edit-car-prb-${v.id}" value="${normalizeIsoDate(v.prbExpiryDate) || ''}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs">
                                 </div>
                                 <div>
                                     <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุประกัน</label>
-                                    <input type="date" id="edit-car-insurance-${v.id}" value="${v.insuranceExpiryDate || ''}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs">
+                                    <input type="date" id="edit-car-insurance-${v.id}" value="${normalizeIsoDate(v.insuranceExpiryDate) || ''}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs">
                                 </div>
                             </div>
                             <div class="flex gap-2 justify-end">
@@ -2669,6 +2760,7 @@
                             <div class="min-w-0 flex-1">
                                 <span class="font-extrabold text-slate-800 text-xs block truncate" title="${escAttr(v.name)}">${v.name}</span>
                                 <span class="text-[9px] text-slate-500 block font-bold font-mono truncate">${v.license}</span>
+                                <span class="text-[9px] text-slate-400 block mt-0.5 truncate">พรบ. ${formatExpiryPreview(v.prbExpiryDate)} · ประกัน ${formatExpiryPreview(v.insuranceExpiryDate)}</span>
                             </div>
                             <div class="flex items-center shrink-0 gap-0.5">
                                 <button type="button" onclick="startVehicleEditAdmin('${v.id}')" class="text-indigo-500 hover:text-indigo-700 p-1" title="แก้ไข">
