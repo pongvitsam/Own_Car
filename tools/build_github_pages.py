@@ -2,7 +2,6 @@
 import os
 import re
 import sys
-from datetime import datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
@@ -64,16 +63,10 @@ if 'autocomplete="off"' not in body and 'id="log-search-input"' in body:
         'id="log-search-input" autocomplete="off" autocorrect="off" spellcheck="false" oninput="filterLogsList()"'
     )
 
-# Dynamic year options
-current_year = datetime.now().year
-year_options = ''.join(
-    f'<option value="{y}">พ.ศ. {y + 543}</option>\n                        '
-    for y in range(current_year, current_year - 5, -1)
-)
+# Year filter populated dynamically from maintenance logs per vehicle
 body = re.sub(
     r'<select id="report-year-filter"[^>]*>.*?</select>',
-    '<select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500">\n                        '
-    + year_options + '</select>',
+    '<select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>',
     body,
     count=1,
     flags=re.DOTALL
@@ -199,7 +192,8 @@ EXPORT_FN = '''
             }
             const logs = state.maintenanceLogs.filter(l => {
                 if (l.type !== 'Maintenance' || l.vehicleId !== vehicleId) return false;
-                return String(new Date(l.date).getFullYear()) === String(year);
+                const logYear = getLogYear(l.date);
+                return logYear !== null && String(logYear) === String(year);
             });
             const total = logs.reduce((sum, l) => sum + l.cost, 0);
             const categorySums = {};

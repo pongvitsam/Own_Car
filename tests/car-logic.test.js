@@ -25,6 +25,10 @@ const {
   getVehicleStatusLevel,
   formatThaiDate,
   parseIsoDate,
+  getLogYear,
+  getMaintenanceYearsForVehicle,
+  pickDefaultReportYear,
+  computeAnnualReportStats,
 } = require('../lib/car-logic');
 
 const V1 = 'V001';
@@ -351,5 +355,56 @@ describe('public API wrappers', () => {
   it('formatThaiDate renders Buddhist era date', () => {
     assert.equal(formatThaiDate('2026-01-15'), '15 ม.ค. 2569');
     assert.equal(formatThaiDate('invalid'), '-');
+  });
+});
+
+describe('annual report stats', () => {
+  const { execSync } = require('node:child_process');
+  const seedJson = execSync('python -c "import json; from tools.seed_data import build_maintenance_logs; print(json.dumps(build_maintenance_logs()))"', {
+    cwd: require('path').join(__dirname, '..'),
+    encoding: 'utf8',
+  });
+  const seedLogs = JSON.parse(seedJson);
+
+  it('getLogYear parses ISO year without timezone issues', () => {
+    assert.equal(getLogYear('2025-11-24'), 2025);
+    assert.equal(getLogYear('2024-07-30'), 2024);
+    assert.equal(getLogYear('invalid'), null);
+  });
+
+  it('Mazda defaults to 2025 (most recent year with data in 2026)', () => {
+    const { years, yearCounts } = getMaintenanceYearsForVehicle(seedLogs, 'V-001');
+    assert.deepEqual(years, [2025, 2024]);
+    assert.equal(pickDefaultReportYear(years, yearCounts, 2026, null), 2025);
+  });
+
+  it('Mazda 2025 totals match seed data', () => {
+    const stats = computeAnnualReportStats(seedLogs, 'V-001', 2025);
+    assert.equal(stats.count, 8);
+    assert.equal(Math.round(stats.total * 100) / 100, 38978.61);
+  });
+
+  it('Mazda 2024 totals match seed data', () => {
+    const stats = computeAnnualReportStats(seedLogs, 'V-001', 2024);
+    assert.equal(stats.count, 4);
+    assert.equal(stats.total, 43320);
+  });
+
+  it('Click 2026 totals match seed data', () => {
+    const stats = computeAnnualReportStats(seedLogs, 'V-002', 2026);
+    assert.equal(stats.count, 5);
+    assert.equal(stats.total, 3301);
+  });
+
+  it('Altis 2025 totals match seed data', () => {
+    const stats = computeAnnualReportStats(seedLogs, 'V-003', 2025);
+    assert.equal(stats.count, 65);
+    assert.equal(Math.round(stats.total * 100) / 100, 119158.08);
+  });
+
+  it('Altis 2026 has one maintenance log', () => {
+    const stats = computeAnnualReportStats(seedLogs, 'V-003', 2026);
+    assert.equal(stats.count, 1);
+    assert.equal(stats.total, 1839);
   });
 });

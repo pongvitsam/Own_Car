@@ -169,10 +169,7 @@
                         </div>
                         <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">สถิติค่าบริการรายคัน</h3>
                     </div>
-                    <select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500">
-                        <option value="2026">พ.ศ. 2569</option>
-                        <option value="2025">พ.ศ. 2568</option>
-                    </select>
+                    <select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>
                 </div>
             </div>
 
@@ -721,7 +718,6 @@
             populateDropdowns();
             renderVehiclesCarousel();
             selectVehicle(state.selectedVehicleId);
-            renderReports();
             checkLineAlerts(false); 
             initCustomCalendar();
             setDefaultDates(); // Pre-populate default date (6 Jun 2026) immediately
@@ -995,6 +991,7 @@
 
                 calculateVehicleMetrics(id);
                 renderLogsHistory(id);
+                renderReports();
             } else if (activeTab === 'tab-fuelio') {
                 renderFuelLogs();
             }
@@ -1817,21 +1814,66 @@
             }, 300);
         }
 
+        function getLogYear(dateStr) {
+            if (!dateStr || typeof dateStr !== 'string') return null;
+            const match = dateStr.match(/^(\d{4})/);
+            return match ? parseInt(match[1], 10) : null;
+        }
+
+        function populateReportYearFilter(vehicleId) {
+            const yearFilterEl = document.getElementById('report-year-filter');
+            if (!yearFilterEl) return null;
+
+            const yearCounts = {};
+            state.maintenanceLogs.forEach(l => {
+                if (l.type !== 'Maintenance' || l.vehicleId !== vehicleId) return;
+                const year = getLogYear(l.date);
+                if (year == null) return;
+                yearCounts[year] = (yearCounts[year] || 0) + 1;
+            });
+
+            let years = Object.keys(yearCounts).map(Number).sort((a, b) => b - a);
+            if (years.length === 0) {
+                years = [new Date().getFullYear()];
+            }
+
+            const previousValue = yearFilterEl.value;
+            yearFilterEl.innerHTML = years.map(y =>
+                `<option value="${y}">พ.ศ. ${y + 543}</option>`
+            ).join('');
+
+            const currentYear = new Date().getFullYear();
+            let selectedYear;
+            if (previousValue && years.includes(parseInt(previousValue, 10))) {
+                selectedYear = parseInt(previousValue, 10);
+            } else if (yearCounts[currentYear]) {
+                selectedYear = currentYear;
+            } else {
+                selectedYear = years.reduce((best, y) =>
+                    (yearCounts[y] > (yearCounts[best] || 0)) ? y : best, years[0]);
+            }
+            yearFilterEl.value = String(selectedYear);
+            return selectedYear;
+        }
+
         // Render Reports (Annual spending visualization inside tab 1)
         function renderReports() {
             const yearFilterEl = document.getElementById('report-year-filter');
             if (!yearFilterEl) return;
 
-            const targetYear = yearFilterEl.value;
             const targetVehicle = state.selectedVehicleId;
-            
+            if (!targetVehicle) return;
+
+            populateReportYearFilter(targetVehicle);
+            const targetYear = yearFilterEl.value;
+
             const yearLogs = state.maintenanceLogs.filter(l => {
-                if (l.type !== 'Maintenance') return false;
-                const logYear = new Date(l.date).getFullYear().toString();
-                return logYear === targetYear && l.vehicleId === targetVehicle;
+                if (l.type !== 'Maintenance' || l.vehicleId !== targetVehicle) return false;
+                const logYear = getLogYear(l.date);
+                return logYear !== null && String(logYear) === String(targetYear);
             });
 
-            const total = yearLogs.reduce((acc, current) => acc + current.cost, 0);
+            const total = yearLogs.reduce((acc, current) => acc + (current.cost || 0), 0);
             document.getElementById('yearly-total-spend').textContent = `฿${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             document.getElementById('yearly-repairs-count').textContent = `${yearLogs.length} รายการ`;
 
