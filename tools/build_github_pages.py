@@ -6,6 +6,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 from seed_data import SEED_DATA, render_state_js  # noqa: E402
+from premium_ui import PREMIUM_INLINE_STYLES, apply_premium_html, apply_premium_script  # noqa: E402
 MOCKUP = os.path.join(ROOT, 'mockup', 'MyHome-CarCare-v1.8.html')
 GAS_INDEX = os.path.join(ROOT, 'gas', 'Index.html')
 OUT = os.path.join(ROOT, 'index.html')
@@ -29,7 +30,7 @@ if not body_match:
 body = body_match.group(1).strip() if body_match else ''
 
 style_match = re.search(r'<style>(.*?)</style>', gas_index, re.DOTALL)
-inline_styles = style_match.group(1).strip() if style_match else ''
+inline_styles = PREMIUM_INLINE_STYLES.strip()
 
 # Version badge (GitHub Pages) — inject GitHub icon if shell already has version-badge
 body = re.sub(
@@ -593,52 +594,8 @@ script = script.replace(
             });"""
 )
 
-# Itim typography + UI polish in inline CSS (skip if GAS shell already uses Itim)
-if "'Itim'" not in inline_styles:
-    inline_styles = inline_styles.replace(
-        "font-family: 'Inter', 'Sarabun', sans-serif;",
-        "font-family: 'Itim', 'Inter', sans-serif;"
-    )
-if '--radius-sm' not in inline_styles and '.nav-tab-active::after' not in inline_styles:
-    inline_styles += """
-        .nav-tab { position: relative; min-height: 3rem; }
-        .nav-tab-active::after {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            width: 1.25rem;
-            height: 3px;
-            background: linear-gradient(90deg, #6366f1, #818cf8);
-            border-radius: 9999px;
-        }
-        #log-search-input:focus {
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-            border-color: #a5b4fc;
-        }
-        button:active { transform: scale(0.97); }
-"""
-
-def apply_premium_tailwind(text):
-    """Upgrade legacy Tailwind classes to premium rounded variants."""
-    replacements = [
-        ('rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500',
-         'rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40'),
-        ('vehicle-card snap-start shrink-0 w-[145px] md:w-auto p-3 rounded-xl border',
-         'vehicle-card snap-start shrink-0 w-[150px] md:w-auto p-3.5 rounded-2xl border transition-all duration-300'),
-        ("? 'vehicle-card vehicle-card--active border-indigo-500 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg ring-2 ring-indigo-400/30' ",
-         "? 'vehicle-card vehicle-card--active border-indigo-400/50 bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 text-white ring-2 ring-indigo-400/40' "),
-        ('toast-item p-3.5 rounded-xl shadow-lg', 'toast-item p-4 rounded-2xl shadow-xl backdrop-blur-sm'),
-        ('bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm hover:shadow transition-all relative overflow-hidden',
-         'log-card p-4 relative overflow-hidden'),
-        ('text-center py-6 text-slate-400 text-[10px] font-bold bg-slate-50 border border-slate-200 border-dashed rounded-xl',
-         'empty-state text-center py-6 text-slate-400 text-[10px] font-bold'),
-    ]
-    for old, new in replacements:
-        text = text.replace(old, new)
-    return text
-
-body = apply_premium_tailwind(body)
-script = apply_premium_tailwind(script)
+body = apply_premium_html(body)
+script = apply_premium_script(script)
 
 # Next maintenance plan: show service type (serviceLabel on alerts)
 if 'target-service-val' not in body:
