@@ -55,7 +55,7 @@ year_options = ''.join(
 
 body = re.sub(
     r'<select id="report-year-filter"[^>]*>.*?</select>',
-    '<select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500">\n                        ' + year_options + '</select>',
+    '<select id="report-year-filter" onchange="renderReportStats()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>',
     body,
     count=1,
     flags=re.DOTALL
@@ -584,15 +584,60 @@ script = re.sub(
 )
 
 script = re.sub(
+    r"function saveVehicleEditAdmin\(e, id\) \{[\s\S]*?showToast\('[^']*'\);\s*\n        \}",
+    """function saveVehicleEditAdmin(e, id) {
+            e.preventDefault();
+            const name = document.getElementById(`edit-car-name-${id}`).value.trim();
+            const license = document.getElementById(`edit-car-license-${id}`).value.trim();
+            if (!name || !license) {
+                showToast('กรุณากรอกชื่อรถและทะเบียน', 'error');
+                return;
+            }
+            const prbEl = document.getElementById(`edit-car-prb-${id}`);
+            const insEl = document.getElementById(`edit-car-insurance-${id}`);
+            runGas('updateVehicle', {
+                id: id,
+                name: name,
+                license: license,
+                selectedVehicleId: state.selectedVehicleId,
+                prbExpiryDate: prbEl ? prbEl.value : '',
+                insuranceExpiryDate: insEl ? insEl.value : ''
+            }, function(result) {
+                adminVehicleEditId = null;
+                applyState(result.state);
+                renderAdminVehicles();
+                refreshUI();
+                if (state.selectedVehicleId === id) {
+                    selectVehicle(id);
+                }
+                showToast('บันทึกข้อมูลรถสำเร็จ');
+            });
+        }""",
+    script,
+    count=1
+)
+
+script = re.sub(
     r'function addVehicleAdmin\(e\) \{[\s\S]*?showToast\("[^"]*"\);\s*\n        \}',
     """function addVehicleAdmin(e) {
             e.preventDefault();
-            const name = document.getElementById('add-car-name').value;
-            const license = document.getElementById('add-car-license').value;
-            runGas('addVehicle', { name: name, license: license }, function(result) {
+            const name = document.getElementById('add-car-name').value.trim();
+            const license = document.getElementById('add-car-license').value.trim();
+            if (!name || !license) {
+                showToast('กรุณากรอกชื่อรถและทะเบียน', 'error');
+                return;
+            }
+            const prbDate = document.getElementById('add-car-prb-expiry').value;
+            const insDate = document.getElementById('add-car-insurance-expiry').value;
+            const payload = { name: name, license: license };
+            if (prbDate) payload.prbExpiryDate = prbDate;
+            if (insDate) payload.insuranceExpiryDate = insDate;
+            runGas('addVehicle', payload, function(result) {
                 applyState(result.state);
                 document.getElementById('add-car-name').value = '';
                 document.getElementById('add-car-license').value = '';
+                document.getElementById('add-car-prb-expiry').value = '';
+                document.getElementById('add-car-insurance-expiry').value = '';
                 renderAdminVehicles();
                 refreshUI();
                 showToast("เพิ่มข้อมูลรถยนต์คันใหม่สำเร็จ");
@@ -652,15 +697,39 @@ script = re.sub(
     """function saveEditedLog(e) {
             e.preventDefault();
             const logId = document.getElementById('edit-log-id').value;
-            runGas('saveEditedLog', {
+            const log = state.maintenanceLogs.find(l => l.id === logId);
+            const payload = {
                 id: logId,
-                odo: parseInt(document.getElementById('edit-log-odo').value),
-                shop: document.getElementById('edit-log-shop').value || '-',
-                cost: parseFloat(document.getElementById('edit-log-cost').value)
-            }, function(result) {
+                odo: parseInt(document.getElementById('edit-log-odo').value)
+            };
+            if (log && log.type !== 'Odometer_Update') {
+                payload.shop = document.getElementById('edit-log-shop').value || '-';
+                payload.cost = parseFloat(document.getElementById('edit-log-cost').value);
+            } else {
+                payload.shop = '-';
+                payload.cost = 0;
+            }
+            runGas('saveEditedLog', payload, function(result) {
                 applyState(result.state);
                 closeModal('edit-log-modal');
                 showToast("แก้ไขข้อมูลการซ่อมบำรุงสำเร็จ");
+                refreshUI();
+            });
+        }""",
+    script,
+    count=1
+)
+
+script = re.sub(
+    r'function confirmDeleteLog\(logId\) \{[\s\S]*?renderReports\(\);\s*\n        \}',
+    """function confirmDeleteLog(logId) {
+            const log = state.maintenanceLogs.find(l => l.id === logId);
+            if (!log) return;
+            const label = log.type === 'Odometer_Update' ? 'รายการอัปเดตเลขไมล์' : 'รายการซ่อมบำรุง';
+            if (!confirm(`ยืนยันลบ${label}นี้จากประวัติ?`)) return;
+            runGas('deleteMaintenanceLog', logId, function(result) {
+                applyState(result.state);
+                showToast('ลบรายการออกจากบันทึกสำเร็จ', 'warning');
                 refreshUI();
             });
         }""",
