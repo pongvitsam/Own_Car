@@ -67,18 +67,27 @@ CATEGORIES = [
 ]
 
 VEHICLES = [
-    {"id": "V-001", "name": "Mazda", "license": "ขต 1062", "createdDate": "2024-07-30"},
+    {
+        "id": "V-001",
+        "name": "Mazda",
+        "license": "ขต 1062",
+        "createdDate": "2024-07-30",
+        "insuranceExpiryDate": "2026-08-25",
+        "prbExpiryDate": "2026-09-04",
+    },
     {
         "id": "V-002",
         "name": "Honda Click 160",
         "license": "รอใส่ทะเบียน",
         "createdDate": "2025-10-04",
+        "prbExpiryDate": "2026-10-04",
     },
     {
         "id": "V-003",
         "name": "Toyota Altis",
         "license": "1กพ8782 กทม",
         "createdDate": "2025-11-21",
+        "insuranceExpiryDate": "2026-11-22",
     },
 ]
 

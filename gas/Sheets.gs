@@ -49,7 +49,9 @@ function clearScriptPropCache_(key) {
 }
 
 function initSheetHeaders_() {
-  SHEET_HEADERS_[SHEET_NAMES.VEHICLES] = ['vehicleId', 'ชื่อ', 'ทะเบียน', 'สร้างเมื่อ'];
+  SHEET_HEADERS_[SHEET_NAMES.VEHICLES] = [
+    'vehicleId', 'ชื่อ', 'ทะเบียน', 'สร้างเมื่อ', 'prbExpiryDate', 'insuranceExpiryDate'
+  ];
   SHEET_HEADERS_[SHEET_NAMES.CATEGORIES] = ['categoryId', 'ชื่อ'];
   SHEET_HEADERS_[SHEET_NAMES.MAINTENANCE] = [
     'logId', 'vehicleId', 'วันที่', 'categoryId', 'ร้าน', 'ราคา', 'ไมล์',

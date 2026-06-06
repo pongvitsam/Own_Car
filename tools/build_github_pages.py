@@ -217,19 +217,19 @@ if 'reportYearFilterVehicleId' not in script:
 # --- Patch JavaScript for v2.0 GitHub Pages ---
 script = script.replace(
     "localStorage.getItem('myhome_carcare_state_v1.7')",
-    "localStorage.getItem('myhome_carcare_state_v2.1')"
+    "localStorage.getItem('myhome_carcare_state_v2.2')"
 )
 script = script.replace(
     "localStorage.setItem('myhome_carcare_state_v1.7', JSON.stringify(state));",
-    "localStorage.setItem('myhome_carcare_state_v2.1', JSON.stringify(state));"
+    "localStorage.setItem('myhome_carcare_state_v2.2', JSON.stringify(state));"
 )
 script = script.replace(
     "localStorage.getItem('myhome_carcare_state_v2.0')",
-    "localStorage.getItem('myhome_carcare_state_v2.1')"
+    "localStorage.getItem('myhome_carcare_state_v2.2')"
 )
 script = script.replace(
     "localStorage.setItem('myhome_carcare_state_v2.0', JSON.stringify(state));",
-    "localStorage.setItem('myhome_carcare_state_v2.1', JSON.stringify(state));"
+    "localStorage.setItem('myhome_carcare_state_v2.2', JSON.stringify(state));"
 )
 
 script = script.replace(

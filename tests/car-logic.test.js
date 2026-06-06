@@ -30,6 +30,9 @@ const {
   getMaintenanceYearsForVehicle,
   pickDefaultReportYear,
   computeAnnualReportStats,
+  daysUntilDate,
+  isExpiryUrgent,
+  getVehicleExpiryWarnings,
 } = require('../lib/car-logic');
 
 const V1 = 'V001';
@@ -385,6 +388,46 @@ describe('public API wrappers', () => {
   it('formatThaiDate renders Buddhist era date', () => {
     assert.equal(formatThaiDate('2026-01-15'), '15 ม.ค. 2569');
     assert.equal(formatThaiDate('invalid'), '-');
+  });
+});
+
+describe('vehicle expiry dates', () => {
+  const { execSync } = require('node:child_process');
+  const seedVehicles = JSON.parse(
+    execSync('python -c "import json; from tools.seed_data import VEHICLES; print(json.dumps(VEHICLES))"', {
+      cwd: require('path').join(__dirname, '..'),
+      encoding: 'utf8',
+    })
+  );
+  const today = new Date('2026-06-06');
+
+  it('seed vehicles include PRB/insurance expiry from spreadsheet', () => {
+    const mazda = seedVehicles.find((v) => v.id === 'V-001');
+    const click = seedVehicles.find((v) => v.id === 'V-002');
+    const altis = seedVehicles.find((v) => v.id === 'V-003');
+    assert.equal(mazda.insuranceExpiryDate, '2026-08-25');
+    assert.equal(mazda.prbExpiryDate, '2026-09-04');
+    assert.equal(click.prbExpiryDate, '2026-10-04');
+    assert.equal(altis.insuranceExpiryDate, '2026-11-22');
+  });
+
+  it('isExpiryUrgent flags dates within 30 days', () => {
+    assert.equal(isExpiryUrgent('2026-06-20', 30, today), true);
+    assert.equal(isExpiryUrgent('2026-08-25', 30, today), false);
+    assert.equal(isExpiryUrgent(null, 30, today), false);
+  });
+
+  it('getVehicleExpiryWarnings lists urgent PRB/insurance for Mazda in June 2026', () => {
+    const mazda = seedVehicles.find((v) => v.id === 'V-001');
+    const warnings = getVehicleExpiryWarnings(mazda, today);
+    assert.equal(warnings.length, 0);
+  });
+
+  it('getVehicleExpiryWarnings flags Mazda insurance near August 2026', () => {
+    const mazda = seedVehicles.find((v) => v.id === 'V-001');
+    const near = new Date('2026-08-01');
+    const warnings = getVehicleExpiryWarnings(mazda, near);
+    assert.ok(warnings.some((w) => w.type === 'insurance'));
   });
 });
 

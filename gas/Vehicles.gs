@@ -1,11 +1,16 @@
 function getVehicles_() {
   return getAllRowsAsObjects_(SHEET_NAMES.VEHICLES).map(function (r) {
-    return {
+    var vehicle = {
       id: String(r.vehicleId),
       name: String(r['ชื่อ'] || ''),
       license: String(r['ทะเบียน'] || ''),
       createdDate: formatDateCell_(r['สร้างเมื่อ'])
     };
+    var prb = formatDateCell_(r.prbExpiryDate);
+    var ins = formatDateCell_(r.insuranceExpiryDate);
+    if (prb) vehicle.prbExpiryDate = prb;
+    if (ins) vehicle.insuranceExpiryDate = ins;
+    return vehicle;
   });
 }
 
@@ -16,7 +21,9 @@ function addVehicle(data) {
       vehicleId: id,
       'ชื่อ': data.name,
       'ทะเบียน': data.license,
-      'สร้างเมื่อ': data.createdDate || getBangkokToday_()
+      'สร้างเมื่อ': data.createdDate || getBangkokToday_(),
+      prbExpiryDate: data.prbExpiryDate || '',
+      insuranceExpiryDate: data.insuranceExpiryDate || ''
     });
 
     // Seed initial odometer log
@@ -64,7 +71,11 @@ function updateVehicle(data) {
       vehicleId: id,
       'ชื่อ': name,
       'ทะเบียน': license,
-      'สร้างเมื่อ': existing['สร้างเมื่อ'] || getBangkokToday_()
+      'สร้างเมื่อ': existing['สร้างเมื่อ'] || getBangkokToday_(),
+      prbExpiryDate: data.prbExpiryDate != null ? String(data.prbExpiryDate || '') : formatDateCell_(existing.prbExpiryDate),
+      insuranceExpiryDate: data.insuranceExpiryDate != null
+        ? String(data.insuranceExpiryDate || '')
+        : formatDateCell_(existing.insuranceExpiryDate)
     });
     var selectedId = data.selectedVehicleId || id;
     return { success: true, state: getAppState(selectedId, { skipCache: true }) };
