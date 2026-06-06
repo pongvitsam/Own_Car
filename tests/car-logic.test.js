@@ -437,4 +437,24 @@ describe('annual report stats', () => {
     assert.equal(stats.count, 1);
     assert.equal(stats.total, 1839);
   });
+
+  it('pickDefaultReportYear resets when previous year is from another vehicle', () => {
+    const click = getMaintenanceYearsForVehicle(seedLogs, 'V-002');
+    assert.equal(pickDefaultReportYear(click.years, click.yearCounts, 2026, null), 2026);
+    assert.equal(pickDefaultReportYear(click.years, click.yearCounts, 2026, '2025'), 2025);
+
+    const mazda2025 = computeAnnualReportStats(seedLogs, 'V-001', 2025);
+    const altis2025 = computeAnnualReportStats(seedLogs, 'V-003', 2025);
+    assert.notEqual(Math.round(mazda2025.total), Math.round(altis2025.total));
+    assert.equal(mazda2025.count, 8);
+    assert.equal(altis2025.count, 65);
+  });
+
+  it('Click and Mazda 2025 totals differ per vehicle', () => {
+    const mazda = computeAnnualReportStats(seedLogs, 'V-001', 2025);
+    const click = computeAnnualReportStats(seedLogs, 'V-002', 2025);
+    assert.equal(mazda.count, 8);
+    assert.equal(click.count, 2);
+    assert.notEqual(Math.round(mazda.total), Math.round(click.total));
+  });
 });

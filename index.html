@@ -289,7 +289,7 @@ html {
                         </div>
                         <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">สถิติค่าบริการรายคัน</h3>
                     </div>
-                    <select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>
+                    <select id="report-year-filter" onchange="renderReportStats()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>
                 </div>
             </div>
 
@@ -998,6 +998,7 @@ html {
         let currentUploadedReceiptBase64 = "";
         let searchDebounceTimer = null;
         let adminVehicleEditId = null;
+        let reportYearFilterVehicleId = null;
 
         // App Initializer
         function initApp() {
@@ -1268,7 +1269,8 @@ html {
             if (!v) return;
 
             // Load values for selected tab
-            const activeTab = document.querySelector('.tab-content:not(.hidden)').id;
+            const activeTabEl = document.querySelector('.tab-content:not(.hidden)');
+            const activeTab = activeTabEl ? activeTabEl.id : '';
 
             if (activeTab === 'tab-dashboard') {
                 const latestOdo = getLatestOdometer(id);
@@ -1315,11 +1317,22 @@ html {
                 }
 
                 calculateVehicleMetrics(id);
+                clearLogSearch();
+                refreshVehicleAnnualReport(id);
                 renderLogsHistory(id);
-                renderReports();
             } else if (activeTab === 'tab-fuelio') {
+                reportYearFilterVehicleId = null;
                 renderFuelLogs();
+            } else {
+                reportYearFilterVehicleId = null;
             }
+        }
+
+        function clearLogSearch() {
+            const searchInput = document.getElementById('log-search-input');
+            const clearBtn = document.getElementById('clear-search-btn');
+            if (searchInput) searchInput.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
         }
 
         // Render maintenance logs inside first page tab
@@ -2154,7 +2167,7 @@ html {
             return match ? parseInt(match[1], 10) : null;
         }
 
-        function populateReportYearFilter(vehicleId) {
+        function populateReportYearFilter(vehicleId, resetYear) {
             const yearFilterEl = document.getElementById('report-year-filter');
             if (!yearFilterEl) return null;
 
@@ -2171,15 +2184,17 @@ html {
                 years = [new Date().getFullYear()];
             }
 
-            const previousValue = yearFilterEl.value;
+            const preserveYear = !resetYear && reportYearFilterVehicleId === vehicleId;
+            const previousValue = preserveYear ? yearFilterEl.value : null;
             yearFilterEl.innerHTML = years.map(y =>
                 `<option value="${y}">พ.ศ. ${y + 543}</option>`
             ).join('');
 
             const currentYear = new Date().getFullYear();
             let selectedYear;
-            if (previousValue && years.includes(parseInt(previousValue, 10))) {
-                selectedYear = parseInt(previousValue, 10);
+            const prev = previousValue != null ? parseInt(previousValue, 10) : NaN;
+            if (!Number.isNaN(prev) && years.includes(prev)) {
+                selectedYear = prev;
             } else if (yearCounts[currentYear]) {
                 selectedYear = currentYear;
             } else {
@@ -2187,18 +2202,23 @@ html {
                     (yearCounts[y] > (yearCounts[best] || 0)) ? y : best, years[0]);
             }
             yearFilterEl.value = String(selectedYear);
+            reportYearFilterVehicleId = vehicleId;
             return selectedYear;
         }
 
-        // Render Reports (Annual spending visualization inside tab 1)
-        function renderReports() {
+        function refreshVehicleAnnualReport(vehicleId) {
+            populateReportYearFilter(vehicleId, true);
+            renderReportStats();
+        }
+
+        // Render annual stats for the selected vehicle + year (no year-dropdown reset)
+        function renderReportStats() {
             const yearFilterEl = document.getElementById('report-year-filter');
             if (!yearFilterEl) return;
 
             const targetVehicle = state.selectedVehicleId;
             if (!targetVehicle) return;
 
-            populateReportYearFilter(targetVehicle);
             const targetYear = yearFilterEl.value;
 
             const yearLogs = state.maintenanceLogs.filter(l => {
@@ -2261,6 +2281,14 @@ html {
                     </div>
                 `;
             }
+        }
+
+        // Repopulate year options when logs change; preserve year for same vehicle
+        function renderReports() {
+            const targetVehicle = state.selectedVehicleId;
+            if (!targetVehicle) return;
+            populateReportYearFilter(targetVehicle, false);
+            renderReportStats();
         }
 
         // ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมิน admin / 1234)

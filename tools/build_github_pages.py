@@ -72,6 +72,148 @@ body = re.sub(
     flags=re.DOTALL
 )
 
+# Per-vehicle annual stats: reset year dropdown when carousel vehicle changes
+if 'reportYearFilterVehicleId' not in script:
+    script = script.replace(
+        'let searchDebounceTimer = null;',
+        'let searchDebounceTimer = null;\n        let reportYearFilterVehicleId = null;'
+    )
+    script = script.replace(
+        "const activeTab = document.querySelector('.tab-content:not(.hidden)').id;",
+        "const activeTabEl = document.querySelector('.tab-content:not(.hidden)');\n"
+        "            const activeTab = activeTabEl ? activeTabEl.id : '';"
+    )
+    script = script.replace(
+        """                calculateVehicleMetrics(id);
+                renderLogsHistory(id);
+                renderReports();
+            } else if (activeTab === 'tab-fuelio') {
+                renderFuelLogs();
+            }
+        }""",
+        """                calculateVehicleMetrics(id);
+                clearLogSearch();
+                refreshVehicleAnnualReport(id);
+                renderLogsHistory(id);
+            } else if (activeTab === 'tab-fuelio') {
+                reportYearFilterVehicleId = null;
+                renderFuelLogs();
+            } else {
+                reportYearFilterVehicleId = null;
+            }
+        }
+
+        function clearLogSearch() {
+            const searchInput = document.getElementById('log-search-input');
+            const clearBtn = document.getElementById('clear-search-btn');
+            if (searchInput) searchInput.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
+        }"""
+    )
+    script = script.replace(
+        'function populateReportYearFilter(vehicleId) {',
+        'function populateReportYearFilter(vehicleId, resetYear) {'
+    )
+    script = script.replace(
+        """            const previousValue = yearFilterEl.value;
+            yearFilterEl.innerHTML = years.map(y =>
+                `<option value="${y}">พ.ศ. ${y + 543}</option>`
+            ).join('');
+
+            const currentYear = new Date().getFullYear();
+            let selectedYear;
+            if (previousValue && years.includes(parseInt(previousValue, 10))) {
+                selectedYear = parseInt(previousValue, 10);
+            } else if (yearCounts[currentYear]) {
+                selectedYear = currentYear;
+            } else {
+                selectedYear = years.reduce((best, y) =>
+                    (yearCounts[y] > (yearCounts[best] || 0)) ? y : best, years[0]);
+            }
+            yearFilterEl.value = String(selectedYear);
+            return selectedYear;
+        }
+
+        // Render Reports (Annual spending visualization inside tab 1)
+        function renderReports() {
+            const yearFilterEl = document.getElementById('report-year-filter');
+            if (!yearFilterEl) return;
+
+            const targetVehicle = state.selectedVehicleId;
+            if (!targetVehicle) return;
+
+            populateReportYearFilter(targetVehicle);
+            const targetYear = yearFilterEl.value;
+
+            const yearLogs = state.maintenanceLogs.filter(l => {""",
+        """            const preserveYear = !resetYear && reportYearFilterVehicleId === vehicleId;
+            const previousValue = preserveYear ? yearFilterEl.value : null;
+            yearFilterEl.innerHTML = years.map(y =>
+                `<option value="${y}">พ.ศ. ${y + 543}</option>`
+            ).join('');
+
+            const currentYear = new Date().getFullYear();
+            let selectedYear;
+            const prev = previousValue != null ? parseInt(previousValue, 10) : NaN;
+            if (!Number.isNaN(prev) && years.includes(prev)) {
+                selectedYear = prev;
+            } else if (yearCounts[currentYear]) {
+                selectedYear = currentYear;
+            } else {
+                selectedYear = years.reduce((best, y) =>
+                    (yearCounts[y] > (yearCounts[best] || 0)) ? y : best, years[0]);
+            }
+            yearFilterEl.value = String(selectedYear);
+            reportYearFilterVehicleId = vehicleId;
+            return selectedYear;
+        }
+
+        function refreshVehicleAnnualReport(vehicleId) {
+            populateReportYearFilter(vehicleId, true);
+            renderReportStats();
+        }
+
+        function renderReportStats() {
+            const yearFilterEl = document.getElementById('report-year-filter');
+            if (!yearFilterEl) return;
+
+            const targetVehicle = state.selectedVehicleId;
+            if (!targetVehicle) return;
+
+            const targetYear = yearFilterEl.value;
+
+            const yearLogs = state.maintenanceLogs.filter(l => {"""
+    )
+    script = script.replace(
+        """            if (total === 0) {
+                barContainer.innerHTML = `
+                    <div class="text-center py-6 text-slate-400 text-[10px] font-bold bg-slate-50 border border-slate-200 border-dashed rounded-xl">
+                        ไม่พบประวัติการใช้จ่ายในปี พ.ศ. ${parseInt(targetYear) + 543} ของรถคันนี้
+                    </div>
+                `;
+            }
+        }
+
+        // ADMIN TAB STATE MANAGEMENT""",
+        """            if (total === 0) {
+                barContainer.innerHTML = `
+                    <div class="text-center py-6 text-slate-400 text-[10px] font-bold bg-slate-50 border border-slate-200 border-dashed rounded-xl">
+                        ไม่พบประวัติการใช้จ่ายในปี พ.ศ. ${parseInt(targetYear) + 543} ของรถคันนี้
+                    </div>
+                `;
+            }
+        }
+
+        function renderReports() {
+            const targetVehicle = state.selectedVehicleId;
+            if (!targetVehicle) return;
+            populateReportYearFilter(targetVehicle, false);
+            renderReportStats();
+        }
+
+        // ADMIN TAB STATE MANAGEMENT"""
+    )
+
 # --- Patch JavaScript for v2.0 GitHub Pages ---
 script = script.replace(
     "localStorage.getItem('myhome_carcare_state_v1.7')",
