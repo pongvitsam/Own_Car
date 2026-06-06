@@ -6,7 +6,6 @@
             categories: [],
             maintenanceLogs: [],
             fuelLogs: [],
-            latestOdometers: {},
             alerts: [],
             selectedVehicleId: '',
             adminAuthenticated: false,
@@ -14,38 +13,21 @@
             lineNotifyConfigured: false,
             driveFolderId: ''
         };
-        let fuelLogsLoaded = false;
-        let fuelCacheByVehicle = {};
-        let searchDebounceTimer = null;
-        let isInitialLoad = true;
         // --- Google Apps Script API layer ---
-        function showLoading(msg, mode) {
-            if (mode === 'none') return;
+        function showLoading(msg) {
             const el = document.getElementById('loading-overlay');
             const txt = document.getElementById('loading-text');
-            if (mode === 'light') {
-                if (txt) txt.textContent = msg || 'กำลังทำงาน...';
-                if (el) {
-                    el.classList.remove('hidden');
-                    el.classList.add('opacity-60');
-                }
-                return;
-            }
             if (txt) txt.textContent = msg || 'กำลังโหลด...';
-            if (el) el.classList.remove('hidden', 'opacity-60');
+            if (el) el.classList.remove('hidden');
         }
 
         function hideLoading() {
             const el = document.getElementById('loading-overlay');
-            if (el) {
-                el.classList.add('hidden');
-                el.classList.remove('opacity-60');
-            }
+            if (el) el.classList.add('hidden');
         }
 
-        function runGas(fn, args, onSuccess, onError, loadingMode) {
-            const mode = loadingMode !== undefined ? loadingMode : (isInitialLoad ? 'full' : 'light');
-            showLoading(undefined, mode);
+        function runGas(fn, args, onSuccess, onError) {
+            showLoading();
             const runner = google.script.run
                 .withSuccessHandler(function(result) {
                     hideLoading();
@@ -69,27 +51,14 @@
         function applyState(newState) {
             if (!newState) return;
             const adminAuth = state.adminAuthenticated;
-            const odometers = newState.vehicleOdometers || newState.latestOdometers || state.latestOdometers || {};
-            const preserveFuel = fuelLogsLoaded && (!newState.fuelLogs || newState.fuelLogs.length === 0);
-            const mergedFuel = preserveFuel ? state.fuelLogs : (newState.fuelLogs || []);
-            state = Object.assign({}, newState, {
-                adminAuthenticated: adminAuth,
-                fuelLogs: mergedFuel,
-                latestOdometers: odometers
-            });
-            if (newState.fuelLogs && newState.fuelLogs.length > 0) {
-                fuelLogsLoaded = true;
-                if (state.selectedVehicleId) {
-                    fuelCacheByVehicle[state.selectedVehicleId] = newState.fuelLogs;
-                }
-            }
+            state = Object.assign({}, newState, { adminAuthenticated: adminAuth });
         }
 
         function refreshUI() {
             populateDropdowns();
             renderVehiclesCarousel();
             const vid = state.selectedVehicleId || (state.vehicles[0] && state.vehicles[0].id);
-            if (vid) selectVehicle(vid, true);
+            if (vid) selectVehicle(vid);
             renderReports();
             initCustomCalendar();
             setDefaultDates();
@@ -98,45 +67,9 @@
         function loadAppState(selectedId, callback) {
             runGas('getAppState', [selectedId || ''], function(result) {
                 applyState(result);
-                isInitialLoad = false;
                 refreshUI();
                 if (callback) callback(result);
-            }, null, 'full');
-        }
-
-        function loadVehicleMaintenance(vehicleId, callback) {
-            runGas('getMaintenanceLogs', [vehicleId], function(result) {
-                state.maintenanceLogs = result.maintenanceLogs || [];
-                if (result.vehicleOdometers) {
-                    state.latestOdometers = Object.assign({}, state.latestOdometers, result.vehicleOdometers);
-                }
-                selectVehicle(vehicleId, true);
-                if (callback) callback(result);
-            }, null, 'light');
-        }
-
-        function loadFuelLogs(callback) {
-            const vid = state.selectedVehicleId;
-            if (!vid) {
-                if (callback) callback();
-                return;
-            }
-            if (fuelCacheByVehicle[vid]) {
-                state.fuelLogs = fuelCacheByVehicle[vid];
-                fuelLogsLoaded = true;
-                if (callback) callback();
-                return;
-            }
-            runGas('getFuelLogs', [vid], function(result) {
-                fuelCacheByVehicle[vid] = result.fuelLogs || [];
-                state.fuelLogs = fuelCacheByVehicle[vid];
-                fuelLogsLoaded = true;
-                if (result.vehicleOdometers) {
-                    state.latestOdometers = Object.assign({}, state.latestOdometers, result.vehicleOdometers);
-                    renderVehiclesCarousel();
-                }
-                if (callback) callback(result);
-            }, null, 'light');
+            });
         }
 
 
@@ -160,45 +93,9 @@
         // App Initializer
         function initApp() {
             loadAppState('', function() {
+                checkLineAlerts(false);
                 switchTab('dashboard');
-                showSetupWelcomeToast();
             });
-        }
-
-        function showSetupWelcomeToast() {
-            try {
-                if (sessionStorage.getItem('carcare-setup-shown')) return;
-                sessionStorage.setItem('carcare-setup-shown', '1');
-            } catch (e) { /* private browsing */ }
-            setTimeout(function() {
-                var lineHint = state.lineNotifyConfigured
-                    ? 'LINE Notify พร้อมใช้งาน'
-                    : 'LINE ยังเป็นโหมดจำลอง — ตั้ง LINE_NOTIFY_TOKEN ใน Script Properties';
-                showToast('ยินดีต้อนรับ MyHome CarCare! แอดมิน: ไปแท็บแอดมินบ้าน → สร้าง Daily Trigger. ' + lineHint, 'warning');
-            }, 800);
-        }
-
-        function setupDailyTrigger() {
-            showLoading('กำลังสร้าง trigger...');
-            google.script.run
-                .withSuccessHandler(function(result) {
-                    hideLoading();
-                    var statusEl = document.getElementById('setup-trigger-status');
-                    if (result && result.success) {
-                        if (statusEl) {
-                            statusEl.textContent = result.message || 'สร้าง trigger สำเร็จ';
-                            statusEl.classList.remove('hidden');
-                        }
-                        showToast(result.message || 'สร้าง daily trigger สำเร็จ');
-                    } else {
-                        showToast((result && result.error) || 'สร้าง trigger ไม่สำเร็จ', 'error');
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    hideLoading();
-                    showToast(err.message || String(err), 'error');
-                })
-                .setupTriggers();
         }
 
         // Set Default Date Helper for both forms (June 6, 2026)
@@ -275,32 +172,32 @@
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className = `p-3 rounded-xl shadow-lg text-xs font-bold transition-all transform translate-y-2 flex justify-between items-center pointer-events-auto border ${
-                type === 'success' ? 'bg-indigo-950 text-white border-indigo-900' : 
-                type === 'warning' ? 'bg-amber-500 text-slate-900 border-amber-400' : 'bg-rose-600 text-white border-rose-500'
-            }`;
+            const styles = {
+                success: 'bg-gradient-to-r from-indigo-950 to-indigo-900 text-white border-indigo-700/50 shadow-indigo-900/20',
+                warning: 'bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 border-amber-300 shadow-amber-500/20',
+                error: 'bg-gradient-to-r from-rose-600 to-rose-700 text-white border-rose-500 shadow-rose-900/20'
+            };
+            toast.className = `toast-item p-3.5 rounded-xl shadow-lg text-xs font-bold flex justify-between items-center pointer-events-auto border ${styles[type] || styles.success}`;
             
             let icon = 'fa-circle-check';
             if (type === 'warning') icon = 'fa-bell';
             if (type === 'error') icon = 'fa-circle-exclamation';
 
             toast.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid ${icon}"></i>
-                    <span>${message}</span>
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid ${icon} text-sm opacity-90"></i>
+                    <span class="leading-snug">${message}</span>
                 </div>
-                <button onclick="this.parentElement.remove()" class="text-white/60 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="this.parentElement.remove()" class="opacity-60 hover:opacity-100 ml-2 p-1 rounded-lg transition-opacity"><i class="fa-solid fa-xmark"></i></button>
             `;
             container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2');
-                toast.classList.add('translate-y-0');
-            }, 10);
 
             setTimeout(() => {
-                toast.remove();
-            }, 4000);
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-8px)';
+                toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4200);
         }
 
         // Render cars selection inside header carousel
@@ -311,15 +208,15 @@
             state.vehicles.forEach(v => {
                 const isActive = v.id === state.selectedVehicleId;
                 const activeClasses = isActive 
-                    ? 'border-indigo-600 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg scale-102 ring-2 ring-indigo-500/20' 
-                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800';
+                    ? 'vehicle-card vehicle-card--active border-indigo-500 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg ring-2 ring-indigo-400/30' 
+                    : 'vehicle-card border-slate-200 bg-white hover:border-indigo-200 hover:shadow-md text-slate-800';
 
                 const latestOdo = getLatestOdometer(v.id);
 
                 carousel.innerHTML += `
-                    <div onclick="selectVehicle('${v.id}')" class="snap-start shrink-0 w-[145px] md:w-auto md:shrink p-3 rounded-xl border ${activeClasses} cursor-pointer transition-all duration-200">
-                        <div class="text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
-                        <div class="font-extrabold text-xs truncate mt-0.5">${v.name}</div>
+                    <div onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[145px] md:w-auto p-3 rounded-xl border ${activeClasses} cursor-pointer">
+                        <div class="vehicle-card-license text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
+                        <div class="vehicle-card-name font-extrabold text-xs truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
                         <div class="mt-4 pt-1.5 border-t ${isActive ? 'border-indigo-800/60' : 'border-slate-100'} text-[10px] flex justify-between items-center font-mono">
                             <span class="${isActive ? 'text-indigo-200' : 'text-slate-400'}">ไมล์ล่าสุด:</span>
                             <span class="font-bold text-right">${latestOdo.toLocaleString()} กม.</span>
@@ -331,9 +228,7 @@
         }
 
         function getLatestOdometer(vehicleId) {
-            if (state.latestOdometers && state.latestOdometers[vehicleId] != null) {
-                return state.latestOdometers[vehicleId];
-            }
+            // Find highest odometer between Maintenance Logs and Fuel Logs
             const mainLogs = state.maintenanceLogs.filter(l => l.vehicleId === vehicleId).map(l => l.odo);
             const fuelLogs = state.fuelLogs.filter(l => l.vehicleId === vehicleId).map(l => l.odo);
             const allOdos = [...mainLogs, ...fuelLogs, 0];
@@ -422,19 +317,31 @@
             return logsBeforeDate.length > 0 ? logsBeforeDate[0].odo : 0;
         }
 
-        function selectVehicle(id, skipFetch) {
-            const prevId = state.selectedVehicleId;
+        function resolveAlertServiceLabel(alert) {
+            if (!alert) return 'บำรุงรักษาตามกำหนด';
+            if (alert.serviceLabel) return alert.serviceLabel;
+            if (alert.categoryId) {
+                const cat = state.categories.find(c => c.id === alert.categoryId);
+                if (cat) return cat.name;
+            }
+            const logs = state.maintenanceLogs.filter(
+                l => l.vehicleId === alert.vehicleId && l.date === alert.lastUpdated && (l.alertKm > 0 || l.alertMonth > 0)
+            );
+            if (logs.length > 0) {
+                const cat = state.categories.find(c => c.id === logs[0].category);
+                if (cat) return cat.name;
+            }
+            return 'บำรุงรักษาตามกำหนด';
+        }
+
+        function selectVehicle(id) {
             state.selectedVehicleId = id;
             renderVehiclesCarousel();
             
             const v = state.vehicles.find(v => v.id === id);
             if (!v) return;
 
-            if (!skipFetch && prevId !== id) {
-                loadVehicleMaintenance(id);
-                return;
-            }
-
+            // Load values for selected tab
             const activeTab = document.querySelector('.tab-content:not(.hidden)').id;
 
             if (activeTab === 'tab-dashboard') {
@@ -450,11 +357,16 @@
                     : 'อัปเดตล่าสุด: ยังไม่เคยอัปเดต';
 
                 const alertObj = state.alerts.find(a => a.vehicleId === id && a.status === 'Active');
+                const targetServiceSpan = document.getElementById('target-service-val');
                 const targetKmSpan = document.getElementById('target-odometer-val');
                 const targetTimeSpan = document.getElementById('target-time-val');
                 const statusBadge = document.getElementById('vehicle-status-badge');
 
                 if (alertObj) {
+                    const serviceLabel = resolveAlertServiceLabel(alertObj);
+                    if (targetServiceSpan) {
+                        targetServiceSpan.innerHTML = `รายการถัดไป: <span class="font-extrabold">${serviceLabel}</span>`;
+                    }
                     targetKmSpan.innerHTML = `ตรวจระยะรอบต่อไป: <span class="text-indigo-700 font-extrabold">${alertObj.targetKm.toLocaleString()} กม.</span>`;
                     targetTimeSpan.innerHTML = `<i class="fa-solid fa-clock"></i> เตือนล่วงหน้า: ${formatThaiDate(alertObj.targetDate)}`;
                     
@@ -469,6 +381,7 @@
                         statusBadge.innerHTML = `<i class="fa-solid fa-check"></i> ระยะทางปกติ`;
                     }
                 } else {
+                    if (targetServiceSpan) targetServiceSpan.innerHTML = '';
                     targetKmSpan.innerHTML = `<span class="text-slate-400">ยังไม่ได้รับการตั้งการเตือน</span>`;
                     targetTimeSpan.innerHTML = `<i class="fa-solid fa-circle-info"></i> ปลอดภัย`;
                     statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 flex items-center gap-1";
@@ -477,8 +390,9 @@
 
                 calculateVehicleMetrics(id);
                 renderLogsHistory(id);
+                renderReports();
             } else if (activeTab === 'tab-fuelio') {
-                loadFuelLogs(function() { renderFuelLogs(); });
+                renderFuelLogs();
             }
         }
 
@@ -495,19 +409,23 @@
             if (filterKeyword.trim() !== '') {
                 const kw = filterKeyword.toLowerCase().trim();
                 logs = logs.filter(l => {
-                    const shopMatch = l.shop.toLowerCase().includes(kw);
+                    const shopMatch = (l.shop || '').toLowerCase().includes(kw);
                     const catObj = state.categories.find(c => c.id === l.category);
                     const catMatch = catObj && catObj.name.toLowerCase().includes(kw);
-                    const typeMatch = l.type.toLowerCase().includes(kw);
-                    return shopMatch || catMatch || typeMatch;
+                    const odoMatch = String(l.odo).includes(kw);
+                    return shopMatch || catMatch || odoMatch;
                 });
             }
 
             if (logs.length === 0) {
+                const emptyMsg = filterKeyword.trim() !== ''
+                    ? 'ไม่พบผลลัพธ์ที่ตรงกับคำค้นหา'
+                    : 'ยังไม่มีประวัติการซ่อมบำรุงของรถคันนี้';
                 container.innerHTML = `
-                    <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
-                        <i class="fa-solid fa-magnifying-glass text-2xl mb-2 text-slate-300 block"></i>
-                        ไม่พบประวัติการซ่อมบำรุงในขณะนี้
+                    <div class="empty-state space-y-2">
+                        <i class="fa-solid fa-wrench text-3xl text-indigo-200 block"></i>
+                        <p class="font-bold text-slate-500">${emptyMsg}</p>
+                        <p class="text-[10px] text-slate-400">กด "บันทึกการซ่อมบำรุง" เพื่อเพิ่มรายการแรก</p>
                     </div>
                 `;
                 return;
@@ -550,8 +468,8 @@
                         ${l.receipt ? `
                         <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
                             <div class="flex items-center gap-1">
-                                ${l.driveFileId ?
-                                    `<img data-receipt-id="${l.driveFileId}" data-receipt-name="${l.receipt.replace(/"/g, '&quot;')}" class="receipt-thumb w-6 h-6 object-cover rounded border border-slate-200 cursor-pointer bg-slate-100" alt="ใบเสร็จ">` :
+                                ${l.receiptBase64 ? 
+                                    `<img src="${l.receiptBase64}" class="w-6 h-6 object-cover rounded border border-slate-200 cursor-pointer" onclick="viewFullReceipt('${l.receiptBase64}', '${l.receipt}')">` : 
                                     `<i class="fa-solid fa-receipt text-indigo-500"></i>`
                                 }
                                 <span class="text-[9px] text-emerald-700 font-bold">ใบเสร็จแนบแล้ว</span>
@@ -566,37 +484,10 @@
                     </div>
                 `;
             });
-            lazyLoadReceiptThumbs(container);
         }
 
-        function lazyLoadReceiptThumbs(container) {
-            if (!container) return;
-            container.querySelectorAll('img.receipt-thumb[data-receipt-id]').forEach(function(img) {
-                const fileId = img.getAttribute('data-receipt-id');
-                const fileName = img.getAttribute('data-receipt-name') || 'receipt';
-                if (!fileId || img.dataset.loaded) return;
-                img.dataset.loaded = '1';
-                google.script.run
-                    .withSuccessHandler(function(result) {
-                        if (!result || !result.success || !result.base64) return;
-                        const src = result.base64.indexOf('data:') === 0
-                            ? result.base64
-                            : 'data:' + (result.mimeType || 'image/jpeg') + ';base64,' + result.base64;
-                        img.src = src;
-                        img.onclick = function() { viewFullReceipt(src, fileName); };
-                    })
-                    .withFailureHandler(function() { /* keep placeholder */ })
-                    .getReceiptThumbnail(fileId);
-            });
-        }
-
-        // Search Filter for History (debounced 300ms)
+        // Search Filter for History
         function filterLogsList() {
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(filterLogsListNow, 300);
-        }
-
-        function filterLogsListNow() {
             const val = document.getElementById('log-search-input').value;
             const clearBtn = document.getElementById('clear-search-btn');
             
@@ -691,9 +582,10 @@
             const reversedLogs = [...logs].reverse();
             if (reversedLogs.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
-                        <i class="fa-solid fa-gas-pump text-2xl mb-2 text-slate-300 block"></i>
-                        ยังไม่มีบันทึกการเติมเชื้อเพลิงของรถคันนี้
+                    <div class="empty-state space-y-2">
+                        <i class="fa-solid fa-gas-pump text-3xl text-emerald-200 block"></i>
+                        <p class="font-bold text-slate-500">ยังไม่มีบันทึกการเติมเชื้อเพลิง</p>
+                        <p class="text-[10px] text-slate-400">กดปุ่ม "บันทึกรายการเติมน้ำมันด่วน" เพื่อเริ่มติดตามอัตราสิ้นเปลือง</p>
                     </div>
                 `;
                 return;
@@ -762,36 +654,14 @@
             });
         }
 
-        // View receipt photo (src is data URL, or driveFileId for on-demand fetch)
-        function viewFullReceipt(base64OrFileId, filename) {
-            if (typeof base64OrFileId === 'string' && base64OrFileId.indexOf('data:') === 0) {
-                const w = window.open();
-                if (w) {
-                    w.document.write(`<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#0f172a;"><img src="${base64OrFileId}" style="max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);" alt="${filename}"></div>`);
-                } else {
-                    showToast("โปรดอนุญาตให้เปิด Pop-up เพื่อดูรูปใบเสร็จขนาดใหญ่", "warning");
-                }
-                return;
+        // View receipt photo
+        function viewFullReceipt(base64, filename) {
+            const w = window.open();
+            if (w) {
+                w.document.write(`<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#0f172a;"><img src="${base64}" style="max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);" alt="${filename}"></div>`);
+            } else {
+                showToast("โปรดอนุญาตให้เปิด Pop-up เพื่อดูรูปใบเสร็จขนาดใหญ่", "warning");
             }
-            showLoading('กำลังโหลดใบเสร็จ...');
-            google.script.run
-                .withSuccessHandler(function(result) {
-                    hideLoading();
-                    if (!result || !result.success) {
-                        showToast((result && result.error) || 'โหลดใบเสร็จไม่สำเร็จ', 'error');
-                        return;
-                    }
-                    if (!result.isImage) {
-                        showToast('ไฟล์นี้ไม่ใช่รูปภาพ — เปิดจาก Google Drive', 'warning');
-                        return;
-                    }
-                    viewFullReceipt('data:' + result.mimeType + ';base64,' + result.base64, result.name || filename);
-                })
-                .withFailureHandler(function(err) {
-                    hideLoading();
-                    showToast(err.message || String(err), 'error');
-                })
-                .getReceiptThumbnail(base64OrFileId);
         }
 
         // Image file reading inside Web App
@@ -1072,9 +942,7 @@
                                    calendarSelectedDate.getFullYear() === calendarViewYear;
                 
                 const today = new Date();
-                const isToday = day === today.getDate() &&
-                                   calendarViewMonth === today.getMonth() &&
-                                   calendarViewYear === today.getFullYear();
+                const isToday = day === today.getDate() && calendarViewMonth === today.getMonth() && calendarViewYear === today.getFullYear();
 
                 let dayClass = "p-2 text-[11px] font-bold text-center rounded-xl cursor-pointer hover:bg-indigo-50 hover:text-indigo-600 transition-all ";
                 
@@ -1203,7 +1071,6 @@
             }
             runGas('saveFuelLog', payload, function(result) {
                 applyState(result.state);
-                fuelLogsLoaded = true;
                 closeModal('fuel-modal');
                 const typeLabelText = payload.fuelType === 'gas' ? 'แก๊ส (GAS)' : 'น้ำมัน';
                 showToast('บันทึกประวัติการเติม' + typeLabelText + ' เรียบร้อยแล้ว');
@@ -1222,7 +1089,7 @@
 
         // Check Line Alerts Simulator
         function checkLineAlerts(isManual = false) {
-            runGas('checkLineAlerts', [isManual, false], function(result) {
+            runGas('checkLineAlerts', isManual, function(result) {
                 if (result && result.state) applyState(result.state);
                 if (result.notificationTriggered) {
                     showLineBubble((result.messages || []).join(String.fromCharCode(10)));
@@ -1251,21 +1118,66 @@
             }, 300);
         }
 
+        function getLogYear(dateStr) {
+            if (!dateStr || typeof dateStr !== 'string') return null;
+            const match = dateStr.match(/^(\d{4})/);
+            return match ? parseInt(match[1], 10) : null;
+        }
+
+        function populateReportYearFilter(vehicleId) {
+            const yearFilterEl = document.getElementById('report-year-filter');
+            if (!yearFilterEl) return null;
+
+            const yearCounts = {};
+            state.maintenanceLogs.forEach(l => {
+                if (l.type !== 'Maintenance' || l.vehicleId !== vehicleId) return;
+                const year = getLogYear(l.date);
+                if (year == null) return;
+                yearCounts[year] = (yearCounts[year] || 0) + 1;
+            });
+
+            let years = Object.keys(yearCounts).map(Number).sort((a, b) => b - a);
+            if (years.length === 0) {
+                years = [new Date().getFullYear()];
+            }
+
+            const previousValue = yearFilterEl.value;
+            yearFilterEl.innerHTML = years.map(y =>
+                `<option value="${y}">พ.ศ. ${y + 543}</option>`
+            ).join('');
+
+            const currentYear = new Date().getFullYear();
+            let selectedYear;
+            if (previousValue && years.includes(parseInt(previousValue, 10))) {
+                selectedYear = parseInt(previousValue, 10);
+            } else if (yearCounts[currentYear]) {
+                selectedYear = currentYear;
+            } else {
+                selectedYear = years.reduce((best, y) =>
+                    (yearCounts[y] > (yearCounts[best] || 0)) ? y : best, years[0]);
+            }
+            yearFilterEl.value = String(selectedYear);
+            return selectedYear;
+        }
+
         // Render Reports (Annual spending visualization inside tab 1)
         function renderReports() {
             const yearFilterEl = document.getElementById('report-year-filter');
             if (!yearFilterEl) return;
 
-            const targetYear = yearFilterEl.value;
             const targetVehicle = state.selectedVehicleId;
-            
+            if (!targetVehicle) return;
+
+            populateReportYearFilter(targetVehicle);
+            const targetYear = yearFilterEl.value;
+
             const yearLogs = state.maintenanceLogs.filter(l => {
-                if (l.type !== 'Maintenance') return false;
-                const logYear = new Date(l.date).getFullYear().toString();
-                return logYear === targetYear && l.vehicleId === targetVehicle;
+                if (l.type !== 'Maintenance' || l.vehicleId !== targetVehicle) return false;
+                const logYear = getLogYear(l.date);
+                return logYear !== null && String(logYear) === String(targetYear);
             });
 
-            const total = yearLogs.reduce((acc, current) => acc + current.cost, 0);
+            const total = yearLogs.reduce((acc, current) => acc + (current.cost || 0), 0);
             document.getElementById('yearly-total-spend').textContent = `฿${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             document.getElementById('yearly-repairs-count').textContent = `${yearLogs.length} รายการ`;
 
@@ -1380,14 +1292,19 @@
             if (!list) return;
             list.innerHTML = '';
             
+            if (state.vehicles.length === 0) {
+                list.innerHTML = `<div class="empty-state py-6"><i class="fa-solid fa-car text-2xl text-indigo-200 mb-2 block"></i>ยังไม่มีรถในระบบ — เพิ่มรถคันแรกด้านบน</div>`;
+                return;
+            }
+
             state.vehicles.forEach(v => {
                 list.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                        <div>
-                            <span class="font-extrabold text-slate-800 text-xs">${v.name}</span>
-                            <span class="text-[9px] text-slate-500 block font-bold font-mono">${v.license}</span>
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                        <div class="min-w-0 flex-1">
+                            <span class="font-extrabold text-slate-800 text-xs block truncate" title="${v.name}">${v.name}</span>
+                            <span class="text-[9px] text-slate-500 block font-bold font-mono truncate">${v.license}</span>
                         </div>
-                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -1423,11 +1340,16 @@
             if (!list) return;
             list.innerHTML = '';
 
+            if (state.categories.length === 0) {
+                list.innerHTML = `<div class="empty-state py-6"><i class="fa-solid fa-tags text-2xl text-indigo-200 mb-2 block"></i>ยังไม่มีหมวดหมู่ — เพิ่มประเภทงานด้านบน</div>`;
+                return;
+            }
+
             state.categories.forEach(c => {
                 list.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                        <span class="font-extrabold text-slate-800 text-xs">${c.name}</span>
-                        <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                        <span class="font-extrabold text-slate-800 text-xs truncate min-w-0 flex-1" title="${c.name}">${c.name}</span>
+                        <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -1497,6 +1419,19 @@
             });
         }
 
+        // GitHub Pages: simulate daily trigger setup (GAS uses google.script.run)
+        function setupDailyTrigger() {
+            const statusEl = document.getElementById('setup-trigger-status');
+            const ts = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+            state.lineLogs.push(`⏰ [${ts}] จำลองสร้าง Daily Trigger 08:00 น. สำเร็จ (GitHub Pages — ไม่มี Apps Script จริง)`);
+            saveToLocalStorage();
+            if (statusEl) {
+                statusEl.textContent = '✓ จำลองสร้าง trigger สำเร็จ — ใน GAS จริงจะรันที่ Apps Script';
+                statusEl.classList.remove('hidden');
+            }
+            showToast('จำลองสร้าง Daily Trigger 08:00 น. สำเร็จ (GitHub Pages)');
+        }
+
         // Tab routing helper
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -1505,17 +1440,18 @@
             const tabs = ['dashboard', 'fuelio', 'admin'];
             tabs.forEach(t => {
                 const navBtn = document.getElementById(`nav-${t}`);
-                if (t === tabId) {
-                    navBtn.className = "flex flex-col items-center justify-center w-16 text-indigo-600 transition-all font-bold";
-                } else {
-                    navBtn.className = "flex flex-col items-center justify-center w-16 text-slate-400 transition-all";
-                }
+                const isActive = t === tabId;
+                const isFuel = t === 'fuelio';
+                const base = 'nav-tab-btn flex flex-col items-center justify-center transition-all';
+                const active = isFuel ? ' nav-tab-btn--fuel nav-tab-btn--active text-emerald-700' : ' nav-tab-btn--active text-indigo-600';
+                const inactive = isFuel ? ' nav-tab-btn--fuel text-slate-400 hover:text-emerald-600' : ' text-slate-400 hover:text-indigo-600';
+                navBtn.className = base + (isActive ? active : inactive);
             });
 
             if (tabId === 'dashboard') {
                 selectVehicle(state.selectedVehicleId);
             } else if (tabId === 'fuelio') {
-                loadFuelLogs(function() { renderFuelLogs(); });
+                renderFuelLogs();
             } else if (tabId === 'admin') {
                 renderAdminPanelState();
             }

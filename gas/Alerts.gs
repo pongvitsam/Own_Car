@@ -7,7 +7,9 @@ function getAlerts_() {
       targetKm: num_(r.targetKm),
       targetDate: formatDateCell_(r.targetDate),
       status: String(r.status || 'Active'),
-      lastUpdated: formatDateCell_(r.lastUpdated)
+      lastUpdated: formatDateCell_(r.lastUpdated),
+      serviceLabel: String(r.serviceLabel || ''),
+      categoryId: String(r.categoryId || '')
     };
   });
 }
@@ -55,7 +57,9 @@ function checkLineAlerts(manual, includeState) {
           targetKm: alert.targetKm,
           targetDate: alert.targetDate,
           status: 'Notified',
-          lastUpdated: getBangkokToday_()
+          lastUpdated: getBangkokToday_(),
+          serviceLabel: alert.serviceLabel || '',
+          categoryId: alert.categoryId || ''
         });
 
         notificationTriggered = true;

@@ -60,7 +60,7 @@ function initSheetHeaders_() {
     'ราคา/ลิตร', 'ราคารวม', 'เต็มถัง', 'สถานี'
   ];
   SHEET_HEADERS_[SHEET_NAMES.ALERTS] = [
-    'alertId', 'vehicleId', 'targetKm', 'targetDate', 'status', 'lastUpdated'
+    'alertId', 'vehicleId', 'targetKm', 'targetDate', 'status', 'lastUpdated', 'serviceLabel', 'categoryId'
   ];
   SHEET_HEADERS_[SHEET_NAMES.SETTINGS] = ['key', 'value'];
 }
@@ -231,8 +231,8 @@ function seedSampleDataIfEmpty_(ss) {
 
   var alerts = getSheet_(SHEET_NAMES.ALERTS);
   [
-    ['ALERT-001', 'V-001', 162000, '2026-09-01', 'Active', '2026-03-01'],
-    ['ALERT-002', 'V-002', 44500, '2026-11-20', 'Active', '2025-11-20']
+    ['ALERT-001', 'V-001', 162000, '2026-09-01', 'Active', '2026-03-01', 'เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว', 'CAT-001'],
+    ['ALERT-002', 'V-002', 44500, '2026-11-20', 'Active', '2025-11-20', 'เปลี่ยนยางและถ่วงล้อ', 'CAT-003']
   ].forEach(function (r) { alerts.appendRow(r); });
 }
 

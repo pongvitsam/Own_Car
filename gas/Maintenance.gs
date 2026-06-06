@@ -82,7 +82,8 @@ function saveMaintenanceLog(data) {
     });
 
     if (data.alertKm > 0 || data.alertMonth > 0) {
-      upsertAlertForVehicle_(vehicleId, odoVal, data.date, data.alertKm, data.alertMonth);
+      var serviceLabel = resolveCategoryServiceLabel_(categoryId);
+      upsertAlertForVehicle_(vehicleId, odoVal, data.date, data.alertKm, data.alertMonth, serviceLabel, categoryId);
     }
 
     return { success: true, state: getAppState(vehicleId, { skipCache: true }) };
@@ -139,7 +140,15 @@ function deleteMaintenanceLog(logId) {
   }
 }
 
-function upsertAlertForVehicle_(vehicleId, odoVal, repairDate, alertKm, alertMonth) {
+function resolveCategoryServiceLabel_(categoryId) {
+  if (!categoryId) return 'บำรุงรักษาตามกำหนด';
+  var cat = getCategories_().find(function (c) {
+    return c.id === String(categoryId);
+  });
+  return cat ? cat.name : 'บำรุงรักษาตามกำหนด';
+}
+
+function upsertAlertForVehicle_(vehicleId, odoVal, repairDate, alertKm, alertMonth, serviceLabel, categoryId) {
   var targetKm = alertKm > 0 ? (odoVal + alertKm) : 99999999;
   var targetDateStr = '2099-12-31';
   if (alertMonth > 0) {
@@ -153,6 +162,7 @@ function upsertAlertForVehicle_(vehicleId, odoVal, repairDate, alertKm, alertMon
     return String(a.vehicleId) === String(vehicleId) && String(a.status) === 'Active';
   });
   var alertId = existing ? String(existing.alertId) : generateId_('ALERT');
+  var label = serviceLabel || 'บำรุงรักษาตามกำหนด';
 
   upsertRow_(SHEET_NAMES.ALERTS, 'alertId', alertId, {
     alertId: alertId,
@@ -160,8 +170,10 @@ function upsertAlertForVehicle_(vehicleId, odoVal, repairDate, alertKm, alertMon
     targetKm: targetKm,
     targetDate: targetDateStr,
     status: 'Active',
-    lastUpdated: repairDate || getBangkokToday_()
+    lastUpdated: repairDate || getBangkokToday_(),
+    serviceLabel: label,
+    categoryId: categoryId || ''
   });
 
-  appendLineLog_('⏰ ตั้งค่ารอบตรวจสอบของคัน ' + vehicleId + ': เป้าหมาย ' + targetKm + ' กม. หรือ ' + targetDateStr);
+  appendLineLog_('⏰ ตั้งค่ารอบตรวจสอบของคัน ' + vehicleId + ': ' + label + ' — เป้าหมาย ' + targetKm + ' กม. หรือ ' + targetDateStr);
 }
