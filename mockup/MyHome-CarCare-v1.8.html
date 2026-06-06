@@ -259,6 +259,12 @@
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">สัดส่วนตามหมวดหมู่ชิ้นส่วน</span>
                 <div id="chart-bar-container" class="space-y-2.5"></div>
             </div>
+
+            <div class="pt-2">
+                <button onclick="exportReportPdf()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+                    <i class="fa-solid fa-file-pdf text-rose-300"></i> ส่งออกรายงาน PDF รายปี
+                </button>
+            </div>
         </section>
 
         <!-- Live Maintenance History Logs -->
@@ -2615,6 +2621,107 @@
             } else if (tabId === 'admin') {
                 renderAdminPanelState();
             }
+        }
+
+        function formatPdfNextCycleFromLog(log) {
+            if (!log || log.type !== 'Maintenance' || (!log.alertKm && !log.alertMonth)) {
+                return '—';
+            }
+            const cat = state.categories.find(c => c.id === log.category);
+            const label = cat ? cat.name : 'บำรุงรักษาตามกำหนด';
+            const bits = [label];
+            if (log.alertKm > 0) {
+                bits.push('ตรวจระยะรอบต่อไป: ' + (log.odo + log.alertKm).toLocaleString() + ' กม.');
+            }
+            if (log.alertMonth > 0) {
+                const d = new Date(log.date);
+                d.setMonth(d.getMonth() + log.alertMonth);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                bits.push(y + '-' + m + '-' + day);
+            }
+            return bits.join(' — ');
+        }
+
+        function formatPdfActiveNextCycleHtml(vehicleId) {
+            const alertObj = state.alerts.find(a => a.vehicleId === vehicleId && a.status === 'Active');
+            if (!alertObj) {
+                return '<p style="color:#94a3b8">ยังไม่ได้รับการตั้งการเตือน</p>';
+            }
+            const serviceLabel = resolveAlertServiceLabel(alertObj);
+            let html = '<p>รายการถัดไป: <strong>' + serviceLabel + '</strong></p>';
+            html += '<p>ตรวจระยะรอบต่อไป: <strong>' + alertObj.targetKm.toLocaleString() + ' กม.</strong>';
+            if (alertObj.targetDate) {
+                html += ' / ' + alertObj.targetDate;
+            }
+            html += '</p>';
+            return html;
+        }
+
+        function exportReportPdf() {
+            const year = document.getElementById('report-year-filter').value;
+            const vehicleId = state.selectedVehicleId;
+            if (!vehicleId) {
+                showToast('กรุณาเลือกรถก่อนส่งออกรายงาน', 'error');
+                return;
+            }
+            const vehicle = state.vehicles.find(v => v.id === vehicleId);
+            if (!vehicle) {
+                showToast('ไม่พบรถ', 'error');
+                return;
+            }
+            const logs = state.maintenanceLogs.filter(l => {
+                if (l.type !== 'Maintenance' || l.vehicleId !== vehicleId) return false;
+                const logYear = getLogYear(l.date);
+                return logYear !== null && String(logYear) === String(year);
+            });
+            const total = logs.reduce((sum, l) => sum + l.cost, 0);
+            const categorySums = {};
+            logs.forEach(l => {
+                const cat = state.categories.find(c => c.id === l.category);
+                const name = cat ? cat.name : 'อื่นๆ';
+                categorySums[name] = (categorySums[name] || 0) + l.cost;
+            });
+            const buddhistYear = parseInt(year, 10) + 543;
+            const fmtNum = n => Number(n || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            const fmtMoney = n => Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            const rows = logs.map(l =>
+                '<tr><td>' + l.date + '</td><td>' + l.shop + '</td><td>' + fmtNum(l.odo) +
+                '</td><td>' + formatPdfNextCycleFromLog(l) +
+                '</td><td style="text-align:right">฿' + l.cost.toFixed(2) + '</td></tr>'
+            ).join('');
+            const catList = Object.keys(categorySums).map(name => {
+                const sum = categorySums[name];
+                const pct = total > 0 ? ((sum / total) * 100).toFixed(0) : 0;
+                return '<li>' + name + ': ฿' + fmtNum(sum) + ' (' + pct + '%)</li>';
+            }).join('');
+            const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงาน ' + vehicle.license + '</title>' +
+                '<style>body{font-family:Itim,Inter,Arial,sans-serif;padding:24px;color:#1e293b}' +
+                'h1{font-size:20px;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:16px}' +
+                'th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px}th{background:#eef2ff}' +
+                '.summary{background:#f8fafc;padding:12px;border-radius:8px;margin-top:12px}' +
+                '@media print{body{padding:12px}}</style></head><body>' +
+                '<h1>MyHome CarCare - รายงานค่าบำรุงรักษา</h1>' +
+                '<p>รถ: <strong>' + vehicle.name + '</strong> (' + vehicle.license + ')</p>' +
+                '<p>ปี พ.ศ. ' + buddhistYear + ' (ค.ศ. ' + year + ')</p>' +
+                '<div class="summary"><p>ยอดรวม: <strong>฿' + fmtMoney(total) + '</strong></p>' +
+                '<p>จำนวนรายการ: ' + logs.length + '</p><ul>' + catList + '</ul>' +
+                formatPdfActiveNextCycleHtml(vehicleId) + '</div>' +
+                '<table><thead><tr><th>วันที่</th><th>ร้าน/ศูนย์</th><th>ไมล์</th><th>ระยะรอบต่อไป</th><th>ค่าใช้จ่าย</th></tr></thead><tbody>' +
+                (rows || '<tr><td colspan="5">ไม่มีข้อมูลในปีนี้</td></tr>') + '</tbody></table>' +
+                '<p style="font-size:10px;color:#64748b;margin-top:24px">MyHome CarCare v2.0.0 GitHub Pages — ' +
+                new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + '</p></body></html>';
+            const w = window.open('', '_blank');
+            if (!w) {
+                showToast('โปรดอนุญาต Pop-up เพื่อส่งออก PDF', 'warning');
+                return;
+            }
+            w.document.write(html);
+            w.document.close();
+            w.focus();
+            setTimeout(function() { w.print(); }, 400);
+            showToast('เปิดหน้าต่างพิมพ์/บันทึก PDF แล้ว');
         }
 
         window.onload = function () {

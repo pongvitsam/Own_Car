@@ -3044,7 +3044,42 @@
             }
         }
 
-        
+        function formatPdfNextCycleFromLog(log) {
+            if (!log || log.type !== 'Maintenance' || (!log.alertKm && !log.alertMonth)) {
+                return '—';
+            }
+            const cat = state.categories.find(c => c.id === log.category);
+            const label = cat ? cat.name : 'บำรุงรักษาตามกำหนด';
+            const bits = [label];
+            if (log.alertKm > 0) {
+                bits.push('ตรวจระยะรอบต่อไป: ' + (log.odo + log.alertKm).toLocaleString() + ' กม.');
+            }
+            if (log.alertMonth > 0) {
+                const d = new Date(log.date);
+                d.setMonth(d.getMonth() + log.alertMonth);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                bits.push(y + '-' + m + '-' + day);
+            }
+            return bits.join(' — ');
+        }
+
+        function formatPdfActiveNextCycleHtml(vehicleId) {
+            const alertObj = state.alerts.find(a => a.vehicleId === vehicleId && a.status === 'Active');
+            if (!alertObj) {
+                return '<p style="color:#94a3b8">ยังไม่ได้รับการตั้งการเตือน</p>';
+            }
+            const serviceLabel = resolveAlertServiceLabel(alertObj);
+            let html = '<p>รายการถัดไป: <strong>' + serviceLabel + '</strong></p>';
+            html += '<p>ตรวจระยะรอบต่อไป: <strong>' + alertObj.targetKm.toLocaleString() + ' กม.</strong>';
+            if (alertObj.targetDate) {
+                html += ' / ' + alertObj.targetDate;
+            }
+            html += '</p>';
+            return html;
+        }
+
         function exportReportPdf() {
             const year = document.getElementById('report-year-filter').value;
             const vehicleId = state.selectedVehicleId;
@@ -3074,6 +3109,7 @@
             const fmtMoney = n => Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             const rows = logs.map(l =>
                 '<tr><td>' + l.date + '</td><td>' + l.shop + '</td><td>' + fmtNum(l.odo) +
+                '</td><td>' + formatPdfNextCycleFromLog(l) +
                 '</td><td style="text-align:right">฿' + l.cost.toFixed(2) + '</td></tr>'
             ).join('');
             const catList = Object.keys(categorySums).map(name => {
@@ -3091,9 +3127,10 @@
                 '<p>รถ: <strong>' + vehicle.name + '</strong> (' + vehicle.license + ')</p>' +
                 '<p>ปี พ.ศ. ' + buddhistYear + ' (ค.ศ. ' + year + ')</p>' +
                 '<div class="summary"><p>ยอดรวม: <strong>฿' + fmtMoney(total) + '</strong></p>' +
-                '<p>จำนวนรายการ: ' + logs.length + '</p><ul>' + catList + '</ul></div>' +
-                '<table><thead><tr><th>วันที่</th><th>ร้าน/ศูนย์</th><th>ไมล์</th><th>ค่าใช้จ่าย</th></tr></thead><tbody>' +
-                (rows || '<tr><td colspan="4">ไม่มีข้อมูลในปีนี้</td></tr>') + '</tbody></table>' +
+                '<p>จำนวนรายการ: ' + logs.length + '</p><ul>' + catList + '</ul>' +
+                formatPdfActiveNextCycleHtml(vehicleId) + '</div>' +
+                '<table><thead><tr><th>วันที่</th><th>ร้าน/ศูนย์</th><th>ไมล์</th><th>ระยะรอบต่อไป</th><th>ค่าใช้จ่าย</th></tr></thead><tbody>' +
+                (rows || '<tr><td colspan="5">ไม่มีข้อมูลในปีนี้</td></tr>') + '</tbody></table>' +
                 '<p style="font-size:10px;color:#64748b;margin-top:24px">MyHome CarCare v2.0.0 GitHub Pages — ' +
                 new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + '</p></body></html>';
             const w = window.open('', '_blank');
