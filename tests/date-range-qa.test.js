@@ -22,7 +22,7 @@ const {
 } = require('../lib/car-logic');
 
 const START_YEAR = 1726;
-const END_YEAR = 2026;
+const END_YEAR = 2326;
 const SPAN = END_YEAR - START_YEAR + 1;
 
 function isoDate(y, m, d) {
@@ -33,7 +33,7 @@ function localMidnight(y, m, d) {
   return new Date(y, m - 1, d);
 }
 
-describe(`300-year date range QA (${START_YEAR}–${END_YEAR})`, () => {
+describe(`600-year date range QA (${START_YEAR}–${END_YEAR})`, () => {
   it(`parseIsoDate round-trips ${SPAN} calendar days without drift`, () => {
     for (let y = START_YEAR; y <= END_YEAR; y++) {
       for (let m = 1; m <= 12; m++) {
