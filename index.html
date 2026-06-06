@@ -864,37 +864,199 @@ html {
         // System state database representation (simulating Sheet databases)
         let state = {
             vehicles: [
-                { id: "V-001", name: "Toyota Camry Hybrid", license: "กข 555 กรุงเทพ", createdDate: "2025-01-10" },
-                { id: "V-002", name: "Tesla Model Y", license: "ชภ 9999 นนทบุรี", createdDate: "2025-03-15" }
+                {
+                    "id": "V-001",
+                    "name": "Mazda",
+                    "license": "ขต 1062",
+                    "createdDate": "2024-07-30"
+                },
+                {
+                    "id": "V-002",
+                    "name": "Honda Click 160",
+                    "license": "รอใส่ทะเบียน",
+                    "createdDate": "2025-10-04"
+                },
+                {
+                    "id": "V-003",
+                    "name": "Toyota Altis",
+                    "license": "1กพ8782 กทม",
+                    "createdDate": "2025-11-21"
+                }
             ],
             categories: [
-                { id: "CAT-001", name: "เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว" },
-                { id: "CAT-002", name: "ระบบห้ามล้อและเบรก" },
-                { id: "CAT-003", name: "เปลี่ยนยางและถ่วงล้อ" },
-                { id: "CAT-004", name: "แบตเตอรี่และระบบขับเคลื่อน" }
+                {
+                    "id": "CAT-001",
+                    "name": "เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว"
+                },
+                {
+                    "id": "CAT-002",
+                    "name": "ระบบห้ามล้อและเบรก"
+                },
+                {
+                    "id": "CAT-003",
+                    "name": "เปลี่ยนยางและถ่วงล้อ"
+                },
+                {
+                    "id": "CAT-004",
+                    "name": "แบตเตอรี่และระบบขับเคลื่อน"
+                },
+                {
+                    "id": "CAT-005",
+                    "name": "แก๊ส/LPG"
+                },
+                {
+                    "id": "CAT-006",
+                    "name": "ตรอ/ภาษี/พรบ"
+                },
+                {
+                    "id": "CAT-007",
+                    "name": "ประกัน"
+                },
+                {
+                    "id": "CAT-008",
+                    "name": "ของแต่ง/อุปกรณ์"
+                },
+                {
+                    "id": "CAT-009",
+                    "name": "ระบบแอร์"
+                },
+                {
+                    "id": "CAT-010",
+                    "name": "ระบบช่วงล่าง/โช๊ค"
+                },
+                {
+                    "id": "CAT-011",
+                    "name": "บำรุงรักษาใหญ่/ซ่อมเครื่องยนต์"
+                },
+                {
+                    "id": "CAT-012",
+                    "name": "ระบบหม้อน้ำ/ทำความเย็น"
+                },
+                {
+                    "id": "CAT-013",
+                    "name": "ฟิล์ม/ตกแต่งภายนอก"
+                }
             ],
             maintenanceLogs: [
-                { id: "LOG-001", vehicleId: "V-001", odo: 148000, shop: "-", category: "-", cost: 0, receipt: "", fileLink: "", alertKm: 0, alertMonth: 0, date: "2025-06-05", type: "Odometer_Update" },
-                { id: "LOG-002", vehicleId: "V-001", odo: 152000, shop: "ศูนย์โตโยต้า พระราม 9", category: "CAT-001", cost: 3800.00, receipt: "receipt_camry_oil.jpg", fileLink: "https://drive.google.com/drive/folders/1O_L7QryZNzdnzzisWI76bzW269RzhRyd", alertKm: 10000, alertMonth: 6, date: "2026-03-01", type: "Maintenance" },
-                { id: "LOG-003", vehicleId: "V-002", odo: 24500, shop: "ศูนย์เทสลา รามคำแหง", category: "CAT-003", cost: 32000.00, receipt: "tesla_invoice.pdf", fileLink: "https://drive.google.com/drive/folders/1O_L7QryZNzdnzzisWI76bzW269RzhRyd", alertKm: 20000, alertMonth: 12, date: "2025-11-20", type: "Maintenance" },
-                { id: "LOG-004", vehicleId: "V-001", odo: 135000, shop: "บี-ควิก ติวานนท์", category: "CAT-002", cost: 5400.00, receipt: "bq_invoice.jpg", fileLink: "https://drive.google.com/drive/folders/1O_L7QryZNzdnzzisWI76bzW269RzhRyd", alertKm: 15000, alertMonth: 12, date: "2025-08-14", type: "Maintenance" }
+                {"id": "LOG-001", "vehicleId": "V-001", "odo": 112059, "shop": "อู่ติดแก๊ส", "category": "CAT-005", "cost": 27900, "receipt": "", "fileLink": "", "alertKm": 20000, "alertMonth": 0, "date": "2024-07-30", "type": "Maintenance"},
+                {"id": "LOG-002", "vehicleId": "V-001", "odo": 0, "shop": "-", "category": "CAT-005", "cost": 3000, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2024-08-05", "type": "Maintenance"},
+                {"id": "LOG-003", "vehicleId": "V-001", "odo": 112350, "shop": "อู่ซ่อม — สายพาน, น้ำยาหม้อน้ำ, หม้อน้ำ, ค่าแร", "category": "CAT-011", "cost": 5920, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2024-08-08", "type": "Maintenance"},
+                {"id": "LOG-004", "vehicleId": "V-001", "odo": 0, "shop": "กล่อง TAP LPG", "category": "CAT-005", "cost": 6500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2024-08-07", "type": "Maintenance"},
+                {"id": "LOG-005", "vehicleId": "V-001", "odo": 0, "shop": "ตรอ/ภาษี — ตรอ+ภาษี+ตรวจแก๊ส+ฝากต่อ", "category": "CAT-006", "cost": 1432, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 11, "date": "2025-10-04", "type": "Maintenance"},
+                {"id": "LOG-006", "vehicleId": "V-001", "odo": 0, "shop": "ยางใหม่ 4 ล้อ (rotate 135000 km)", "category": "CAT-003", "cost": 4800, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-03-01", "type": "Maintenance"},
+                {"id": "LOG-007", "vehicleId": "V-001", "odo": 117000, "shop": "อู่ซ่อม — ลูกปืนล้อหน้าซ้าย + น้ำมันเครื่อง", "category": "CAT-001", "cost": 3950, "receipt": "", "fileLink": "", "alertKm": 10000, "alertMonth": 0, "date": "2025-04-17", "type": "Maintenance"},
+                {"id": "LOG-008", "vehicleId": "V-001", "odo": 0, "shop": "ประกันภัย — ต่อประกัน", "category": "CAT-007", "cost": 7514.61, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 12, "date": "2025-08-01", "type": "Maintenance"},
+                {"id": "LOG-009", "vehicleId": "V-001", "odo": 111000, "shop": "อู่ซ่อม — Major service: ฝาหม้อน้ำ, ปั๊มน้ำ, t", "category": "CAT-011", "cost": 11282, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-02-10", "type": "Maintenance"},
+                {"id": "LOG-010", "vehicleId": "V-001", "odo": 0, "shop": "อู่แอร์ — AC: condenser, O-ring, พัดลมหม้อน้ำ,", "category": "CAT-009", "cost": 6200, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-05-20", "type": "Maintenance"},
+                {"id": "LOG-011", "vehicleId": "V-001", "odo": 0, "shop": "ร้านติดฟิล์ม — ติดฟิล์ม 60%", "category": "CAT-013", "cost": 2300, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-08", "type": "Maintenance"},
+                {"id": "LOG-012", "vehicleId": "V-001", "odo": 124686, "shop": "อู่ซ่อม — เปลี่ยนน้ำมันเกียร์", "category": "CAT-001", "cost": 1500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-15", "type": "Maintenance"},
+                {"id": "LOG-013", "vehicleId": "V-001", "odo": 124686, "shop": "-", "category": "-", "cost": 0, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-15", "type": "Odometer_Update"},
+                {"id": "LOG-101", "vehicleId": "V-002", "odo": 0, "shop": "ตรอ/ภาษี — พรบ+ภาษี+ฝากต่อ", "category": "CAT-006", "cost": 690, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 12, "date": "2025-10-04", "type": "Maintenance"},
+                {"id": "LOG-102", "vehicleId": "V-002", "odo": 21248, "shop": "อู่ซ่อม — Eneos oil + Motul gear + ค่าแรง", "category": "CAT-001", "cost": 450, "receipt": "", "fileLink": "", "alertKm": 3000, "alertMonth": 0, "date": "2025-11-09", "type": "Maintenance"},
+                {"id": "LOG-103", "vehicleId": "V-002", "odo": 23740, "shop": "อู่ซ่อม — IRC ยางหน้า + น้ำยาหม้อน้ำ", "category": "CAT-003", "cost": 1250, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2026-01-17", "type": "Maintenance"},
+                {"id": "LOG-104", "vehicleId": "V-002", "odo": 0, "shop": "อู่ซ่อม — น้ำมันเครื่อง x3, injector, gear oil", "category": "CAT-001", "cost": 979, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2026-01-25", "type": "Maintenance"},
+                {"id": "LOG-105", "vehicleId": "V-002", "odo": 24202, "shop": "อู่ซ่อม — เปลี่ยนน้ำมัน+flushing", "category": "CAT-001", "cost": 450, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2026-02-01", "type": "Maintenance"},
+                {"id": "LOG-106", "vehicleId": "V-002", "odo": 26571, "shop": "อู่ซ่อม — ผ้าเบรกหน้า", "category": "CAT-002", "cost": 272, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2026-05-31", "type": "Maintenance"},
+                {"id": "LOG-107", "vehicleId": "V-002", "odo": 26679, "shop": "Shopee DIY — เปลี่ยนน้ำมัน Shopee DIY", "category": "CAT-001", "cost": 350, "receipt": "", "fileLink": "", "alertKm": 3000, "alertMonth": 0, "date": "2026-06-06", "type": "Maintenance"},
+                {"id": "LOG-108", "vehicleId": "V-002", "odo": 26679, "shop": "-", "category": "-", "cost": 0, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2026-06-06", "type": "Odometer_Update"},
+                {"id": "LOG-201", "vehicleId": "V-003", "odo": 229726, "shop": "สงขลา", "category": "CAT-001", "cost": 1839, "receipt": "", "fileLink": "", "alertKm": 15000, "alertMonth": 0, "date": "2026-04-14", "type": "Maintenance"},
+                {"id": "LOG-202", "vehicleId": "V-003", "odo": 220669, "shop": "ซอยชินเขต", "category": "CAT-001", "cost": 2150, "receipt": "", "fileLink": "", "alertKm": 10000, "alertMonth": 0, "date": "2025-11-21", "type": "Maintenance"},
+                {"id": "LOG-203", "vehicleId": "V-003", "odo": 220669, "shop": "ซอยชินเขต — กรองแอร์+กรองอากาศ", "category": "CAT-001", "cost": 171, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-21", "type": "Maintenance"},
+                {"id": "LOG-204", "vehicleId": "V-003", "odo": 220770, "shop": "Shopee — thermostat ต่ำ", "category": "CAT-012", "cost": 268, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-205", "vehicleId": "V-003", "odo": 220770, "shop": "Shopee — มอเตอร์พัดลม", "category": "CAT-012", "cost": 883, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-206", "vehicleId": "V-003", "odo": 220770, "shop": "Shopee — หม้อน้ำ", "category": "CAT-012", "cost": 1400, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-207", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — ยางแท่นเครื่อง", "category": "CAT-011", "cost": 5500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-208", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — เกียร์ซ่อมรั่ว", "category": "CAT-004", "cost": 4500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-209", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — น้ำมันเกียร์+กรอง+ปะกัน", "category": "CAT-001", "cost": 3000, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-210", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — ลูกปืนล้อหน้า Koyo x2", "category": "CAT-003", "cost": 3000, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-211", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — ล้างลิ้นปีกผี+กรองปั๊มน้ำมัน", "category": "CAT-011", "cost": 1100, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-212", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — rack พวงมาลัยไฟฟ้า+ยาง stabilizer", "category": "CAT-004", "cost": 4500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-213", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — ลูกหมากคานหน้า L/R", "category": "CAT-010", "cost": 1400, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-214", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — ลูกหมากล่าง x2", "category": "CAT-010", "cost": 1500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-215", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — ลิงก์ stabilizer x2", "category": "CAT-010", "cost": 1400, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-216", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — บushing คานใหญ่ x2", "category": "CAT-010", "cost": 1600, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-217", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — ค่าแรง rack+ช่วงล่าง", "category": "CAT-010", "cost": 1000, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-218", "vehicleId": "V-003", "odo": 220770, "shop": "เค.พี. ไพศาลยางยนต์ — ค่าแรงปั๊มน้ำ+ท่อ+พัดลม", "category": "CAT-012", "cost": 1000, "receipt": "", "fileLink": "", "alertKm": 100000, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-219", "vehicleId": "V-003", "odo": 220770, "shop": "Shopee — ฝาน้ำมันเครื่อง", "category": "CAT-011", "cost": 90, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-220", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — พรม dashboard", "category": "CAT-008", "cost": 453, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-221", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — จอ Android", "category": "CAT-008", "cost": 2334, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-222", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — กล้องถอยหลัง", "category": "CAT-008", "cost": 1200, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-223", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — กรอบป้ายทะเบียน", "category": "CAT-008", "cost": 112, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-224", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — พวงมาลัย custom", "category": "CAT-008", "cost": 212, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-225", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — สติ๊กเกอร์ GR", "category": "CAT-008", "cost": 47, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-226", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — หลอด LED", "category": "CAT-008", "cost": 148, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-227", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — ปากกาแต้มสี", "category": "CAT-008", "cost": 45, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-228", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — พรมรถ", "category": "CAT-008", "cost": 871, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-229", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — ปลอกเข็มขัด", "category": "CAT-008", "cost": 211, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-230", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — ลายไม้แขนเกียร์", "category": "CAT-008", "cost": 971, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-231", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — ฝาเกียร์สแตนเลส", "category": "CAT-008", "cost": 279, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-232", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — ไฟหน้า LED", "category": "CAT-008", "cost": 578, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-24", "type": "Maintenance"},
+                {"id": "LOG-233", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — ปลอกเข็มขัด", "category": "CAT-008", "cost": 211, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-03", "type": "Maintenance"},
+                {"id": "LOG-234", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — ถาดพื้นยาง", "category": "CAT-008", "cost": 871, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-03", "type": "Maintenance"},
+                {"id": "LOG-235", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — OBD2 Reader", "category": "CAT-008", "cost": 1252, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-03", "type": "Maintenance"},
+                {"id": "LOG-236", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — กระจกปรับมองข้าง", "category": "CAT-008", "cost": 65, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-10", "type": "Maintenance"},
+                {"id": "LOG-237", "vehicleId": "V-003", "odo": 0, "shop": "Shopee/ของแต่ง — หลอดไฟแอร์", "category": "CAT-008", "cost": 69, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-10", "type": "Maintenance"},
+                {"id": "LOG-238", "vehicleId": "V-003", "odo": 0, "shop": "ช่างเดียวในกลุ่ม altis — ปุ่มพวงมาลัย+Cruise control", "category": "CAT-008", "cost": 3100, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-14", "type": "Maintenance"},
+                {"id": "LOG-239", "vehicleId": "V-003", "odo": 220822, "shop": "โชคดีแก๊สคาร์เซอร์วิส — ใส่บูทเกียร์ Shopee", "category": "CAT-005", "cost": 60, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-27", "type": "Maintenance"},
+                {"id": "LOG-240", "vehicleId": "V-003", "odo": 220822, "shop": "โชคดีแก๊สคาร์เซอร์วิส — เปลี่ยนหัวเทียน", "category": "CAT-005", "cost": 2000, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-27", "type": "Maintenance"},
+                {"id": "LOG-241", "vehicleId": "V-003", "odo": 220822, "shop": "โชคดีแก๊สคาร์เซอร์วิส — เปลี่ยนปลั๊กหัวฉีด", "category": "CAT-005", "cost": 800, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-27", "type": "Maintenance"},
+                {"id": "LOG-242", "vehicleId": "V-003", "odo": 220822, "shop": "โชคดีแก๊สคาร์เซอร์วิส — ติดตั้ง LPG KME NEVOJET ECO", "category": "CAT-005", "cost": 22900, "receipt": "", "fileLink": "", "alertKm": 40000, "alertMonth": 0, "date": "2025-11-27", "type": "Maintenance"},
+                {"id": "LOG-243", "vehicleId": "V-003", "odo": 220822, "shop": "โชคดีแก๊สคาร์เซอร์วิส — กรองแก๊ส Ultra 360", "category": "CAT-005", "cost": 1000, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-27", "type": "Maintenance"},
+                {"id": "LOG-244", "vehicleId": "V-003", "odo": 220822, "shop": "โชคดีแก๊สคาร์เซอร์วิส — กล่องปรับ ATD", "category": "CAT-005", "cost": 4500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-27", "type": "Maintenance"},
+                {"id": "LOG-245", "vehicleId": "V-003", "odo": 220822, "shop": "โชคดีแก๊สคาร์เซอร์วิส — ตัดน้ำมัน", "category": "CAT-005", "cost": 800, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-11-27", "type": "Maintenance"},
+                {"id": "LOG-246", "vehicleId": "V-003", "odo": 0, "shop": "insurereverse — ประกันภัย", "category": "CAT-007", "cost": 12459.08, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 12, "date": "2025-11-01", "type": "Maintenance"},
+                {"id": "LOG-247", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — เบ้าโช้คแท้ x2", "category": "CAT-010", "cost": 3800, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-248", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — โฟมรองเบ้าโช้ค", "category": "CAT-010", "cost": 100, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-249", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — ยางรองสปริงบนหน้า", "category": "CAT-010", "cost": 500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-250", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — ยางกันกระแทกโช้ค", "category": "CAT-010", "cost": 700, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-251", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — ยางรองสปริงล่างหน้า", "category": "CAT-010", "cost": 200, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-252", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — ผ้าเบรคหน้า OEM", "category": "CAT-002", "cost": 1200, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-253", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — เจียรจานเบรค", "category": "CAT-002", "cost": 400, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-254", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — โช้คอัพหน้า/หลังแท้", "category": "CAT-010", "cost": 7400, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-255", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — ยางรองสปริงบนหลัง", "category": "CAT-010", "cost": 200, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-256", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — สายพานหน้าเครื่อง", "category": "CAT-011", "cost": 500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-257", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — ล้างลิ้นปีกผี+แอร์โฟลว", "category": "CAT-011", "cost": 400, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-258", "vehicleId": "V-003", "odo": 0, "shop": "เฮียดี วีซีเอ — ค่าแรง", "category": "CAT-010", "cost": 1500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-259", "vehicleId": "V-003", "odo": 222599, "shop": "Shopee — ค่าแรงยก rack+ช่วงล่าง", "category": "CAT-010", "cost": 1000, "receipt": "", "fileLink": "", "alertKm": 100000, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-260", "vehicleId": "V-003", "odo": 222599, "shop": "Shopee — ตั้งศูนย์", "category": "CAT-010", "cost": 400, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-261", "vehicleId": "V-003", "odo": 222599, "shop": "Shopee — บูทคานหลัง ซ/ข", "category": "CAT-010", "cost": 2500, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-262", "vehicleId": "V-003", "odo": 222599, "shop": "Shopee — ปั๊มน้ำ Aisin", "category": "CAT-012", "cost": 1300, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-263", "vehicleId": "V-003", "odo": 222599, "shop": "Shopee — ท่อน้ำแท้", "category": "CAT-012", "cost": 550, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-264", "vehicleId": "V-003", "odo": 222599, "shop": "Shopee — คอยล์ Denso x1", "category": "CAT-012", "cost": 1077, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-265", "vehicleId": "V-003", "odo": 222599, "shop": "Shopee — คอยล์ Denso x3", "category": "CAT-012", "cost": 3231, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-266", "vehicleId": "V-003", "odo": 222599, "shop": "Shopee — ฝาหม้อน้ำ", "category": "CAT-012", "cost": 190, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2025-12-08", "type": "Maintenance"},
+                {"id": "LOG-299", "vehicleId": "V-003", "odo": 229726, "shop": "-", "category": "-", "cost": 0, "receipt": "", "fileLink": "", "alertKm": 0, "alertMonth": 0, "date": "2026-04-14", "type": "Odometer_Update"},
             ],
-            // FUELIO FUEL LOG SCHEMA (Rule: บันทึกข้อมูลค่าน้ำมันอัตราสิ้นเปลืองเฉลี่ย)
-            fuelLogs: [
-                { id: "FUEL-001", vehicleId: "V-001", odo: 148500, date: "2026-01-10", liters: 45.0, pricePerLiter: 38.50, totalCost: 1732.50, fullTank: true, fuelType: "oil" },
-                { id: "FUEL-002", vehicleId: "V-001", odo: 149200, date: "2026-02-15", liters: 42.0, pricePerLiter: 39.20, totalCost: 1646.40, fullTank: true, fuelType: "oil" },
-                { id: "FUEL-003", vehicleId: "V-001", odo: 150050, date: "2026-04-10", liters: 44.5, pricePerLiter: 40.10, totalCost: 1784.45, fullTank: true, fuelType: "oil" }
-            ],
+            fuelLogs: [],
             alerts: [
-                { vehicleId: "V-001", targetKm: 162000, targetDate: "2026-09-01", status: "Active", lastUpdated: "2026-03-01" },
-                { vehicleId: "V-002", targetKm: 44500, targetDate: "2026-11-20", status: "Active", lastUpdated: "2025-11-20" }
+                {
+                    "vehicleId": "V-001",
+                    "targetKm": 132059,
+                    "targetDate": "2026-08-25",
+                    "status": "Active",
+                    "lastUpdated": "2025-11-15"
+                },
+                {
+                    "vehicleId": "V-002",
+                    "targetKm": 29679,
+                    "targetDate": "2026-10-04",
+                    "status": "Active",
+                    "lastUpdated": "2026-06-06"
+                },
+                {
+                    "vehicleId": "V-003",
+                    "targetKm": 244726,
+                    "targetDate": "2026-11-22",
+                    "status": "Active",
+                    "lastUpdated": "2026-04-14"
+                }
             ],
             selectedVehicleId: "V-001",
             adminAuthenticated: false,
             lineLogs: [
-                "🚀 [2026-06-06 09:00:00] Line API Simulator เริ่มต้นการเชื่อมต่อ...",
-                "📡 [2026-06-06 09:00:15] ค้นพบเป้าหมายโฟลเดอร์ Google Drive: 1O_L7QryZNzdnzzisWI76bzW269RzhRyd"
-            ]
+                "🚀 MyHome CarCare v2.1 — ข้อมูลรถจริง 3 คัน (Mazda, Click 160, Altis)",
+                "📡 โฟลเดอร์ใบเสร็จ Google Drive: 1O_L7QryZNzdnzzisWI76bzW269RzhRyd",
+            ],
         };
 
         // Shared Custom Thai Calendar State Variables
@@ -917,7 +1079,7 @@ html {
 
         // App Initializer
         function initApp() {
-            const savedState = localStorage.getItem('myhome_carcare_state_v2.0');
+            const savedState = localStorage.getItem('myhome_carcare_state_v2.1');
             if (savedState) {
                 try {
                     state = JSON.parse(savedState);
@@ -958,7 +1120,7 @@ html {
         }
 
         function saveToLocalStorage() {
-            localStorage.setItem('myhome_carcare_state_v2.0', JSON.stringify(state));
+            localStorage.setItem('myhome_carcare_state_v2.1', JSON.stringify(state));
         }
 
         // Dropdowns Populator

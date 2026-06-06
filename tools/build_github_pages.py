@@ -1,9 +1,12 @@
 """Build static index.html for GitHub Pages from mockup + responsive GAS shell."""
 import os
 import re
+import sys
 from datetime import datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+from seed_data import SEED_DATA, render_state_js  # noqa: E402
 MOCKUP = os.path.join(ROOT, 'mockup', 'MyHome-CarCare-v1.8.html')
 GAS_INDEX = os.path.join(ROOT, 'gas', 'Index.html')
 OUT = os.path.join(ROOT, 'index.html')
@@ -79,11 +82,19 @@ body = re.sub(
 # --- Patch JavaScript for v2.0 GitHub Pages ---
 script = script.replace(
     "localStorage.getItem('myhome_carcare_state_v1.7')",
-    "localStorage.getItem('myhome_carcare_state_v2.0')"
+    "localStorage.getItem('myhome_carcare_state_v2.1')"
 )
 script = script.replace(
     "localStorage.setItem('myhome_carcare_state_v1.7', JSON.stringify(state));",
-    "localStorage.setItem('myhome_carcare_state_v2.0', JSON.stringify(state));"
+    "localStorage.setItem('myhome_carcare_state_v2.1', JSON.stringify(state));"
+)
+script = script.replace(
+    "localStorage.getItem('myhome_carcare_state_v2.0')",
+    "localStorage.getItem('myhome_carcare_state_v2.1')"
+)
+script = script.replace(
+    "localStorage.setItem('myhome_carcare_state_v2.0', JSON.stringify(state));",
+    "localStorage.setItem('myhome_carcare_state_v2.1', JSON.stringify(state));"
 )
 
 script = script.replace(
@@ -468,6 +479,14 @@ if '.nav-tab-active::after' not in inline_styles:
         }
         button:active { transform: scale(0.97); }
 """
+
+# Real vehicle seed data (Mazda, Click 160, Altis)
+script = re.sub(
+    r'let state = \{[\s\S]*?\n        \};',
+    render_state_js(),
+    script,
+    count=1,
+)
 
 index_html = f'''<!DOCTYPE html>
 <html lang="th" class="h-full min-h-full bg-slate-100 sm:bg-slate-200/80">
