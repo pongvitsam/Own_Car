@@ -473,13 +473,14 @@ html {
                         <i class="fa-solid fa-lock text-lg"></i>
                     </div>
                     <h3 class="text-xs font-bold text-slate-900">แผงควบคุมระบบของแอดมิน</h3>
-                    <p class="text-[10px] text-slate-500">กรุณากรอกรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>
+                    <p class="text-[10px] text-slate-500">กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>
                     <p class="text-[9px] text-indigo-500 bg-indigo-50/80 rounded-lg px-2 py-1.5"><i class="fa-solid fa-cloud mr-1"></i>โหมด GitHub Pages — ข้อมูลเก็บในเบราว์เซอร์ของคุณ</p>
                 </div>
                 <div class="space-y-2">
-                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="new-password" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="admin-username" name="carcare-admin-user" autocomplete="username" placeholder="ชื่อผู้ใช้ (เริ่มต้น: admin)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="current-password" placeholder="รหัสผ่าน (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                     <button onclick="authenticateAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all active:scale-95 shadow-md">
-                        ยืนยันรหัสผ่านเพื่อเข้าใช้งาน
+                        เข้าสู่ระบบแอดมิน
                     </button>
                 </div>
             </div>
@@ -539,7 +540,7 @@ html {
                     <ul class="text-[10px] text-amber-900/80 space-y-1 list-disc pl-4">
                         <li>กดปุ่มด้านล่างเพื่อจำลองการสร้าง trigger แจ้งเตือนอัตโนมัติทุกวัน 08:00 น. (GitHub Pages)</li>
                         <li>LINE Notify: ในเวอร์ชัน GAS ตั้ง Script property <code class="bg-white px-1 rounded">LINE_NOTIFY_TOKEN</code></li>
-                        <li>รหัสแอดมินเริ่มต้น: <strong>1234</strong></li>
+                        <li>บัญชีแอดมินเริ่มต้น: <strong>admin</strong> / รหัสผ่าน <strong>1234</strong></li>
                     </ul>
                     <button type="button" onclick="setupDailyTrigger()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
                         <i class="fa-solid fa-clock mr-1"></i> สร้าง Daily Trigger (08:00)
@@ -2105,7 +2106,7 @@ html {
             }
         }
 
-        // ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมินรหัส 1234)
+        // ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมิน admin / 1234)
         function renderAdminPanelState() {
             if (state.adminAuthenticated) {
                 document.getElementById('admin-tab-auth-view').classList.add('hidden');
@@ -2119,18 +2120,20 @@ html {
         }
 
         function authenticateAdmin() {
+            const user = document.getElementById('admin-username').value.trim();
             const pass = document.getElementById('admin-passcode').value;
-            if (pass === '1234') {
+            if (user === 'admin' && pass === '1234') {
                 state.adminAuthenticated = true;
                 showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
                 renderAdminPanelState();
             } else {
-                showToast("รหัสผ่านไม่ถูกต้อง! ลองใส่ 1234", "error");
+                showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง! (admin / 1234)", "error");
             }
         }
 
         function logoutAdmin() {
             state.adminAuthenticated = false;
+            document.getElementById('admin-username').value = '';
             document.getElementById('admin-passcode').value = '';
             renderAdminPanelState();
             showToast("ออกจากระบบแอดมินเรียบร้อย");

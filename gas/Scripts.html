@@ -1321,7 +1321,7 @@
             }
         }
 
-        // ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมินรหัส 1234)
+        // ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมิน admin / 1234)
         function renderAdminPanelState() {
             if (state.adminAuthenticated) {
                 document.getElementById('admin-tab-auth-view').classList.add('hidden');
@@ -1335,20 +1335,22 @@
         }
 
         function authenticateAdmin() {
+            const user = document.getElementById('admin-username').value.trim();
             const pass = document.getElementById('admin-passcode').value;
-            runGas('verifyAdmin', pass, function(result) {
+            runGas('verifyAdmin', { username: user, password: pass }, function(result) {
                 if (result.authenticated) {
                     state.adminAuthenticated = true;
                     showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
                     renderAdminPanelState();
                 } else {
-                    showToast(result.message || "รหัสผ่านไม่ถูกต้อง! ลองใส่ 1234", "error");
+                    showToast(result.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง! (admin / 1234)", "error");
                 }
             });
         }
 
         function logoutAdmin() {
             state.adminAuthenticated = false;
+            document.getElementById('admin-username').value = '';
             document.getElementById('admin-passcode').value = '';
             renderAdminPanelState();
             showToast("ออกจากระบบแอดมินเรียบร้อย");

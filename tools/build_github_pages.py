@@ -276,6 +276,72 @@ script = script.replace(
     "const shopMatch = (l.shop || '').toLowerCase().includes(kw);"
 )
 
+# Admin login: username + password (admin / 1234)
+if 'id="admin-username"' not in body:
+    body = body.replace(
+        """                    <p class="text-[10px] text-slate-500">กรุณากรอกรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>""",
+        """                    <p class="text-[10px] text-slate-500">กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>"""
+    )
+    body = body.replace(
+        """                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="new-password" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="authenticateAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all active:scale-95 shadow-md">
+                        ยืนยันรหัสผ่านเพื่อเข้าใช้งาน
+                    </button>""",
+        """                    <input type="text" id="admin-username" name="carcare-admin-user" autocomplete="username" placeholder="ชื่อผู้ใช้ (เริ่มต้น: admin)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="current-password" placeholder="รหัสผ่าน (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="authenticateAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all active:scale-95 shadow-md">
+                        เข้าสู่ระบบแอดมิน
+                    </button>"""
+    )
+    body = body.replace(
+        """                        <li>รหัสแอดมินเริ่มต้น: <strong>1234</strong></li>""",
+        """                        <li>บัญชีแอดมินเริ่มต้น: <strong>admin</strong> / รหัสผ่าน <strong>1234</strong></li>"""
+    )
+
+if "user === 'admin' && pass === '1234'" not in script:
+    script = script.replace(
+        """        function authenticateAdmin() {
+            const pass = document.getElementById('admin-passcode').value;
+            if (pass === '1234') {
+                state.adminAuthenticated = true;
+                showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
+                renderAdminPanelState();
+            } else {
+                showToast("รหัสผ่านไม่ถูกต้อง! ลองใส่ 1234", "error");
+            }
+        }""",
+        """        function authenticateAdmin() {
+            const user = document.getElementById('admin-username').value.trim();
+            const pass = document.getElementById('admin-passcode').value;
+            if (user === 'admin' && pass === '1234') {
+                state.adminAuthenticated = true;
+                showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
+                renderAdminPanelState();
+            } else {
+                showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง! (admin / 1234)", "error");
+            }
+        }"""
+    )
+    script = script.replace(
+        """        function logoutAdmin() {
+            state.adminAuthenticated = false;
+            document.getElementById('admin-passcode').value = '';
+            renderAdminPanelState();
+            showToast("ออกจากระบบแอดมินเรียบร้อย");
+        }""",
+        """        function logoutAdmin() {
+            state.adminAuthenticated = false;
+            document.getElementById('admin-username').value = '';
+            document.getElementById('admin-passcode').value = '';
+            renderAdminPanelState();
+            showToast("ออกจากระบบแอดมินเรียบร้อย");
+        }"""
+    )
+    script = script.replace(
+        '// ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมินรหัส 1234)',
+        '// ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมิน admin / 1234)'
+    )
+
 # Truncate long names in admin lists
 script = script.replace(
     """                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
@@ -298,6 +364,59 @@ script = script.replace(
     """                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
                         <span class="font-extrabold text-slate-800 text-xs truncate min-w-0 flex-1" title="${c.name}">${c.name}</span>
                         <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">"""
+)
+
+# Admin login: username admin + password 1234
+if 'admin-username' not in body:
+    body = body.replace(
+        '<p class="text-[10px] text-slate-500">กรุณากรอกรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>',
+        '<p class="text-[10px] text-slate-500">กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>'
+    )
+    body = body.replace(
+        '<input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="new-password" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">',
+        '<input type="text" id="admin-username" name="carcare-admin-user" autocomplete="username" placeholder="ชื่อผู้ใช้ (เริ่มต้น: admin)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">\n'
+        '                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="current-password" placeholder="รหัสผ่าน (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">'
+    )
+    body = body.replace(
+        'ยืนยันรหัสผ่านเพื่อเข้าใช้งาน',
+        'เข้าสู่ระบบแอดมิน'
+    )
+body = body.replace(
+    'รหัสแอดมินเริ่มต้น: <strong>1234</strong>',
+    'บัญชีแอดมินเริ่มต้น: <strong>admin</strong> / รหัสผ่าน <strong>1234</strong>'
+)
+
+script = re.sub(
+    r'function authenticateAdmin\(\) \{[\s\S]*?\n        \}',
+    """function authenticateAdmin() {
+            const user = document.getElementById('admin-username').value.trim();
+            const pass = document.getElementById('admin-passcode').value;
+            if (user === 'admin' && pass === '1234') {
+                state.adminAuthenticated = true;
+                showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
+                renderAdminPanelState();
+            } else {
+                showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง! (admin / 1234)", "error");
+            }
+        }""",
+    script,
+    count=1
+)
+script = script.replace(
+    '// ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมินรหัส 1234)',
+    '// ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมิน admin / 1234)'
+)
+script = re.sub(
+    r"function logoutAdmin\(\) \{[\s\S]*?showToast\(\"ออกจากระบบแอดมินเรียบร้อย\"\);\s*\n        \}",
+    """function logoutAdmin() {
+            state.adminAuthenticated = false;
+            document.getElementById('admin-username').value = '';
+            document.getElementById('admin-passcode').value = '';
+            renderAdminPanelState();
+            showToast("ออกจากระบบแอดมินเรียบร้อย");
+        }""",
+    script,
+    count=1
 )
 
 # Footer nav active indicator

@@ -567,14 +567,15 @@ script = re.sub(
 script = re.sub(
     r'function authenticateAdmin\(\) \{[\s\S]*?\n        \}',
     """function authenticateAdmin() {
+            const user = document.getElementById('admin-username').value.trim();
             const pass = document.getElementById('admin-passcode').value;
-            runGas('verifyAdmin', pass, function(result) {
+            runGas('verifyAdmin', { username: user, password: pass }, function(result) {
                 if (result.authenticated) {
                     state.adminAuthenticated = true;
                     showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
                     renderAdminPanelState();
                 } else {
-                    showToast(result.message || "รหัสผ่านไม่ถูกต้อง! ลองใส่ 1234", "error");
+                    showToast(result.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง! (admin / 1234)", "error");
                 }
             });
         }""",

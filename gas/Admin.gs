@@ -1,8 +1,17 @@
-function verifyAdmin(passcode) {
-  var valid = String(passcode) === String(getAdminPass_());
+function verifyAdmin(credentials) {
+  var user = '';
+  var pass = '';
+  if (credentials && typeof credentials === 'object') {
+    user = String(credentials.username || '').trim();
+    pass = String(credentials.password || '');
+  } else {
+    pass = String(credentials || '');
+    user = CONFIG.DEFAULT_ADMIN_USER;
+  }
+  var valid = user === String(getAdminUser_()) && pass === String(getAdminPass_());
   return {
     success: true,
     authenticated: valid,
-    message: valid ? 'ยืนยันแอดมินสำเร็จ' : 'รหัสผ่านไม่ถูกต้อง! ลองใส่ 1234'
+    message: valid ? 'ยืนยันแอดมินสำเร็จ' : 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง! (admin / 1234)'
   };
 }

@@ -3,10 +3,12 @@
  */
 var CONFIG = {
   DRIVE_FOLDER_ID: '1R-dpki8-nS17XAma6tyiQMEH66kEcf7U',
+  DEFAULT_ADMIN_USER: 'admin',
   DEFAULT_ADMIN_PASS: '1234',
   SPREADSHEET_PROP: 'SPREADSHEET_ID',
   LINE_TOKEN_PROP: 'LINE_NOTIFY_TOKEN',
   LINE_LOGS_PROP: 'LINE_LOGS_JSON',
+  ADMIN_USER_PROP: 'ADMIN_USER',
   ADMIN_PASS_PROP: 'ADMIN_PASS',
   TIMEZONE: 'Asia/Bangkok'
 };
@@ -27,6 +29,10 @@ function getScriptProp_(key) {
 function setScriptProp_(key, value) {
   clearScriptPropCache_(key);
   PropertiesService.getScriptProperties().setProperty(key, String(value));
+}
+
+function getAdminUser_() {
+  return getScriptProp_(CONFIG.ADMIN_USER_PROP) || CONFIG.DEFAULT_ADMIN_USER;
 }
 
 function getAdminPass_() {
