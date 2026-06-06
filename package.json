@@ -1,0 +1,9 @@
+﻿{
+  "name": "myhome-carcare",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Google Apps Script - MyHome CarCare (clasp); lib/car-logic.js mirrors GAS formulas for npm tests",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

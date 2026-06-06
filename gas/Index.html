@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full min-h-full bg-slate-100 sm:bg-slate-200/80">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>MyHome CarCare - ระบบบำรุงรักษาและบันทึกน้ำมันสไตล์ Fuelio</title>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                screens: {
+                    xs: '400px',
+                    sm: '640px',
+                    md: '768px',
+                    lg: '1024px',
+                    xl: '1280px',
+                    '2xl': '1536px',
+                },
+            },
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <style>
+        html {
+            -webkit-text-size-adjust: 100%;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            margin: 0;
+            padding: 0;
+            background-color: #f1f5f9;
+        }
+        body {
+            font-family: 'Inter', 'Sarabun', sans-serif;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            margin: 0;
+            padding: 0;
+            background-color: #f1f5f9;
+        }
+        @media (min-width: 640px) {
+            html, body { background-color: rgba(226, 232, 240, 0.8); }
+        }
+        .app-shell {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8fafc;
+            padding-left: env(safe-area-inset-left, 0);
+            padding-right: env(safe-area-inset-right, 0);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        @media (min-width: 640px) {
+            .app-shell {
+                max-width: 36rem;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                min-height: calc(100dvh - 1rem);
+            }
+        }
+        @media (min-width: 768px) {
+            .app-shell { max-width: 42rem; }
+        }
+        @media (min-width: 1024px) {
+            .app-shell {
+                max-width: 56rem;
+                margin-top: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 1rem;
+                overflow: hidden;
+                min-height: calc(100dvh - 2rem);
+                max-height: calc(100dvh - 2rem);
+            }
+        }
+        @media (min-width: 1280px) {
+            .app-shell { max-width: 64rem; }
+        }
+        @media (min-width: 1536px) {
+            .app-shell { max-width: 80rem; }
+        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        @keyframes custom-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        .urgent-alert { animation: custom-pulse 2s infinite; }
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @media (min-width: 640px) {
+            @keyframes slide-up-center {
+                from { transform: translateY(16px) scale(0.98); opacity: 0; }
+                to { transform: translateY(0) scale(1); opacity: 1; }
+            }
+            .modal-sheet-inner.animate-slide-up { animation-name: slide-up-center; }
+        }
+        .modal-sheet-inner { width: 100%; }
+        #vehicles-carousel {
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+        }
+        #vehicles-carousel > * { scroll-snap-align: start; }
+        @media (min-width: 768px) {
+            #vehicles-carousel {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr);
+                overflow: visible !important;
+                scroll-snap-type: none;
+                padding-bottom: 0;
+                gap: 0.75rem;
+            }
+        }
+        @media (min-width: 1024px) {
+            #vehicles-carousel { grid-template-columns: repeat(3, 1fr); }
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                align-items: start;
+            }
+            .dashboard-grid > section { margin-bottom: 0 !important; }
+            .tab-content > section { transition: box-shadow 0.2s ease; }
+        }
+        @media (min-width: 1280px) {
+            #vehicles-carousel { grid-template-columns: repeat(4, 1fr); }
+        }
+        #loading-overlay.hidden { display: none !important; }
+    </style>
+</head>
+<body class="app-shell relative">
+
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center">
+        <div class="bg-white rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-3">
+            <i class="fa-solid fa-circle-notch fa-spin text-indigo-600 text-xl"></i>
+            <span class="text-xs font-bold text-slate-700" id="loading-text">กำลังโหลด...</span>
+        </div>
+    </div>
+
+<!-- Top Navigation Header -->
+    <header class="bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 text-white px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 sticky top-0 z-50 shadow-md shrink-0">
+        <div class="flex justify-between items-center gap-2 sm:gap-4">
+            <div class="flex items-center space-x-2.5 min-w-0">
+                <div class="bg-gradient-to-tr from-indigo-500 to-indigo-700 p-2.5 sm:p-3 rounded-xl text-white shadow-md shrink-0">
+                    <i class="fa-solid fa-car-wrench text-lg sm:text-xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-sm sm:text-base lg:text-lg font-bold leading-tight tracking-wide truncate">MyHome CarCare</h1>
+                    <span class="text-[9px] sm:text-[10px] bg-indigo-500/30 text-indigo-200 px-1.5 py-0.2 rounded-md font-mono">v1.9.0 (Performance)</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+                <!-- Check status indicator -->
+                <button onclick="checkLineAlerts(true)" class="bg-emerald-600 hover:bg-emerald-500 text-[10px] sm:text-xs text-white font-bold px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center space-x-1 transition-all active:scale-95 shadow-sm">
+                    <i class="fa-brands fa-line text-xs"></i>
+                    <span class="hidden xs:inline">ตรวจสภาพด่วน</span>
+                    <span class="xs:hidden">ตรวจ</span>
+                </button>
+                <button onclick="showLineLogs()" class="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-lg text-slate-300 transition-all active:scale-95 border border-slate-700" title="ดู LINE Log">
+                    <i class="fa-solid fa-code text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Custom On-Screen LINE Notification Simulation Box -->
+    <div id="line-notification-bubble" class="hidden fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md md:max-w-lg z-50 bg-[#06C755] text-white p-3 sm:p-4 rounded-2xl shadow-2xl transition-all transform duration-300 translate-y-[-100px] flex items-start space-x-2.5 border border-[#05b04b]">
+        <div class="bg-white p-1.5 rounded-full text-[#06C755] flex-shrink-0">
+            <i class="fa-brands fa-line text-lg"></i>
+        </div>
+        <div class="flex-1 text-xs">
+            <div class="flex justify-between items-center mb-0.5">
+                <span class="font-extrabold tracking-wide">LINE NOTIFY (ครอบครัว)</span>
+                <span class="text-[9px] text-emerald-100 opacity-90">เมื่อสักครู่</span>
+            </div>
+            <p id="line-notification-text" class="leading-snug text-emerald-50"></p>
+        </div>
+        <button onclick="dismissLineBubble()" class="text-white hover:text-emerald-100 font-bold self-start p-1 text-sm">&times;</button>
+    </div>
+
+    <!-- Alert Dialog Popups Toast container -->
+    <div id="toast-container" class="absolute top-16 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm md:max-w-md z-40 pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- MAIN CAROUSEL VEHICLE SELECTOR (Shared across tabs) -->
+    <section class="bg-white p-3.5 sm:p-4 md:p-5 border-b border-slate-200/60 shadow-sm space-y-3 shrink-0">
+        <div class="flex justify-between items-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ยานพาหนะใช้งานในครอบครัว</span>
+            <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold" id="total-cars-count">...</span>
+        </div>
+        <div class="flex gap-2.5 overflow-x-auto pb-1.5 snap-x md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:snap-none md:pb-0 md:gap-3" id="vehicles-carousel">
+            <!-- Loaded dynamically by JavaScript -->
+        </div>
+    </section>
+
+    <!-- TAB 1: MAINTENANCE PAGE (หน้าบำรุงรักษาและการแจ้งเตือน) -->
+    <div id="tab-dashboard" class="tab-content flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 lg:p-8 space-y-4 sm:space-y-5 md:space-y-6">
+        
+        <div class="dashboard-grid space-y-4 sm:space-y-5 lg:space-y-0">
+        <!-- Selected Vehicle Live Status -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/60 shadow-sm space-y-3.5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-blue-500"></div>
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">สถานะการเปลี่ยนระยะล่าสุด</h3>
+                <span id="vehicle-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm"></span>
+            </div>
+            
+            <div class="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-100 relative">
+                    <div class="text-[10px] sm:text-xs text-slate-400 font-bold">เลขไมล์สะสมล่าสุด</div>
+                    <div class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight mt-1 flex items-baseline">
+                        <span id="current-odometer-val" class="text-2xl sm:text-3xl font-black text-indigo-950">0</span>
+                        <span class="text-[10px] font-bold text-slate-400 ml-1">กม.</span>
+                    </div>
+                    <div class="text-[9px] text-slate-400 mt-1.5 font-medium" id="odometer-updated-date">อัปเดตล่าสุด: -</div>
+                </div>
+                <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-100">
+                    <div class="text-[10px] text-slate-400 font-bold">แผนการเปลี่ยนระยะถัดไป</div>
+                    <div class="text-xs font-bold text-slate-700 mt-1.5" id="target-odometer-val">-</div>
+                    <div class="text-[9px] text-rose-600 mt-1 font-bold flex items-center gap-1" id="target-time-val">-</div>
+                </div>
+            </div>
+
+            <!-- Health Safety Indicator Bar -->
+            <div class="p-3 bg-gradient-to-r from-slate-50 to-indigo-50/30 rounded-xl border border-slate-100 space-y-2 text-xs">
+                <div class="flex justify-between items-center text-[10px] text-slate-500 font-bold">
+                    <span>ประสิทธิภาพการเข้าตรวจรอบหน้า</span>
+                    <span>อัตราความเสี่ยงต่ำ</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-1.5">
+                        <div class="h-2 w-2 rounded-full bg-indigo-500"></div>
+                        <span class="font-extrabold text-slate-700" id="car-cost-per-km-label">฿0.00 / กม.</span>
+                    </div>
+                    <span class="text-[9px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded font-bold" id="car-total-distance-label">วิ่งไปแล้ว: - กม.</span>
+                </div>
+                <div class="space-y-1 pt-1.5">
+                    <div class="flex justify-between text-[9px] font-bold text-slate-400">
+                        <span>เปอร์เซ็นต์ความปลอดภัยของชิ้นส่วน</span>
+                        <span id="car-health-percent" class="text-indigo-600">100%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5">
+                        <div id="car-health-bar" class="bg-gradient-to-r from-emerald-400 to-indigo-600 h-1.5 rounded-full transition-all duration-500" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick update actions -->
+            <div class="flex flex-col min-[400px]:flex-row gap-2 pt-1">
+                <button onclick="openOdometerModal()" class="flex-1 bg-white hover:bg-slate-50 text-slate-700 text-[11px] sm:text-xs font-bold py-2.5 sm:py-3 px-3 rounded-xl border border-slate-200 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+                    <i class="fa-solid fa-gauge-high text-indigo-500"></i> อัปเดตเลขไมล์เปล่า
+                </button>
+                <button onclick="openRepairModal()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95">
+                    <i class="fa-solid fa-wrench"></i> บันทึกการซ่อมบำรุง
+                </button>
+            </div>
+        </section>
+
+        <!-- Annual Expense Stats -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/60 shadow-sm space-y-4">
+            <div class="space-y-2.5">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-1.5">
+                        <div class="bg-indigo-50 p-1.5 rounded-lg text-indigo-600">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">สถิติค่าบริการรายคัน</h3>
+                    </div>
+                    <select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500">
+                        <option value="2026">พ.ศ. 2569</option>
+                        <option value="2025">พ.ศ. 2568</option>
+                        <option value="2024">พ.ศ. 2567</option>
+                        <option value="2023">พ.ศ. 2566</option>
+                        <option value="2022">พ.ศ. 2565</option>
+                        </select>
+                </div>
+            </div>
+
+            <!-- Large Total Count display -->
+            <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white p-4 sm:p-5 md:p-6 rounded-xl flex flex-col xs:flex-row justify-between items-start xs:items-center gap-3 relative overflow-hidden shadow-inner">
+                <div class="absolute -right-6 -bottom-6 text-indigo-900/40 text-7xl font-bold pointer-events-none">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div class="relative z-10">
+                    <span class="text-[9px] text-indigo-300 block uppercase tracking-wider font-bold">สรุปเงินค่าแจ้งซ่อมบำรุง</span>
+                    <span class="text-2xl sm:text-3xl font-black tracking-tight" id="yearly-total-spend">฿0.00</span>
+                </div>
+                <div class="text-right z-10">
+                    <span class="text-[9px] text-indigo-300 block font-bold">รวมเสร็จ</span>
+                    <span class="text-[10px] font-extrabold bg-indigo-800/80 text-white px-2.5 py-0.8 rounded-md inline-block mt-1 border border-indigo-700" id="yearly-repairs-count">0 รายการ</span>
+                </div>
+            </div>
+
+            <!-- Spending Category visual progress list -->
+            <div class="space-y-3">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">สัดส่วนตามหมวดหมู่ชิ้นส่วน</span>
+                <div id="chart-bar-container" class="space-y-2.5"></div>
+            </div>
+        
+            <div class="pt-2">
+                <button onclick="exportReportPdf()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+                    <i class="fa-solid fa-file-pdf text-rose-300"></i> ส่งออกรายงาน PDF รายปี
+                </button>
+            </div>
+        </section>
+        </div>
+
+        <!-- Live Maintenance History Logs -->
+        <section class="space-y-3 md:col-span-full">
+            <div class="flex flex-col gap-2">
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">ประวัติการดูแลและใบเสร็จ</h3>
+                <div class="relative w-full">
+                    <input type="text" id="log-search-input" oninput="filterLogsList()" placeholder="🔍 ค้นหาประวัติซ่อมบำรุง..." class="w-full bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-[11px] outline-none focus:ring-1 focus:ring-indigo-500">
+                    <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-2.5 text-slate-300 hover:text-slate-500">
+                        <i class="fa-solid fa-circle-xmark text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="space-y-3" id="maintenance-history-logs"></div>
+        </section>
+    </div>
+
+    <!-- TAB 2: FUELIO FUEL PAGE (หน้าอัตราสิ้นเปลืองน้ำมันสไตล์ FUELIO) -->
+    <div id="tab-fuelio" class="tab-content flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 lg:p-8 space-y-4 sm:space-y-5 md:space-y-6 hidden">
+        
+        <!-- Fuel Analytics & Fuelio Cards -->
+        <section class="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">สถิติสิ้นเปลือง & ความประหยัด</h3>
+                <span class="bg-emerald-50 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Fuelio Engine Active</span>
+            </div>
+
+            <!-- Key metrics display grid -->
+            <div class="grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3">
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50/20 p-3 sm:p-4 rounded-xl border border-emerald-100 text-center">
+                    <div class="text-[9px] text-slate-400 font-bold">อัตราสิ้นเปลืองเฉลี่ย</div>
+                    <div class="text-base font-black text-slate-800 mt-1" id="fuel-avg-efficiency">-.--</div>
+                    <div class="text-[9px] text-emerald-600 font-bold mt-0.5">กม./ลิตร</div>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50/20 p-3 rounded-xl border border-emerald-100 text-center">
+                    <div class="text-[9px] text-slate-400 font-bold">ค่าน้ำมันเฉลี่ย</div>
+                    <div class="text-base font-black text-slate-800 mt-1" id="fuel-avg-cost-km">-.--</div>
+                    <div class="text-[9px] text-emerald-600 font-bold mt-0.5">บาท/กม.</div>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50/20 p-3 rounded-xl border border-emerald-100 text-center">
+                    <div class="text-[9px] text-slate-400 font-bold">ราคาเติมล่าสุด</div>
+                    <div class="text-base font-black text-slate-800 mt-1" id="fuel-last-price-liter">-.--</div>
+                    <div class="text-[9px] text-emerald-600 font-bold mt-0.5">บาท/ลิตร</div>
+                </div>
+            </div>
+
+            <!-- Additional quick analytics -->
+            <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center text-xs">
+                <div class="space-y-0.5">
+                    <div class="text-[9px] text-slate-400 font-bold uppercase">เติมน้ำมันคันนี้สะสม</div>
+                    <div class="font-extrabold text-slate-700" id="fuel-total-liters">0 ลิตร</div>
+                </div>
+                <div class="text-right space-y-0.5">
+                    <div class="text-[9px] text-slate-400 font-bold uppercase">ยอดเงินรวมสะสม</div>
+                    <div class="font-extrabold text-indigo-950" id="fuel-total-spend">฿0.00</div>
+                </div>
+            </div>
+
+            <!-- Quick fuel logging button -->
+            <button onclick="openFuelModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-100 active:scale-95">
+                <i class="fa-solid fa-gas-pump text-sm"></i> บันทึกรายการเติมน้ำมันด่วน
+            </button>
+        </section>
+
+        <!-- Fuel logs list -->
+        <section class="space-y-3">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">ประวัติการเติมน้ำมัน & อัตราสิ้นเปลือง</h3>
+            <div class="space-y-3" id="fuel-logs-container">
+                <!-- Loaded dynamically -->
+            </div>
+        </section>
+    </div>
+
+    <!-- TAB 3: ADMIN PAGE (หน้าแผงควบคุมแอดมินบ้าน) -->
+    <div id="tab-admin" class="tab-content flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 lg:p-8 space-y-4 sm:space-y-5 md:space-y-6 hidden">
+        
+        <!-- Auth wrapper -->
+        <div id="admin-unlocked-container" class="space-y-4">
+            
+            <!-- Lock Form screen if not yet verified -->
+            <div id="admin-tab-auth-view" class="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm space-y-4">
+                <div class="text-center space-y-1.5">
+                    <div class="bg-indigo-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-indigo-600">
+                        <i class="fa-solid fa-lock text-lg"></i>
+                    </div>
+                    <h3 class="text-xs font-bold text-slate-900">แผงควบคุมระบบของแอดมิน</h3>
+                    <p class="text-[10px] text-slate-500">กรุณากรอกรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>
+                </div>
+                <div class="space-y-2">
+                    <input type="password" id="admin-passcode" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="authenticateAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all active:scale-95 shadow-md">
+                        ยืนยันรหัสผ่านเพื่อเข้าใช้งาน
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin actual panel (Hidden by default until passcode is correct) -->
+            <div id="admin-tab-controls" class="hidden space-y-4">
+                
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <h3 class="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                            <i class="fa-solid fa-gears text-indigo-600"></i> สิทธิ์แก้ไขระบบหลังบ้าน
+                        </h3>
+                        <button onclick="logoutAdmin()" class="text-rose-500 hover:text-rose-700 font-bold text-[10px]">
+                            ล็อคระบบอีกครั้ง
+                        </button>
+                    </div>
+
+                    <!-- Dual buttons selectors inside admin tab -->
+                    <div class="flex border border-slate-100 rounded-xl overflow-hidden text-xs">
+                        <button onclick="switchAdminSubTab('cars')" id="btn-admin-tab-cars" class="flex-1 py-2 text-center font-bold bg-indigo-50 text-indigo-700">
+                            🚘 รายชื่อรถยนต์
+                        </button>
+                        <button onclick="switchAdminSubTab('categories')" id="btn-admin-tab-categories" class="flex-1 py-2 text-center font-bold text-slate-400 hover:bg-slate-50">
+                            ⚙️ หมวดหมู่ค่าซ่อม
+                        </button>
+                    </div>
+
+                    <!-- Sub views inside Admin control -->
+                    <div id="admin-view-cars" class="space-y-3">
+                        <form onsubmit="addVehicleAdmin(event)" class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 space-y-2 text-[11px]">
+                            <div class="font-bold text-indigo-950">เพิ่มข้อมูลรถคันใหม่เข้าระบบ</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input type="text" id="add-car-name" placeholder="รุ่นรถ เช่น Fortuner" class="bg-white border p-2 rounded-lg outline-none text-xs sm:text-sm" required>
+                                <input type="text" id="add-car-license" placeholder="ทะเบียน เช่น กข 11 กรุงเทพ" class="bg-white border p-2 rounded-lg outline-none text-xs" required>
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 rounded-lg font-bold text-xs transition-all">ยืนยันบันทึกเพิ่มรถใหม่</button>
+                        </form>
+                        <div class="space-y-1.5" id="admin-vehicles-list"></div>
+                    </div>
+
+                    <div id="admin-view-categories" class="space-y-3 hidden">
+                        <form onsubmit="addCategoryAdmin(event)" class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 space-y-2 text-[11px]">
+                            <div class="font-bold text-indigo-950">เพิ่มประเภทอะไหล่และงานบำรุงรักษา</div>
+                            <div class="flex gap-2">
+                                <input type="text" id="add-cat-name" placeholder="เช่น ระบบระบายความร้อน" class="flex-1 bg-white border p-2 rounded-lg outline-none text-xs" required>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs">เพิ่ม</button>
+                            </div>
+                        </form>
+                        <div class="space-y-1.5" id="admin-categories-list"></div>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50/80 p-4 rounded-2xl border border-amber-200/80 shadow-sm space-y-3 text-[11px]">
+                    <h3 class="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                        <i class="fa-solid fa-screwdriver-wrench text-amber-600"></i> ตั้งค่าระบบ (ครั้งแรก)
+                    </h3>
+                    <ul class="text-[10px] text-amber-900/80 space-y-1 list-disc pl-4">
+                        <li>กดปุ่มด้านล่างเพื่อสร้าง trigger แจ้งเตือนอัตโนมัติทุกวัน 08:00 น.</li>
+                        <li>LINE Notify: ตั้ง Script property <code class="bg-white px-1 rounded">LINE_NOTIFY_TOKEN</code> ใน Apps Script editor</li>
+                        <li>รหัสแอดมินเริ่มต้น: <strong>1234</strong> (เปลี่ยนได้ที่ property <code class="bg-white px-1 rounded">ADMIN_PASS</code>)</li>
+                    </ul>
+                    <button type="button" onclick="setupDailyTrigger()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
+                        <i class="fa-solid fa-clock mr-1"></i> สร้าง Daily Trigger (08:00)
+                    </button>
+                    <p id="setup-trigger-status" class="text-[10px] text-amber-800 hidden"></p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PERSISTENT BOTTOM NAVIGATION BAR (True Multi-Tab Controller) -->
+    <footer class="bg-white border-t border-slate-100 h-16 flex items-center justify-around px-2 sm:px-4 md:px-8 lg:px-12 xl:px-24 sticky bottom-0 z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] shrink-0">
+        <button onclick="switchTab('dashboard')" class="flex flex-col items-center justify-center w-16 text-indigo-600 transition-all" id="nav-dashboard">
+            <i class="fa-solid fa-screwdriver-wrench text-lg"></i>
+            <span class="text-[9px] mt-1 font-bold">บำรุงรักษา</span>
+        </button>
+        <button onclick="switchTab('fuelio')" class="flex flex-col items-center justify-center w-16 text-slate-400 transition-all" id="nav-fuelio">
+            <i class="fa-solid fa-gas-pump text-lg"></i>
+            <span class="text-[9px] mt-1 font-bold">บันทึกน้ำมัน</span>
+        </button>
+        <button onclick="switchTab('admin')" class="flex flex-col items-center justify-center w-16 text-slate-400 transition-all" id="nav-admin">
+            <i class="fa-solid fa-users-gear text-lg"></i>
+            <span class="text-[9px] mt-1 font-bold">แอดมินบ้าน</span>
+        </button>
+    </footer>
+
+    <!-- MODAL 1: Odometer Only Update Form -->
+    <div id="odometer-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6">
+        <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 animate-slide-up shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-gauge-high text-indigo-500"></i> อัปเดตเลขไมล์ด่วน (กม. เท่านั้น)
+                </h3>
+                <button onclick="closeModal('odometer-modal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form id="odometer-form" onsubmit="saveOdometerOnly(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-1">เลือกรถที่ต้องการลงไมล์</label>
+                    <select id="odo-vehicle-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none" required></select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-1">เลขไมล์ปัจจุบัน (กิโลเมตรเท่านั้น)</label>
+                    <input type="number" id="odo-mileage-input" placeholder="ตัวอย่าง: 125600" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none" required>
+                    <p class="text-[10px] text-indigo-600 mt-1.5 font-bold"><i class="fa-solid fa-circle-info mr-1"></i>อัปเดตไมล์เฉลี่ยอย่างเดียวโดยไม่มีการซ่อมแซมบำรุงรักษา</p>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md active:scale-95 text-xs">
+                        บันทึกเลขไมล์ปัจจุบัน
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Repair / Maintenance Form with alerts & receipt simulation -->
+    <div id="repair-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
+        <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-wrench text-indigo-600"></i> บันทึกงานซ่อมแซม & ตั้งระบบเตือน
+                </h3>
+                <button onclick="closeModal('repair-modal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="repair-form" onsubmit="saveMaintenanceLog(event)" class="space-y-3 text-xs text-slate-700 pb-16">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">รถที่นำไปซ่อม</label>
+                        <select id="rep-vehicle-select" onchange="updateOdoPlaceholder(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold outline-none" required></select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">เลขไมล์เมื่อเข้าซ่อม (กม.)</label>
+                        <input type="number" id="rep-mileage" placeholder="เช่น 125500" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 relative">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ประเภทงานซ่อม</label>
+                        <select id="rep-category" onchange="handleCategoryChange(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required></select>
+                    </div>
+                    
+                    <!-- Calendar Trigger (Unified Popup Helper) -->
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">วันที่ซ่อมบำรุง (พ.ศ.)</label>
+                        <button type="button" onclick="toggleCustomCalendar('maintenance')" id="calendar-trigger-btn" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-slate-100">
+                            <span id="calendar-trigger-text" class="text-slate-800">เลือกวันที่...</span>
+                            <i class="fa-regular fa-calendar-days text-indigo-500 text-sm"></i>
+                        </button>
+                        <input type="hidden" id="rep-date" required>
+                    </div>
+                </div>
+
+                <!-- Custom/Other Category input -->
+                <div id="rep-category-other-container" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                    <label class="block font-bold text-amber-900 mb-1"><i class="fa-solid fa-pen-nib mr-1"></i>ระบุประเภทงานซ่อมอื่นๆ ของคุณ</label>
+                    <input type="text" id="rep-category-other" placeholder="เช่น ซ่อมคลัตช์, ล้างตู้แอร์" class="w-full bg-white border border-amber-300 rounded-lg p-2 text-xs font-bold">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ราคารวม (บาท)</label>
+                        <input type="number" step="0.01" id="rep-cost" placeholder="ระบุจำนวนเงินบาท" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ร้านค้า / อู่ซ่อมรถ</label>
+                        <input type="text" id="rep-shop" placeholder="เช่น อู่ช่างเอ, บี-ควิก" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                </div>
+
+                <!-- Receipt Upload -->
+                <div class="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="font-bold text-indigo-950 block"><i class="fa-solid fa-file-invoice-dollar mr-1"></i>อัปโหลดใบเสร็จเข้าระบบ</label>
+                        <span class="text-[9px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono">Drive Cloud Storage</span>
+                    </div>
+                    <div class="flex items-center justify-center border-2 border-dashed border-indigo-200 bg-white rounded-lg p-2 hover:bg-indigo-50 transition-all cursor-pointer relative min-h-[60px]">
+                        <input type="file" id="rep-receipt" accept="image/*,application/pdf" onchange="previewReceiptFile(event)" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+                        <div class="text-center text-slate-500 flex flex-col items-center justify-center" id="receipt-upload-preview">
+                            <i class="fa-solid fa-cloud-arrow-up text-lg text-indigo-500 mb-1"></i>
+                            <div class="text-[9px] font-bold">แตะเพื่อถ่ายภาพหรือเลือกใบเสร็จรับเงิน</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Alert System -->
+                <div class="border-t border-slate-100 pt-3">
+                    <span class="block font-bold text-slate-800 mb-2 flex items-center gap-1">
+                        <i class="fa-solid fa-bell-on text-amber-500"></i> กำหนดรอบตรวจเช็กถัดไป
+                    </span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
+                            <label class="flex items-center space-x-1.5 font-bold text-slate-600 mb-1 cursor-pointer">
+                                <input type="checkbox" id="alert-km-enable" class="accent-indigo-600" onchange="toggleAlertInputs()">
+                                <span>ตามระยะทาง</span>
+                            </label>
+                            <input type="number" id="alert-km-offset" placeholder="+ กม. เช่น 10000" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs mt-1 disabled:opacity-50 font-bold" disabled>
+                        </div>
+                        <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
+                            <label class="flex items-center space-x-1.5 font-bold text-slate-600 mb-1 cursor-pointer">
+                                <input type="checkbox" id="alert-month-enable" class="accent-indigo-600" onchange="toggleAlertInputs()">
+                                <span>ตามกำหนดเดือน</span>
+                            </label>
+                            <input type="number" id="alert-month-offset" placeholder="+ เดือน เช่น 6" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs mt-1 disabled:opacity-50 font-bold" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 text-xs">
+                        บันทึกประวัติการบำรุงรักษา
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: Fuelio Style - Add Fuel Fill Log Modal -->
+    <div id="fuel-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
+        <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-gas-pump text-emerald-600"></i> บันทึกเติมเชื้อเพลิง (Fuelio Module)
+                </h3>
+                <button onclick="closeModal('fuel-modal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="fuel-form" onsubmit="saveFuelLog(event)" class="space-y-3.5 text-xs text-slate-700">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">รถที่ไปเติมเชื้อเพลิง</label>
+                        <select id="fuel-vehicle-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold outline-none" required></select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ระยะไมล์ปัจจุบัน (กม.)</label>
+                        <input type="number" id="fuel-odo" placeholder="เช่น 125650" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                </div>
+
+                <!-- Segmented Control for Fuel Type (Oil vs GAS) -->
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">ประเภทพลังงาน / เชื้อเพลิง</label>
+                    <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200/60">
+                        <div onclick="updateFuelTypeSelection('oil')" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg cursor-pointer text-xs font-bold transition-all bg-emerald-600 text-white shadow-md" id="label-fuel-type-oil">
+                            <span>⛽ น้ำมัน (Petrol/Diesel)</span>
+                        </div>
+                        <div onclick="updateFuelTypeSelection('gas')" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg cursor-pointer text-xs font-bold transition-all text-slate-500 hover:bg-slate-200/60" id="label-fuel-type-gas">
+                            <span>🔥 แก๊ส GAS (LPG/CNG)</span>
+                        </div>
+                    </div>
+                    <!-- Hidden input to keep state -->
+                    <input type="hidden" id="fuel-type-input" value="oil">
+                </div>
+
+                <div class="grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">จำนวนลิตร (L)</label>
+                        <input type="number" step="0.01" id="fuel-liters" placeholder="เช่น 45.21" oninput="calculateFuelCostSum()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">บาท / ลิตร</label>
+                        <input type="number" step="0.01" id="fuel-price-liter" placeholder="เช่น 38.45" oninput="calculateFuelCostSum()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ยอดเงินรวม (บาท)</label>
+                        <input type="number" step="0.01" id="fuel-total-cost" placeholder="คำนวณให้อัตโนมัติ" class="w-full bg-indigo-50/50 border border-indigo-100 rounded-xl p-2 text-xs font-black text-indigo-950" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <!-- Date Selector for Fuel log -->
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">วันที่เติมน้ำมัน (พ.ศ.)</label>
+                        <button type="button" onclick="toggleCustomCalendar('fuel')" id="fuel-calendar-trigger-btn" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-slate-100">
+                            <span id="fuel-calendar-trigger-text" class="text-slate-800">เลือกวันที่...</span>
+                            <i class="fa-regular fa-calendar-days text-emerald-600 text-sm"></i>
+                        </button>
+                        <input type="hidden" id="fuel-date" required>
+                    </div>
+                    <div class="flex items-center justify-center pt-4">
+                        <label class="flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl p-2.5 font-bold cursor-pointer select-none">
+                            <input type="checkbox" id="fuel-full-tank" checked class="accent-emerald-600 w-4 h-4">
+                            <span>⛽ เติมเต็มถัง</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 text-xs">
+                        บันทึกรายการลงในประวัติ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SHARED REUSABLE CUSTOM PREMIUM THAI CALENDAR POPOVER BOX -->
+    <div id="custom-calendar-dropdown" class="hidden absolute z-50 bg-white border border-slate-200 rounded-2xl shadow-2xl p-3.5 sm:p-4 space-y-2.5 animate-slide-up w-[min(280px,calc(100vw-2rem))] sm:w-[300px] md:w-[320px]">
+        <div class="flex justify-between items-center text-xs font-bold text-slate-800 pb-2 border-b border-slate-100 gap-1.5">
+            <button type="button" onclick="prevCalendarMonth()" class="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-all"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="flex items-center gap-1">
+                <select id="calendar-month-select" onchange="handleCalendarSelectChange()" class="bg-slate-50 border border-slate-200 text-indigo-950 px-1 py-1 rounded text-[11px] font-extrabold outline-none"></select>
+                <select id="calendar-year-select" onchange="handleCalendarSelectChange()" class="bg-slate-50 border border-slate-200 text-indigo-950 px-1 py-1 rounded text-[11px] font-extrabold outline-none"></select>
+            </div>
+            <button type="button" onclick="nextCalendarMonth()" class="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-all"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-extrabold text-slate-400">
+            <div class="text-rose-500">อา.</div><div>จ.</div><div>อ.</div><div>พ.</div><div>พฤ.</div><div>ศ.</div><div class="text-indigo-600">ส.</div>
+        </div>
+        <div id="calendar-days-grid" class="grid grid-cols-7 gap-1"></div>
+        <div class="flex gap-1.5 pt-1.5 border-t border-slate-100">
+            <button type="button" onclick="setCalendarToToday()" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold py-1.5 rounded-lg transition-all">วันนี้</button>
+            <button type="button" onclick="toggleCustomCalendarDropdownDirectly()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold py-1.5 rounded-lg transition-all">ตกลง</button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Console Line API Simulation logs -->
+    <div id="line-logs-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+        <div class="bg-white w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <i class="fa-brands fa-line text-emerald-500 text-lg"></i> Line API Log Console
+                </h3>
+                <button onclick="closeModal('line-logs-modal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-md"></i>
+                </button>
+            </div>
+            <div class="bg-slate-950 text-emerald-400 font-mono text-[9px] p-3 rounded-lg overflow-y-auto max-h-60 space-y-1.5" id="line-api-console-log"></div>
+            <div class="text-[10px] text-slate-500 leading-relaxed bg-slate-50 p-2 rounded border">
+                <strong>💡 การแจ้งเตือน:</strong> จะจำลองเมื่อคุณบันทึกค่าที่ตรงเกณฑ์ระบบ หรือสแกนด่วนเท่านั้น
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Log Modal -->
+    <div id="edit-log-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+        <div class="bg-white w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1">
+                    <i class="fa-solid fa-pen-to-square text-indigo-600"></i> แก้ไขรายการบันทึก
+                </h3>
+                <button onclick="closeModal('edit-log-modal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="edit-log-form" onsubmit="saveEditedLog(event)" class="space-y-3 text-xs text-slate-700">
+                <input type="hidden" id="edit-log-id">
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">ระยะไมล์ (กม.)</label>
+                    <input type="number" id="edit-log-odo" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-bold" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">ร้านค้า / อู่บริการ</label>
+                    <input type="text" id="edit-log-shop" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">ยอดใช้จ่าย (บาท)</label>
+                    <input type="number" step="0.01" id="edit-log-cost" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-bold" required>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="deleteMaintenanceLog()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-xl transition-all">ลบประวัติ</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl transition-all shadow-md">บันทึกที่แก้ไข</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?!= include('Scripts'); ?>
+</body>
+</html>

@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full min-h-full bg-slate-100 sm:bg-slate-200/80">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>MyHome CarCare - ระบบบำรุงรักษาและบันทึกน้ำมันสไตล์ Fuelio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                screens: {
+                    xs: '400px',
+                    sm: '640px',
+                    md: '768px',
+                    lg: '1024px',
+                    xl: '1280px',
+                    '2xl': '1536px',
+                },
+            },
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+html {
+            -webkit-text-size-adjust: 100%;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            margin: 0;
+            padding: 0;
+            background-color: #f1f5f9;
+        }
+        body {
+            font-family: 'Inter', 'Sarabun', sans-serif;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            margin: 0;
+            padding: 0;
+            background-color: #f1f5f9;
+        }
+        @media (min-width: 640px) {
+            html, body { background-color: rgba(226, 232, 240, 0.8); }
+        }
+        .app-shell {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8fafc;
+            padding-left: env(safe-area-inset-left, 0);
+            padding-right: env(safe-area-inset-right, 0);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        @media (min-width: 640px) {
+            .app-shell {
+                max-width: 36rem;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                min-height: calc(100dvh - 1rem);
+            }
+        }
+        @media (min-width: 768px) {
+            .app-shell { max-width: 42rem; }
+        }
+        @media (min-width: 1024px) {
+            .app-shell {
+                max-width: 56rem;
+                margin-top: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 1rem;
+                overflow: hidden;
+                min-height: calc(100dvh - 2rem);
+                max-height: calc(100dvh - 2rem);
+            }
+        }
+        @media (min-width: 1280px) {
+            .app-shell { max-width: 64rem; }
+        }
+        @media (min-width: 1536px) {
+            .app-shell { max-width: 80rem; }
+        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        @keyframes custom-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        .urgent-alert { animation: custom-pulse 2s infinite; }
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @media (min-width: 640px) {
+            @keyframes slide-up-center {
+                from { transform: translateY(16px) scale(0.98); opacity: 0; }
+                to { transform: translateY(0) scale(1); opacity: 1; }
+            }
+            .modal-sheet-inner.animate-slide-up { animation-name: slide-up-center; }
+        }
+        .modal-sheet-inner { width: 100%; }
+        #vehicles-carousel {
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+        }
+        #vehicles-carousel > * { scroll-snap-align: start; }
+        @media (min-width: 768px) {
+            #vehicles-carousel {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr);
+                overflow: visible !important;
+                scroll-snap-type: none;
+                padding-bottom: 0;
+                gap: 0.75rem;
+            }
+        }
+        @media (min-width: 1024px) {
+            #vehicles-carousel { grid-template-columns: repeat(3, 1fr); }
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                align-items: start;
+            }
+            .dashboard-grid > section { margin-bottom: 0 !important; }
+            .tab-content > section { transition: box-shadow 0.2s ease; }
+        }
+        @media (min-width: 1280px) {
+            #vehicles-carousel { grid-template-columns: repeat(4, 1fr); }
+        }
+        #loading-overlay.hidden { display: none !important; }
+    </style>
+</head>
+<body class="app-shell relative">
+</div>
+
+<!-- Top Navigation Header -->
+    <header class="bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 text-white px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 sticky top-0 z-50 shadow-md shrink-0">
+        <div class="flex justify-between items-center gap-2 sm:gap-4">
+            <div class="flex items-center space-x-2.5 min-w-0">
+                <div class="bg-gradient-to-tr from-indigo-500 to-indigo-700 p-2.5 sm:p-3 rounded-xl text-white shadow-md shrink-0">
+                    <i class="fa-solid fa-car-wrench text-lg sm:text-xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-sm sm:text-base lg:text-lg font-bold leading-tight tracking-wide truncate">MyHome CarCare</h1>
+                    <span class="text-[9px] sm:text-[10px] bg-indigo-500/30 text-indigo-200 px-1.5 py-0.2 rounded-md font-mono">v2.0.0 (GitHub Pages)</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+                <!-- Check status indicator -->
+                <button onclick="checkLineAlerts(true)" class="bg-emerald-600 hover:bg-emerald-500 text-[10px] sm:text-xs text-white font-bold px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg flex items-center space-x-1 transition-all active:scale-95 shadow-sm">
+                    <i class="fa-brands fa-line text-xs"></i>
+                    <span class="hidden xs:inline">ตรวจสภาพด่วน</span>
+                    <span class="xs:hidden">ตรวจ</span>
+                </button>
+                <button onclick="showLineLogs()" class="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-lg text-slate-300 transition-all active:scale-95 border border-slate-700" title="ดู LINE Log">
+                    <i class="fa-solid fa-code text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Custom On-Screen LINE Notification Simulation Box -->
+    <div id="line-notification-bubble" class="hidden fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md md:max-w-lg z-50 bg-[#06C755] text-white p-3 sm:p-4 rounded-2xl shadow-2xl transition-all transform duration-300 translate-y-[-100px] flex items-start space-x-2.5 border border-[#05b04b]">
+        <div class="bg-white p-1.5 rounded-full text-[#06C755] flex-shrink-0">
+            <i class="fa-brands fa-line text-lg"></i>
+        </div>
+        <div class="flex-1 text-xs">
+            <div class="flex justify-between items-center mb-0.5">
+                <span class="font-extrabold tracking-wide">LINE NOTIFY (ครอบครัว)</span>
+                <span class="text-[9px] text-emerald-100 opacity-90">เมื่อสักครู่</span>
+            </div>
+            <p id="line-notification-text" class="leading-snug text-emerald-50"></p>
+        </div>
+        <button onclick="dismissLineBubble()" class="text-white hover:text-emerald-100 font-bold self-start p-1 text-sm">&times;</button>
+    </div>
+
+    <!-- Alert Dialog Popups Toast container -->
+    <div id="toast-container" class="absolute top-16 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm md:max-w-md z-40 pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- MAIN CAROUSEL VEHICLE SELECTOR (Shared across tabs) -->
+    <section class="bg-white p-3.5 sm:p-4 md:p-5 border-b border-slate-200/60 shadow-sm space-y-3 shrink-0">
+        <div class="flex justify-between items-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ยานพาหนะใช้งานในครอบครัว</span>
+            <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold" id="total-cars-count">...</span>
+        </div>
+        <div class="flex gap-2.5 overflow-x-auto pb-1.5 snap-x md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:snap-none md:pb-0 md:gap-3" id="vehicles-carousel">
+            <!-- Loaded dynamically by JavaScript -->
+        </div>
+    </section>
+
+    <!-- TAB 1: MAINTENANCE PAGE (หน้าบำรุงรักษาและการแจ้งเตือน) -->
+    <div id="tab-dashboard" class="tab-content flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 lg:p-8 space-y-4 sm:space-y-5 md:space-y-6">
+        
+        <div class="dashboard-grid space-y-4 sm:space-y-5 lg:space-y-0">
+        <!-- Selected Vehicle Live Status -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/60 shadow-sm space-y-3.5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-blue-500"></div>
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">สถานะการเปลี่ยนระยะล่าสุด</h3>
+                <span id="vehicle-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm"></span>
+            </div>
+            
+            <div class="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-100 relative">
+                    <div class="text-[10px] sm:text-xs text-slate-400 font-bold">เลขไมล์สะสมล่าสุด</div>
+                    <div class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight mt-1 flex items-baseline">
+                        <span id="current-odometer-val" class="text-2xl sm:text-3xl font-black text-indigo-950">0</span>
+                        <span class="text-[10px] font-bold text-slate-400 ml-1">กม.</span>
+                    </div>
+                    <div class="text-[9px] text-slate-400 mt-1.5 font-medium" id="odometer-updated-date">อัปเดตล่าสุด: -</div>
+                </div>
+                <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-100">
+                    <div class="text-[10px] text-slate-400 font-bold">แผนการเปลี่ยนระยะถัดไป</div>
+                    <div class="text-xs font-bold text-slate-700 mt-1.5" id="target-odometer-val">-</div>
+                    <div class="text-[9px] text-rose-600 mt-1 font-bold flex items-center gap-1" id="target-time-val">-</div>
+                </div>
+            </div>
+
+            <!-- Health Safety Indicator Bar -->
+            <div class="p-3 bg-gradient-to-r from-slate-50 to-indigo-50/30 rounded-xl border border-slate-100 space-y-2 text-xs">
+                <div class="flex justify-between items-center text-[10px] text-slate-500 font-bold">
+                    <span>ประสิทธิภาพการเข้าตรวจรอบหน้า</span>
+                    <span>อัตราความเสี่ยงต่ำ</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-1.5">
+                        <div class="h-2 w-2 rounded-full bg-indigo-500"></div>
+                        <span class="font-extrabold text-slate-700" id="car-cost-per-km-label">฿0.00 / กม.</span>
+                    </div>
+                    <span class="text-[9px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded font-bold" id="car-total-distance-label">วิ่งไปแล้ว: - กม.</span>
+                </div>
+                <div class="space-y-1 pt-1.5">
+                    <div class="flex justify-between text-[9px] font-bold text-slate-400">
+                        <span>เปอร์เซ็นต์ความปลอดภัยของชิ้นส่วน</span>
+                        <span id="car-health-percent" class="text-indigo-600">100%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5">
+                        <div id="car-health-bar" class="bg-gradient-to-r from-emerald-400 to-indigo-600 h-1.5 rounded-full transition-all duration-500" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick update actions -->
+            <div class="flex flex-col min-[400px]:flex-row gap-2 pt-1">
+                <button onclick="openOdometerModal()" class="flex-1 bg-white hover:bg-slate-50 text-slate-700 text-[11px] sm:text-xs font-bold py-2.5 sm:py-3 px-3 rounded-xl border border-slate-200 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+                    <i class="fa-solid fa-gauge-high text-indigo-500"></i> อัปเดตเลขไมล์เปล่า
+                </button>
+                <button onclick="openRepairModal()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95">
+                    <i class="fa-solid fa-wrench"></i> บันทึกการซ่อมบำรุง
+                </button>
+            </div>
+        </section>
+
+        <!-- Annual Expense Stats -->
+        <section class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/60 shadow-sm space-y-4">
+            <div class="space-y-2.5">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-1.5">
+                        <div class="bg-indigo-50 p-1.5 rounded-lg text-indigo-600">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">สถิติค่าบริการรายคัน</h3>
+                    </div>
+                    <select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500">
+                        <option value="2026">พ.ศ. 2569</option>
+                        <option value="2025">พ.ศ. 2568</option>
+                        <option value="2024">พ.ศ. 2567</option>
+                        <option value="2023">พ.ศ. 2566</option>
+                        <option value="2022">พ.ศ. 2565</option>
+                        </select>
+                </div>
+            </div>
+
+            <!-- Large Total Count display -->
+            <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white p-4 sm:p-5 md:p-6 rounded-xl flex flex-col xs:flex-row justify-between items-start xs:items-center gap-3 relative overflow-hidden shadow-inner">
+                <div class="absolute -right-6 -bottom-6 text-indigo-900/40 text-7xl font-bold pointer-events-none">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div class="relative z-10">
+                    <span class="text-[9px] text-indigo-300 block uppercase tracking-wider font-bold">สรุปเงินค่าแจ้งซ่อมบำรุง</span>
+                    <span class="text-2xl sm:text-3xl font-black tracking-tight" id="yearly-total-spend">฿0.00</span>
+                </div>
+                <div class="text-right z-10">
+                    <span class="text-[9px] text-indigo-300 block font-bold">รวมเสร็จ</span>
+                    <span class="text-[10px] font-extrabold bg-indigo-800/80 text-white px-2.5 py-0.8 rounded-md inline-block mt-1 border border-indigo-700" id="yearly-repairs-count">0 รายการ</span>
+                </div>
+            </div>
+
+            <!-- Spending Category visual progress list -->
+            <div class="space-y-3">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">สัดส่วนตามหมวดหมู่ชิ้นส่วน</span>
+                <div id="chart-bar-container" class="space-y-2.5"></div>
+            </div>
+        
+            <div class="pt-2">
+                <button onclick="exportReportPdf()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+                    <i class="fa-solid fa-file-pdf text-rose-300"></i> ส่งออกรายงาน PDF รายปี
+                </button>
+            </div>
+        </section>
+        </div>
+
+        <!-- Live Maintenance History Logs -->
+        <section class="space-y-3 md:col-span-full">
+            <div class="flex flex-col gap-2">
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">ประวัติการดูแลและใบเสร็จ</h3>
+                <div class="relative w-full">
+                    <input type="text" id="log-search-input" oninput="filterLogsList()" placeholder="🔍 ค้นหาประวัติซ่อมบำรุง..." class="w-full bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-[11px] outline-none focus:ring-1 focus:ring-indigo-500">
+                    <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-2.5 text-slate-300 hover:text-slate-500">
+                        <i class="fa-solid fa-circle-xmark text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="space-y-3" id="maintenance-history-logs"></div>
+        </section>
+    </div>
+
+    <!-- TAB 2: FUELIO FUEL PAGE (หน้าอัตราสิ้นเปลืองน้ำมันสไตล์ FUELIO) -->
+    <div id="tab-fuelio" class="tab-content flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 lg:p-8 space-y-4 sm:space-y-5 md:space-y-6 hidden">
+        
+        <!-- Fuel Analytics & Fuelio Cards -->
+        <section class="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">สถิติสิ้นเปลือง & ความประหยัด</h3>
+                <span class="bg-emerald-50 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Fuelio Engine Active</span>
+            </div>
+
+            <!-- Key metrics display grid -->
+            <div class="grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3">
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50/20 p-3 sm:p-4 rounded-xl border border-emerald-100 text-center">
+                    <div class="text-[9px] text-slate-400 font-bold">อัตราสิ้นเปลืองเฉลี่ย</div>
+                    <div class="text-base font-black text-slate-800 mt-1" id="fuel-avg-efficiency">-.--</div>
+                    <div class="text-[9px] text-emerald-600 font-bold mt-0.5">กม./ลิตร</div>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50/20 p-3 rounded-xl border border-emerald-100 text-center">
+                    <div class="text-[9px] text-slate-400 font-bold">ค่าน้ำมันเฉลี่ย</div>
+                    <div class="text-base font-black text-slate-800 mt-1" id="fuel-avg-cost-km">-.--</div>
+                    <div class="text-[9px] text-emerald-600 font-bold mt-0.5">บาท/กม.</div>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50/20 p-3 rounded-xl border border-emerald-100 text-center">
+                    <div class="text-[9px] text-slate-400 font-bold">ราคาเติมล่าสุด</div>
+                    <div class="text-base font-black text-slate-800 mt-1" id="fuel-last-price-liter">-.--</div>
+                    <div class="text-[9px] text-emerald-600 font-bold mt-0.5">บาท/ลิตร</div>
+                </div>
+            </div>
+
+            <!-- Additional quick analytics -->
+            <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center text-xs">
+                <div class="space-y-0.5">
+                    <div class="text-[9px] text-slate-400 font-bold uppercase">เติมน้ำมันคันนี้สะสม</div>
+                    <div class="font-extrabold text-slate-700" id="fuel-total-liters">0 ลิตร</div>
+                </div>
+                <div class="text-right space-y-0.5">
+                    <div class="text-[9px] text-slate-400 font-bold uppercase">ยอดเงินรวมสะสม</div>
+                    <div class="font-extrabold text-indigo-950" id="fuel-total-spend">฿0.00</div>
+                </div>
+            </div>
+
+            <!-- Quick fuel logging button -->
+            <button onclick="openFuelModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-100 active:scale-95">
+                <i class="fa-solid fa-gas-pump text-sm"></i> บันทึกรายการเติมน้ำมันด่วน
+            </button>
+        </section>
+
+        <!-- Fuel logs list -->
+        <section class="space-y-3">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">ประวัติการเติมน้ำมัน & อัตราสิ้นเปลือง</h3>
+            <div class="space-y-3" id="fuel-logs-container">
+                <!-- Loaded dynamically -->
+            </div>
+        </section>
+    </div>
+
+    <!-- TAB 3: ADMIN PAGE (หน้าแผงควบคุมแอดมินบ้าน) -->
+    <div id="tab-admin" class="tab-content flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 lg:p-8 space-y-4 sm:space-y-5 md:space-y-6 hidden">
+        
+        <!-- Auth wrapper -->
+        <div id="admin-unlocked-container" class="space-y-4">
+            
+            <!-- Lock Form screen if not yet verified -->
+            <div id="admin-tab-auth-view" class="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm space-y-4">
+                <div class="text-center space-y-1.5">
+                    <div class="bg-indigo-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto text-indigo-600">
+                        <i class="fa-solid fa-lock text-lg"></i>
+                    </div>
+                    <h3 class="text-xs font-bold text-slate-900">แผงควบคุมระบบของแอดมิน</h3>
+                    <p class="text-[10px] text-slate-500">กรุณากรอกรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>
+                </div>
+                <div class="space-y-2">
+                    <input type="password" id="admin-passcode" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="authenticateAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all active:scale-95 shadow-md">
+                        ยืนยันรหัสผ่านเพื่อเข้าใช้งาน
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin actual panel (Hidden by default until passcode is correct) -->
+            <div id="admin-tab-controls" class="hidden space-y-4">
+                
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <h3 class="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                            <i class="fa-solid fa-gears text-indigo-600"></i> สิทธิ์แก้ไขระบบหลังบ้าน
+                        </h3>
+                        <button onclick="logoutAdmin()" class="text-rose-500 hover:text-rose-700 font-bold text-[10px]">
+                            ล็อคระบบอีกครั้ง
+                        </button>
+                    </div>
+
+                    <!-- Dual buttons selectors inside admin tab -->
+                    <div class="flex border border-slate-100 rounded-xl overflow-hidden text-xs">
+                        <button onclick="switchAdminSubTab('cars')" id="btn-admin-tab-cars" class="flex-1 py-2 text-center font-bold bg-indigo-50 text-indigo-700">
+                            🚘 รายชื่อรถยนต์
+                        </button>
+                        <button onclick="switchAdminSubTab('categories')" id="btn-admin-tab-categories" class="flex-1 py-2 text-center font-bold text-slate-400 hover:bg-slate-50">
+                            ⚙️ หมวดหมู่ค่าซ่อม
+                        </button>
+                    </div>
+
+                    <!-- Sub views inside Admin control -->
+                    <div id="admin-view-cars" class="space-y-3">
+                        <form onsubmit="addVehicleAdmin(event)" class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 space-y-2 text-[11px]">
+                            <div class="font-bold text-indigo-950">เพิ่มข้อมูลรถคันใหม่เข้าระบบ</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input type="text" id="add-car-name" placeholder="รุ่นรถ เช่น Fortuner" class="bg-white border p-2 rounded-lg outline-none text-xs sm:text-sm" required>
+                                <input type="text" id="add-car-license" placeholder="ทะเบียน เช่น กข 11 กรุงเทพ" class="bg-white border p-2 rounded-lg outline-none text-xs" required>
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 rounded-lg font-bold text-xs transition-all">ยืนยันบันทึกเพิ่มรถใหม่</button>
+                        </form>
+                        <div class="space-y-1.5" id="admin-vehicles-list"></div>
+                    </div>
+
+                    <div id="admin-view-categories" class="space-y-3 hidden">
+                        <form onsubmit="addCategoryAdmin(event)" class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 space-y-2 text-[11px]">
+                            <div class="font-bold text-indigo-950">เพิ่มประเภทอะไหล่และงานบำรุงรักษา</div>
+                            <div class="flex gap-2">
+                                <input type="text" id="add-cat-name" placeholder="เช่น ระบบระบายความร้อน" class="flex-1 bg-white border p-2 rounded-lg outline-none text-xs" required>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs">เพิ่ม</button>
+                            </div>
+                        </form>
+                        <div class="space-y-1.5" id="admin-categories-list"></div>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50/80 p-4 rounded-2xl border border-amber-200/80 shadow-sm space-y-3 text-[11px]">
+                    <h3 class="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                        <i class="fa-solid fa-screwdriver-wrench text-amber-600"></i> ตั้งค่าระบบ (ครั้งแรก)
+                    </h3>
+                    <ul class="text-[10px] text-amber-900/80 space-y-1 list-disc pl-4">
+                        <li>กดปุ่มด้านล่างเพื่อสร้าง trigger แจ้งเตือนอัตโนมัติทุกวัน 08:00 น.</li>
+                        <li>LINE Notify: ตั้ง Script property <code class="bg-white px-1 rounded">LINE_NOTIFY_TOKEN</code> ใน Apps Script editor</li>
+                        <li>รหัสแอดมินเริ่มต้น: <strong>1234</strong> (เปลี่ยนได้ที่ property <code class="bg-white px-1 rounded">ADMIN_PASS</code>)</li>
+                    </ul>
+                    <button type="button" onclick="setupDailyTrigger()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
+                        <i class="fa-solid fa-clock mr-1"></i> สร้าง Daily Trigger (08:00)
+                    </button>
+                    <p id="setup-trigger-status" class="text-[10px] text-amber-800 hidden"></p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PERSISTENT BOTTOM NAVIGATION BAR (True Multi-Tab Controller) -->
+    <footer class="bg-white border-t border-slate-100 h-16 flex items-center justify-around px-2 sm:px-4 md:px-8 lg:px-12 xl:px-24 sticky bottom-0 z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] shrink-0">
+        <button onclick="switchTab('dashboard')" class="flex flex-col items-center justify-center w-16 text-indigo-600 transition-all" id="nav-dashboard">
+            <i class="fa-solid fa-screwdriver-wrench text-lg"></i>
+            <span class="text-[9px] mt-1 font-bold">บำรุงรักษา</span>
+        </button>
+        <button onclick="switchTab('fuelio')" class="flex flex-col items-center justify-center w-16 text-slate-400 transition-all" id="nav-fuelio">
+            <i class="fa-solid fa-gas-pump text-lg"></i>
+            <span class="text-[9px] mt-1 font-bold">บันทึกน้ำมัน</span>
+        </button>
+        <button onclick="switchTab('admin')" class="flex flex-col items-center justify-center w-16 text-slate-400 transition-all" id="nav-admin">
+            <i class="fa-solid fa-users-gear text-lg"></i>
+            <span class="text-[9px] mt-1 font-bold">แอดมินบ้าน</span>
+        </button>
+    </footer>
+
+    <!-- MODAL 1: Odometer Only Update Form -->
+    <div id="odometer-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6">
+        <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 animate-slide-up shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-gauge-high text-indigo-500"></i> อัปเดตเลขไมล์ด่วน (กม. เท่านั้น)
+                </h3>
+                <button onclick="closeModal('odometer-modal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form id="odometer-form" onsubmit="saveOdometerOnly(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-1">เลือกรถที่ต้องการลงไมล์</label>
+                    <select id="odo-vehicle-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none" required></select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-1">เลขไมล์ปัจจุบัน (กิโลเมตรเท่านั้น)</label>
+                    <input type="number" id="odo-mileage-input" placeholder="ตัวอย่าง: 125600" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none" required>
+                    <p class="text-[10px] text-indigo-600 mt-1.5 font-bold"><i class="fa-solid fa-circle-info mr-1"></i>อัปเดตไมล์เฉลี่ยอย่างเดียวโดยไม่มีการซ่อมแซมบำรุงรักษา</p>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md active:scale-95 text-xs">
+                        บันทึกเลขไมล์ปัจจุบัน
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Repair / Maintenance Form with alerts & receipt simulation -->
+    <div id="repair-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
+        <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-wrench text-indigo-600"></i> บันทึกงานซ่อมแซม & ตั้งระบบเตือน
+                </h3>
+                <button onclick="closeModal('repair-modal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="repair-form" onsubmit="saveMaintenanceLog(event)" class="space-y-3 text-xs text-slate-700 pb-16">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">รถที่นำไปซ่อม</label>
+                        <select id="rep-vehicle-select" onchange="updateOdoPlaceholder(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold outline-none" required></select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">เลขไมล์เมื่อเข้าซ่อม (กม.)</label>
+                        <input type="number" id="rep-mileage" placeholder="เช่น 125500" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 relative">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ประเภทงานซ่อม</label>
+                        <select id="rep-category" onchange="handleCategoryChange(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required></select>
+                    </div>
+                    
+                    <!-- Calendar Trigger (Unified Popup Helper) -->
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">วันที่ซ่อมบำรุง (พ.ศ.)</label>
+                        <button type="button" onclick="toggleCustomCalendar('maintenance')" id="calendar-trigger-btn" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-slate-100">
+                            <span id="calendar-trigger-text" class="text-slate-800">เลือกวันที่...</span>
+                            <i class="fa-regular fa-calendar-days text-indigo-500 text-sm"></i>
+                        </button>
+                        <input type="hidden" id="rep-date" required>
+                    </div>
+                </div>
+
+                <!-- Custom/Other Category input -->
+                <div id="rep-category-other-container" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                    <label class="block font-bold text-amber-900 mb-1"><i class="fa-solid fa-pen-nib mr-1"></i>ระบุประเภทงานซ่อมอื่นๆ ของคุณ</label>
+                    <input type="text" id="rep-category-other" placeholder="เช่น ซ่อมคลัตช์, ล้างตู้แอร์" class="w-full bg-white border border-amber-300 rounded-lg p-2 text-xs font-bold">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ราคารวม (บาท)</label>
+                        <input type="number" step="0.01" id="rep-cost" placeholder="ระบุจำนวนเงินบาท" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ร้านค้า / อู่ซ่อมรถ</label>
+                        <input type="text" id="rep-shop" placeholder="เช่น อู่ช่างเอ, บี-ควิก" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                </div>
+
+                <!-- Receipt Upload -->
+                <div class="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="font-bold text-indigo-950 block"><i class="fa-solid fa-file-invoice-dollar mr-1"></i>อัปโหลดใบเสร็จเข้าระบบ</label>
+                        <span class="text-[9px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono">Drive Cloud Storage</span>
+                    </div>
+                    <div class="flex items-center justify-center border-2 border-dashed border-indigo-200 bg-white rounded-lg p-2 hover:bg-indigo-50 transition-all cursor-pointer relative min-h-[60px]">
+                        <input type="file" id="rep-receipt" accept="image/*,application/pdf" onchange="previewReceiptFile(event)" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+                        <div class="text-center text-slate-500 flex flex-col items-center justify-center" id="receipt-upload-preview">
+                            <i class="fa-solid fa-cloud-arrow-up text-lg text-indigo-500 mb-1"></i>
+                            <div class="text-[9px] font-bold">แตะเพื่อถ่ายภาพหรือเลือกใบเสร็จรับเงิน</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Alert System -->
+                <div class="border-t border-slate-100 pt-3">
+                    <span class="block font-bold text-slate-800 mb-2 flex items-center gap-1">
+                        <i class="fa-solid fa-bell-on text-amber-500"></i> กำหนดรอบตรวจเช็กถัดไป
+                    </span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
+                            <label class="flex items-center space-x-1.5 font-bold text-slate-600 mb-1 cursor-pointer">
+                                <input type="checkbox" id="alert-km-enable" class="accent-indigo-600" onchange="toggleAlertInputs()">
+                                <span>ตามระยะทาง</span>
+                            </label>
+                            <input type="number" id="alert-km-offset" placeholder="+ กม. เช่น 10000" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs mt-1 disabled:opacity-50 font-bold" disabled>
+                        </div>
+                        <div class="p-2 bg-slate-50 rounded-xl border border-slate-200">
+                            <label class="flex items-center space-x-1.5 font-bold text-slate-600 mb-1 cursor-pointer">
+                                <input type="checkbox" id="alert-month-enable" class="accent-indigo-600" onchange="toggleAlertInputs()">
+                                <span>ตามกำหนดเดือน</span>
+                            </label>
+                            <input type="number" id="alert-month-offset" placeholder="+ เดือน เช่น 6" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs mt-1 disabled:opacity-50 font-bold" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 text-xs">
+                        บันทึกประวัติการบำรุงรักษา
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: Fuelio Style - Add Fuel Fill Log Modal -->
+    <div id="fuel-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
+        <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-gas-pump text-emerald-600"></i> บันทึกเติมเชื้อเพลิง (Fuelio Module)
+                </h3>
+                <button onclick="closeModal('fuel-modal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="fuel-form" onsubmit="saveFuelLog(event)" class="space-y-3.5 text-xs text-slate-700">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">รถที่ไปเติมเชื้อเพลิง</label>
+                        <select id="fuel-vehicle-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold outline-none" required></select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ระยะไมล์ปัจจุบัน (กม.)</label>
+                        <input type="number" id="fuel-odo" placeholder="เช่น 125650" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                </div>
+
+                <!-- Segmented Control for Fuel Type (Oil vs GAS) -->
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">ประเภทพลังงาน / เชื้อเพลิง</label>
+                    <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200/60">
+                        <div onclick="updateFuelTypeSelection('oil')" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg cursor-pointer text-xs font-bold transition-all bg-emerald-600 text-white shadow-md" id="label-fuel-type-oil">
+                            <span>⛽ น้ำมัน (Petrol/Diesel)</span>
+                        </div>
+                        <div onclick="updateFuelTypeSelection('gas')" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg cursor-pointer text-xs font-bold transition-all text-slate-500 hover:bg-slate-200/60" id="label-fuel-type-gas">
+                            <span>🔥 แก๊ส GAS (LPG/CNG)</span>
+                        </div>
+                    </div>
+                    <!-- Hidden input to keep state -->
+                    <input type="hidden" id="fuel-type-input" value="oil">
+                </div>
+
+                <div class="grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">จำนวนลิตร (L)</label>
+                        <input type="number" step="0.01" id="fuel-liters" placeholder="เช่น 45.21" oninput="calculateFuelCostSum()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">บาท / ลิตร</label>
+                        <input type="number" step="0.01" id="fuel-price-liter" placeholder="เช่น 38.45" oninput="calculateFuelCostSum()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ยอดเงินรวม (บาท)</label>
+                        <input type="number" step="0.01" id="fuel-total-cost" placeholder="คำนวณให้อัตโนมัติ" class="w-full bg-indigo-50/50 border border-indigo-100 rounded-xl p-2 text-xs font-black text-indigo-950" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <!-- Date Selector for Fuel log -->
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">วันที่เติมน้ำมัน (พ.ศ.)</label>
+                        <button type="button" onclick="toggleCustomCalendar('fuel')" id="fuel-calendar-trigger-btn" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-slate-100">
+                            <span id="fuel-calendar-trigger-text" class="text-slate-800">เลือกวันที่...</span>
+                            <i class="fa-regular fa-calendar-days text-emerald-600 text-sm"></i>
+                        </button>
+                        <input type="hidden" id="fuel-date" required>
+                    </div>
+                    <div class="flex items-center justify-center pt-4">
+                        <label class="flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl p-2.5 font-bold cursor-pointer select-none">
+                            <input type="checkbox" id="fuel-full-tank" checked class="accent-emerald-600 w-4 h-4">
+                            <span>⛽ เติมเต็มถัง</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 text-xs">
+                        บันทึกรายการลงในประวัติ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SHARED REUSABLE CUSTOM PREMIUM THAI CALENDAR POPOVER BOX -->
+    <div id="custom-calendar-dropdown" class="hidden absolute z-50 bg-white border border-slate-200 rounded-2xl shadow-2xl p-3.5 sm:p-4 space-y-2.5 animate-slide-up w-[min(280px,calc(100vw-2rem))] sm:w-[300px] md:w-[320px]">
+        <div class="flex justify-between items-center text-xs font-bold text-slate-800 pb-2 border-b border-slate-100 gap-1.5">
+            <button type="button" onclick="prevCalendarMonth()" class="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-all"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="flex items-center gap-1">
+                <select id="calendar-month-select" onchange="handleCalendarSelectChange()" class="bg-slate-50 border border-slate-200 text-indigo-950 px-1 py-1 rounded text-[11px] font-extrabold outline-none"></select>
+                <select id="calendar-year-select" onchange="handleCalendarSelectChange()" class="bg-slate-50 border border-slate-200 text-indigo-950 px-1 py-1 rounded text-[11px] font-extrabold outline-none"></select>
+            </div>
+            <button type="button" onclick="nextCalendarMonth()" class="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-all"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-extrabold text-slate-400">
+            <div class="text-rose-500">อา.</div><div>จ.</div><div>อ.</div><div>พ.</div><div>พฤ.</div><div>ศ.</div><div class="text-indigo-600">ส.</div>
+        </div>
+        <div id="calendar-days-grid" class="grid grid-cols-7 gap-1"></div>
+        <div class="flex gap-1.5 pt-1.5 border-t border-slate-100">
+            <button type="button" onclick="setCalendarToToday()" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold py-1.5 rounded-lg transition-all">วันนี้</button>
+            <button type="button" onclick="toggleCustomCalendarDropdownDirectly()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold py-1.5 rounded-lg transition-all">ตกลง</button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Console Line API Simulation logs -->
+    <div id="line-logs-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+        <div class="bg-white w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <i class="fa-brands fa-line text-emerald-500 text-lg"></i> Line API Log Console
+                </h3>
+                <button onclick="closeModal('line-logs-modal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-md"></i>
+                </button>
+            </div>
+            <div class="bg-slate-950 text-emerald-400 font-mono text-[9px] p-3 rounded-lg overflow-y-auto max-h-60 space-y-1.5" id="line-api-console-log"></div>
+            <div class="text-[10px] text-slate-500 leading-relaxed bg-slate-50 p-2 rounded border">
+                <strong>💡 การแจ้งเตือน:</strong> จะจำลองเมื่อคุณบันทึกค่าที่ตรงเกณฑ์ระบบ หรือสแกนด่วนเท่านั้น
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Log Modal -->
+    <div id="edit-log-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+        <div class="bg-white w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1">
+                    <i class="fa-solid fa-pen-to-square text-indigo-600"></i> แก้ไขรายการบันทึก
+                </h3>
+                <button onclick="closeModal('edit-log-modal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="edit-log-form" onsubmit="saveEditedLog(event)" class="space-y-3 text-xs text-slate-700">
+                <input type="hidden" id="edit-log-id">
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">ระยะไมล์ (กม.)</label>
+                    <input type="number" id="edit-log-odo" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-bold" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">ร้านค้า / อู่บริการ</label>
+                    <input type="text" id="edit-log-shop" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs" required>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">ยอดใช้จ่าย (บาท)</label>
+                    <input type="number" step="0.01" id="edit-log-cost" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-bold" required>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="deleteMaintenanceLog()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-xl transition-all">ลบประวัติ</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl transition-all shadow-md">บันทึกที่แก้ไข</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+
+        // System state database representation (simulating Sheet databases)
+        let state = {
+            vehicles: [
+                { id: "V-001", name: "Toyota Camry Hybrid", license: "กข 555 กรุงเทพ", createdDate: "2025-01-10" },
+                { id: "V-002", name: "Tesla Model Y", license: "ชภ 9999 นนทบุรี", createdDate: "2025-03-15" }
+            ],
+            categories: [
+                { id: "CAT-001", name: "เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว" },
+                { id: "CAT-002", name: "ระบบห้ามล้อและเบรก" },
+                { id: "CAT-003", name: "เปลี่ยนยางและถ่วงล้อ" },
+                { id: "CAT-004", name: "แบตเตอรี่และระบบขับเคลื่อน" }
+            ],
+            maintenanceLogs: [
+                { id: "LOG-001", vehicleId: "V-001", odo: 148000, shop: "-", category: "-", cost: 0, receipt: "", fileLink: "", alertKm: 0, alertMonth: 0, date: "2025-06-05", type: "Odometer_Update" },
+                { id: "LOG-002", vehicleId: "V-001", odo: 152000, shop: "ศูนย์โตโยต้า พระราม 9", category: "CAT-001", cost: 3800.00, receipt: "receipt_camry_oil.jpg", fileLink: "https://drive.google.com/drive/folders/1O_L7QryZNzdnzzisWI76bzW269RzhRyd", alertKm: 10000, alertMonth: 6, date: "2026-03-01", type: "Maintenance" },
+                { id: "LOG-003", vehicleId: "V-002", odo: 24500, shop: "ศูนย์เทสลา รามคำแหง", category: "CAT-003", cost: 32000.00, receipt: "tesla_invoice.pdf", fileLink: "https://drive.google.com/drive/folders/1O_L7QryZNzdnzzisWI76bzW269RzhRyd", alertKm: 20000, alertMonth: 12, date: "2025-11-20", type: "Maintenance" },
+                { id: "LOG-004", vehicleId: "V-001", odo: 135000, shop: "บี-ควิก ติวานนท์", category: "CAT-002", cost: 5400.00, receipt: "bq_invoice.jpg", fileLink: "https://drive.google.com/drive/folders/1O_L7QryZNzdnzzisWI76bzW269RzhRyd", alertKm: 15000, alertMonth: 12, date: "2025-08-14", type: "Maintenance" }
+            ],
+            // FUELIO FUEL LOG SCHEMA (Rule: บันทึกข้อมูลค่าน้ำมันอัตราสิ้นเปลืองเฉลี่ย)
+            fuelLogs: [
+                { id: "FUEL-001", vehicleId: "V-001", odo: 148500, date: "2026-01-10", liters: 45.0, pricePerLiter: 38.50, totalCost: 1732.50, fullTank: true, fuelType: "oil" },
+                { id: "FUEL-002", vehicleId: "V-001", odo: 149200, date: "2026-02-15", liters: 42.0, pricePerLiter: 39.20, totalCost: 1646.40, fullTank: true, fuelType: "oil" },
+                { id: "FUEL-003", vehicleId: "V-001", odo: 150050, date: "2026-04-10", liters: 44.5, pricePerLiter: 40.10, totalCost: 1784.45, fullTank: true, fuelType: "oil" }
+            ],
+            alerts: [
+                { vehicleId: "V-001", targetKm: 162000, targetDate: "2026-09-01", status: "Active", lastUpdated: "2026-03-01" },
+                { vehicleId: "V-002", targetKm: 44500, targetDate: "2026-11-20", status: "Active", lastUpdated: "2025-11-20" }
+            ],
+            selectedVehicleId: "V-001",
+            adminAuthenticated: false,
+            lineLogs: [
+                "🚀 [2026-06-06 09:00:00] Line API Simulator เริ่มต้นการเชื่อมต่อ...",
+                "📡 [2026-06-06 09:00:15] ค้นพบเป้าหมายโฟลเดอร์ Google Drive: 1O_L7QryZNzdnzzisWI76bzW269RzhRyd"
+            ]
+        };
+
+        // Shared Custom Thai Calendar State Variables
+        let calendarTargetField = 'maintenance'; // 'maintenance' or 'fuel'
+        let calendarSelectedDate = new Date();
+        let calendarViewMonth = new Date().getMonth(); 
+        let calendarViewYear = new Date().getFullYear();
+
+        const thaiMonthsFull = [
+            'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+            'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+        ];
+        const thaiMonthsShort = [
+            'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+            'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+        ];
+
+        let currentUploadedReceiptBase64 = "";
+        let searchDebounceTimer = null;
+
+        // App Initializer
+        function initApp() {
+            const savedState = localStorage.getItem('myhome_carcare_state_v2.0');
+            if (savedState) {
+                try {
+                    state = JSON.parse(savedState);
+                } catch (e) {
+                    console.error("Failed to load persistent state, resetting...");
+                }
+            } else {
+                saveToLocalStorage();
+            }
+            populateDropdowns();
+            renderVehiclesCarousel();
+            selectVehicle(state.selectedVehicleId);
+            renderReports();
+            checkLineAlerts(false); 
+            initCustomCalendar();
+            setDefaultDates();
+            
+            // Default select page 1 on load
+            switchTab('dashboard');
+        }
+
+        // Set Default Date Helper for both forms (June 6, 2026)
+        function setDefaultDates() {
+            const now = new Date();
+            const iso = now.toISOString().split('T')[0];
+            const thaiStr = formatThaiDate(iso);
+            const repDate = document.getElementById('rep-date');
+            const calText = document.getElementById('calendar-trigger-text');
+            const fuelDate = document.getElementById('fuel-date');
+            const fuelCalText = document.getElementById('fuel-calendar-trigger-text');
+            if (repDate) repDate.value = iso;
+            if (calText) calText.textContent = thaiStr;
+            if (fuelDate) fuelDate.value = iso;
+            if (fuelCalText) fuelCalText.textContent = thaiStr;
+            calendarSelectedDate = now;
+            calendarViewMonth = now.getMonth();
+            calendarViewYear = now.getFullYear();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('myhome_carcare_state_v2.0', JSON.stringify(state));
+        }
+
+        // Dropdowns Populator
+        function populateDropdowns() {
+            const odoSelect = document.getElementById('odo-vehicle-select');
+            const repSelect = document.getElementById('rep-vehicle-select');
+            const fuelSelect = document.getElementById('fuel-vehicle-select');
+            const repCat = document.getElementById('rep-category');
+            const repVehFilter = document.getElementById('report-vehicle-filter');
+
+            odoSelect.innerHTML = '';
+            repSelect.innerHTML = '';
+            fuelSelect.innerHTML = '';
+            
+            if (repVehFilter) {
+                repVehFilter.innerHTML = '<option value="ALL">🚘 รถทั้งหมดในบ้าน</option>';
+            }
+
+            state.vehicles.forEach(v => {
+                const opt = `<option value="${v.id}">${v.name} (${v.license})</option>`;
+                odoSelect.innerHTML += opt;
+                repSelect.innerHTML += opt;
+                fuelSelect.innerHTML += opt;
+                
+                if (repVehFilter) {
+                    repVehFilter.innerHTML += `<option value="${v.id}">${v.name}</option>`;
+                }
+            });
+
+            state.categories.forEach(c => {
+                repCat.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+            
+            repCat.innerHTML += `<option value="OTHER" class="text-indigo-600 font-bold">✨ อื่นๆ (ระบุเอง)</option>`;
+
+            // Initialize Calendar Year/Month select dropdowns
+            populateCalendarDropdownSelectors();
+        }
+
+        function handleCategoryChange(val) {
+            const otherContainer = document.getElementById('rep-category-other-container');
+            const otherInput = document.getElementById('rep-category-other');
+            if (val === 'OTHER') {
+                otherContainer.classList.remove('hidden');
+                otherInput.required = true;
+                otherInput.focus();
+            } else {
+                otherContainer.classList.add('hidden');
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `p-3 rounded-xl shadow-lg text-xs font-bold transition-all transform translate-y-2 flex justify-between items-center pointer-events-auto border ${
+                type === 'success' ? 'bg-indigo-950 text-white border-indigo-900' : 
+                type === 'warning' ? 'bg-amber-500 text-slate-900 border-amber-400' : 'bg-rose-600 text-white border-rose-500'
+            }`;
+            
+            let icon = 'fa-circle-check';
+            if (type === 'warning') icon = 'fa-bell';
+            if (type === 'error') icon = 'fa-circle-exclamation';
+
+            toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid ${icon}"></i>
+                    <span>${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-white/60 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2');
+                toast.classList.add('translate-y-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
+
+        // Render cars selection inside header carousel
+        function renderVehiclesCarousel() {
+            const carousel = document.getElementById('vehicles-carousel');
+            carousel.innerHTML = '';
+            
+            state.vehicles.forEach(v => {
+                const isActive = v.id === state.selectedVehicleId;
+                const activeClasses = isActive 
+                    ? 'border-indigo-600 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg scale-102 ring-2 ring-indigo-500/20' 
+                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800';
+
+                const latestOdo = getLatestOdometer(v.id);
+
+                carousel.innerHTML += `
+                    <div onclick="selectVehicle('${v.id}')" class="snap-start shrink-0 w-[145px] p-3 rounded-xl border ${activeClasses} cursor-pointer transition-all duration-200">
+                        <div class="text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
+                        <div class="font-extrabold text-xs truncate mt-0.5">${v.name}</div>
+                        <div class="mt-4 pt-1.5 border-t ${isActive ? 'border-indigo-800/60' : 'border-slate-100'} text-[10px] flex justify-between items-center font-mono">
+                            <span class="${isActive ? 'text-indigo-200' : 'text-slate-400'}">ไมล์ล่าสุด:</span>
+                            <span class="font-bold text-right">${latestOdo.toLocaleString()} กม.</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('total-cars-count').textContent = `${state.vehicles.length} คันในบ้าน`;
+        }
+
+        function getLatestOdometer(vehicleId) {
+            // Find highest odometer between Maintenance Logs and Fuel Logs
+            const mainLogs = state.maintenanceLogs.filter(l => l.vehicleId === vehicleId).map(l => l.odo);
+            const fuelLogs = state.fuelLogs.filter(l => l.vehicleId === vehicleId).map(l => l.odo);
+            const allOdos = [...mainLogs, ...fuelLogs, 0];
+            return Math.max(...allOdos);
+        }
+
+        // Helper to format Date to Thai Buddhist Era representation (Fixed missing function bug)
+        function formatThaiDate(dateStr) {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '-';
+            return `${date.getDate()} ${thaiMonthsShort[date.getMonth()]} ${date.getFullYear() + 543}`;
+        }
+
+        // Calculate Cost/KM of maintenance and health percentage bar
+        function calculateVehicleMetrics(vehicleId) {
+            const logs = state.maintenanceLogs
+                .filter(l => l.vehicleId === vehicleId)
+                .sort((a, b) => a.odo - b.odo);
+
+            const latestOdo = getLatestOdometer(vehicleId);
+            
+            let firstOdo = 0;
+            if (logs.length > 0) {
+                const validFirstOdoLogs = logs.filter(l => l.odo > 0);
+                if (validFirstOdoLogs.length > 0) {
+                    firstOdo = validFirstOdoLogs[0].odo;
+                }
+            }
+
+            const totalDistance = latestOdo - firstOdo;
+            document.getElementById('car-total-distance-label').textContent = `วิ่งไปแล้ว: ${totalDistance.toLocaleString()} กม.`;
+
+            const totalCost = logs
+                .filter(l => l.type === 'Maintenance')
+                .reduce((sum, l) => sum + l.cost, 0);
+
+            const costPerKmLabel = document.getElementById('car-cost-per-km-label');
+            if (totalDistance > 0 && totalCost > 0) {
+                const costPerKm = totalCost / totalDistance;
+                costPerKmLabel.textContent = `฿${costPerKm.toFixed(2)} / กม.`;
+            } else {
+                costPerKmLabel.textContent = `฿0.00 / กม.`;
+            }
+
+            const alertObj = state.alerts.find(a => a.vehicleId === vehicleId && a.status === 'Active');
+            const healthBar = document.getElementById('car-health-bar');
+            const healthPercent = document.getElementById('car-health-percent');
+
+            if (alertObj) {
+                const totalTargetKm = alertObj.targetKm;
+                const baseKm = alertObj.lastUpdated ? getLatestOdometerAtDate(vehicleId, alertObj.lastUpdated) : firstOdo;
+                
+                const range = totalTargetKm - baseKm;
+                const runSinceLastAlertSet = latestOdo - baseKm;
+
+                let safetyPct = 100;
+                if (range > 0) {
+                    safetyPct = Math.max(0, Math.min(100, 100 - ((runSinceLastAlertSet / range) * 100)));
+                }
+
+                healthPercent.textContent = `${safetyPct.toFixed(0)}%`;
+                healthBar.style.width = `${safetyPct}%`;
+                
+                if (safetyPct < 20) {
+                    healthBar.className = "bg-gradient-to-r from-rose-500 to-rose-600 h-1.5 rounded-full transition-all duration-500";
+                    healthPercent.className = "text-rose-600 font-extrabold";
+                } else if (safetyPct < 50) {
+                    healthBar.className = "bg-gradient-to-r from-amber-400 to-amber-500 h-1.5 rounded-full transition-all duration-500";
+                    healthPercent.className = "text-amber-500 font-extrabold";
+                } else {
+                    healthBar.className = "bg-gradient-to-r from-emerald-400 to-indigo-600 h-1.5 rounded-full transition-all duration-500";
+                    healthPercent.className = "text-indigo-600 font-extrabold";
+                }
+            } else {
+                healthPercent.textContent = "100%";
+                healthBar.style.width = "100%";
+                healthBar.className = "bg-slate-200 h-1.5 rounded-full";
+                healthPercent.className = "text-slate-400 font-bold";
+            }
+        }
+
+        function getLatestOdometerAtDate(vehicleId, dateStr) {
+            const logsBeforeDate = state.maintenanceLogs
+                .filter(l => l.vehicleId === vehicleId && l.date <= dateStr)
+                .sort((a, b) => b.odo - a.odo);
+            return logsBeforeDate.length > 0 ? logsBeforeDate[0].odo : 0;
+        }
+
+        function selectVehicle(id) {
+            state.selectedVehicleId = id;
+            renderVehiclesCarousel();
+            
+            const v = state.vehicles.find(v => v.id === id);
+            if (!v) return;
+
+            // Load values for selected tab
+            const activeTab = document.querySelector('.tab-content:not(.hidden)').id;
+
+            if (activeTab === 'tab-dashboard') {
+                const latestOdo = getLatestOdometer(id);
+                document.getElementById('current-odometer-val').textContent = latestOdo.toLocaleString();
+
+                const latestLog = state.maintenanceLogs
+                    .filter(l => l.vehicleId === id)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                
+                document.getElementById('odometer-updated-date').textContent = latestLog 
+                    ? `อัปเดตล่าสุดเมื่อ: ${formatThaiDate(latestLog.date)}` 
+                    : 'อัปเดตล่าสุด: ยังไม่เคยอัปเดต';
+
+                const alertObj = state.alerts.find(a => a.vehicleId === id && a.status === 'Active');
+                const targetKmSpan = document.getElementById('target-odometer-val');
+                const targetTimeSpan = document.getElementById('target-time-val');
+                const statusBadge = document.getElementById('vehicle-status-badge');
+
+                if (alertObj) {
+                    targetKmSpan.innerHTML = `ตรวจระยะรอบต่อไป: <span class="text-indigo-700 font-extrabold">${alertObj.targetKm.toLocaleString()} กม.</span>`;
+                    targetTimeSpan.innerHTML = `<i class="fa-solid fa-clock"></i> เตือนล่วงหน้า: ${formatThaiDate(alertObj.targetDate)}`;
+                    
+                    const kmDifference = alertObj.targetKm - latestOdo;
+                    const daysRemaining = Math.ceil((new Date(alertObj.targetDate) - new Date()) / (1000 * 60 * 60 * 24));
+
+                    if (kmDifference <= 1000 || daysRemaining <= 15) {
+                        statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 flex items-center gap-1 urgent-alert";
+                        statusBadge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-rose-600 animate-ping"></span> ถึงกำหนดซ่อมบำรุง`;
+                    } else {
+                        statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1";
+                        statusBadge.innerHTML = `<i class="fa-solid fa-check"></i> ระยะทางปกติ`;
+                    }
+                } else {
+                    targetKmSpan.innerHTML = `<span class="text-slate-400">ยังไม่ได้รับการตั้งการเตือน</span>`;
+                    targetTimeSpan.innerHTML = `<i class="fa-solid fa-circle-info"></i> ปลอดภัย`;
+                    statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 flex items-center gap-1";
+                    statusBadge.innerHTML = `<i class="fa-solid fa-minus"></i> ไม่มีแผนตั้งรับ`;
+                }
+
+                calculateVehicleMetrics(id);
+                renderLogsHistory(id);
+            } else if (activeTab === 'tab-fuelio') {
+                renderFuelLogs();
+            }
+        }
+
+        // Render maintenance logs inside first page tab
+        function renderLogsHistory(vehicleId, filterKeyword = '') {
+            const container = document.getElementById('maintenance-history-logs');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let logs = state.maintenanceLogs
+                .filter(l => l.vehicleId === vehicleId)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filterKeyword.trim() !== '') {
+                const kw = filterKeyword.toLowerCase().trim();
+                logs = logs.filter(l => {
+                    const shopMatch = l.shop.toLowerCase().includes(kw);
+                    const catObj = state.categories.find(c => c.id === l.category);
+                    const catMatch = catObj && catObj.name.toLowerCase().includes(kw);
+                    const typeMatch = l.type.toLowerCase().includes(kw);
+                    return shopMatch || catMatch || typeMatch;
+                });
+            }
+
+            if (logs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
+                        <i class="fa-solid fa-magnifying-glass text-2xl mb-2 text-slate-300 block"></i>
+                        ไม่พบประวัติการซ่อมบำรุงในขณะนี้
+                    </div>
+                `;
+                return;
+            }
+
+            logs.forEach(l => {
+                const isMaintenance = l.type === 'Maintenance';
+                const catObj = isMaintenance ? state.categories.find(c => c.id === l.category) : null;
+                const catName = catObj ? catObj.name : 'ไม่ได้จัดหมวดหมู่';
+
+                container.innerHTML += `
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm hover:shadow transition-all relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <div class="space-y-1">
+                                <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                                    <span class="px-2 py-0.5 rounded text-[8px] font-extrabold tracking-wide ${
+                                        isMaintenance ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700'
+                                    }">
+                                        ${isMaintenance ? catName : 'อัปเดตระยะสะสม'}
+                                    </span>
+                                    <span class="text-[9px] font-bold text-slate-400 font-mono">${formatThaiDate(l.date)}</span>
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-800 pt-0.5">${isMaintenance ? l.shop : 'อัปเดตเลขไมล์เปล่า (ไม่มีงานซ่อม)'}</h4>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-sm font-extrabold ${isMaintenance ? 'text-indigo-600' : 'text-slate-400'} font-mono">
+                                    ${isMaintenance ? '฿' + l.cost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}
+                                </span>
+                                <div class="text-[9px] text-slate-400 font-bold font-mono">เลขไมล์: ${l.odo.toLocaleString()} กม.</div>
+                            </div>
+                        </div>
+
+                        ${isMaintenance && (l.alertKm > 0 || l.alertMonth > 0) ? `
+                        <div class="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-indigo-950 font-bold">
+                            ${l.alertKm > 0 ? `<span><i class="fa-solid fa-road text-indigo-400"></i> เตือนถัดไป: +${l.alertKm.toLocaleString()} กม.</span>` : ''}
+                            ${l.alertMonth > 0 ? `<span><i class="fa-solid fa-calendar-check text-indigo-400"></i> เตือนถัดไป: +${l.alertMonth} เดือน</span>` : ''}
+                        </div>
+                        ` : ''}
+
+                        ${l.receipt ? `
+                        <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
+                            <div class="flex items-center gap-1">
+                                ${l.receiptBase64 ? 
+                                    `<img src="${l.receiptBase64}" class="w-6 h-6 object-cover rounded border border-slate-200 cursor-pointer" onclick="viewFullReceipt('${l.receiptBase64}', '${l.receipt}')">` : 
+                                    `<i class="fa-solid fa-receipt text-indigo-500"></i>`
+                                }
+                                <span class="text-[9px] text-emerald-700 font-bold">ใบเสร็จแนบแล้ว</span>
+                            </div>
+                            <a href="${l.fileLink}" target="_blank" class="text-[9px] font-bold text-indigo-600 hover:underline"><i class="fa-solid fa-external-link"></i> ตรวจ Folder</a>
+                        </div>
+                        ` : ''}
+
+                        <button onclick="openEditLogModal('${l.id}')" class="absolute top-2 right-2 text-slate-300 hover:text-indigo-600 p-1">
+                            <i class="fa-solid fa-ellipsis-vertical text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        // Search Filter for History (debounced 300ms)
+        function filterLogsList() {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(filterLogsListNow, 300);
+        }
+
+        function filterLogsListNow() {
+            const val = document.getElementById('log-search-input').value;
+            const clearBtn = document.getElementById('clear-search-btn');
+            if (val.trim() !== '') {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            renderLogsHistory(state.selectedVehicleId, val);
+        }
+
+        function clearSearch() {
+            document.getElementById('log-search-input').value = '';
+            document.getElementById('clear-search-btn').classList.add('hidden');
+            renderLogsHistory(state.selectedVehicleId);
+        }
+
+        // FUELIO LOGIC RENDER (Rule: สถิติสิ้นเปลืองและค่าน้ำมันเฉลี่ยรายคัน)
+        function renderFuelLogs() {
+            const container = document.getElementById('fuel-logs-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const vehicleId = state.selectedVehicleId;
+            const logs = state.fuelLogs
+                .filter(l => l.vehicleId === vehicleId)
+                .sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort chronologically to compute consumption
+
+            let totalCostSum = 0;
+            let totalLitersSum = 0;
+            let efficiencySum = 0;
+            let efficiencyCount = 0;
+
+            // Compute consumption step-by-step
+            for (let i = 0; i < logs.length; i++) {
+                const current = logs[i];
+                totalCostSum += current.totalCost;
+                totalLitersSum += current.liters;
+
+                let calculatedEfficiency = null; // Km / Liter
+                let costPerKm = null; // Baht / Km
+
+                // We can calculate consumption only if previous full-tank log exists (Standard Fuelio logic)
+                if (i > 0 && current.fullTank && logs[i-1].fullTank) {
+                    const distance = current.odo - logs[i-1].odo;
+                    if (distance > 0) {
+                        calculatedEfficiency = distance / current.liters;
+                        costPerKm = current.totalCost / distance;
+
+                        efficiencySum += calculatedEfficiency;
+                        efficiencyCount++;
+
+                        current.calculatedEfficiency = calculatedEfficiency;
+                        current.costPerKm = costPerKm;
+                    }
+                }
+            }
+
+            // Update UI Summary Header Cards
+            const avgEfficiencyEl = document.getElementById('fuel-avg-efficiency');
+            const avgCostKmEl = document.getElementById('fuel-avg-cost-km');
+            const lastPriceLiterEl = document.getElementById('fuel-last-price-liter');
+            const totalLitersEl = document.getElementById('fuel-total-liters');
+            const totalSpendEl = document.getElementById('fuel-total-spend');
+
+            if (efficiencyCount > 0) {
+                const avgEffVal = efficiencySum / efficiencyCount;
+                avgEfficiencyEl.textContent = avgEffVal.toFixed(2);
+                
+                // Average cost per kilometer
+                const totalCalculatedCost = logs.slice(1).reduce((sum, l) => sum + (l.costPerKm ? l.totalCost : 0), 0);
+                const totalCalculatedDistance = logs.slice(1).reduce((sum, l, idx) => {
+                    return sum + (l.costPerKm ? (l.odo - logs[idx].odo) : 0);
+                }, 0);
+                avgCostKmEl.textContent = totalCalculatedDistance > 0 ? (totalCalculatedCost / totalCalculatedDistance).toFixed(2) : '-.--';
+            } else {
+                avgEfficiencyEl.textContent = '-.--';
+                avgCostKmEl.textContent = '-.--';
+            }
+
+            if (logs.length > 0) {
+                lastPriceLiterEl.textContent = logs[logs.length-1].pricePerLiter.toFixed(2);
+            } else {
+                lastPriceLiterEl.textContent = '-.--';
+            }
+
+            totalLitersEl.textContent = `${totalLitersSum.toLocaleString(undefined, {maximumFractionDigits: 1})} ลิตร`;
+            totalSpendEl.textContent = `฿${totalCostSum.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            // Render fuel logs items (Newest on top)
+            const reversedLogs = [...logs].reverse();
+            if (reversedLogs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
+                        <i class="fa-solid fa-gas-pump text-2xl mb-2 text-slate-300 block"></i>
+                        ยังไม่มีบันทึกการเติมเชื้อเพลิงของรถคันนี้
+                    </div>
+                `;
+                return;
+            }
+
+            reversedLogs.forEach(l => {
+                const hasEfficiency = l.calculatedEfficiency !== undefined && l.calculatedEfficiency !== null;
+                const fuelType = l.fuelType || 'oil'; // default is oil
+                
+                let efficiencyClass = "bg-slate-100 text-slate-600";
+                if (hasEfficiency) {
+                    if (l.calculatedEfficiency > 15) {
+                        efficiencyClass = "bg-emerald-50 text-emerald-800 border border-emerald-100";
+                    } else if (l.calculatedEfficiency > 11) {
+                        efficiencyClass = "bg-amber-50 text-amber-800 border border-amber-100";
+                    } else {
+                        efficiencyClass = "bg-rose-50 text-rose-800 border border-rose-100";
+                    }
+                }
+
+                // Render specific badges for fuel types
+                const fuelTypeBadge = fuelType === 'gas'
+                    ? `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[8px] font-black flex items-center gap-1"><i class="fa-solid fa-fire-flame-simple"></i> แก๊ส GAS</span>`
+                    : `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[8px] font-black flex items-center gap-1"><i class="fa-solid fa-gas-pump"></i> น้ำมัน OIL</span>`;
+
+                container.innerHTML += `
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm hover:shadow transition-all relative">
+                        <div class="flex justify-between items-start">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    ${fuelTypeBadge}
+                                    <span class="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded text-[8px] font-bold">${l.liters.toFixed(1)} ลิตร</span>
+                                    <span class="text-[9px] font-bold text-slate-400 font-mono">${formatThaiDate(l.date)}</span>
+                                    ${l.fullTank ? `<span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.2 rounded text-[8px] font-black">เต็มถัง</span>` : ''}
+                                </div>
+                                <div class="text-xs font-bold text-slate-700 pt-0.5">ค่ายอดเติม: ฿${l.totalCost.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                            </div>
+                            <div class="text-right text-xs">
+                                <span class="font-extrabold text-slate-800 block">${l.pricePerLiter.toFixed(2)} บาท/ลิตร</span>
+                                <span class="text-[9px] text-slate-400 font-bold font-mono">ไมล์สะสม: ${l.odo.toLocaleString()} กม.</span>
+                            </div>
+                        </div>
+
+                        <!-- Efficiency stats badge -->
+                        ${hasEfficiency ? `
+                        <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[9px] font-bold">
+                            <span class="px-2 py-1 rounded-lg ${efficiencyClass}">
+                                <i class="fa-solid fa-seedling mr-1"></i> อัตราประหยัด: ${l.calculatedEfficiency.toFixed(2)} กม./ลิตร
+                            </span>
+                            <span class="text-slate-500">
+                                <i class="fa-solid fa-coins mr-1"></i> เฉลี่ย: ${l.costPerKm.toFixed(2)} บาท/กม.
+                            </span>
+                        </div>
+                        ` : `
+                        <div class="mt-2.5 pt-2 border-t border-slate-100 text-[9px] text-slate-400 font-bold">
+                            💡 เติมเต็มถังประเภทเดียวกันครั้งหน้าเพื่อเริ่มคำนวณความประหยัดสะสม
+                        </div>
+                        `}
+
+                        <!-- Quick delete action inside Fuelio logs -->
+                        <button onclick="deleteFuelLog('${l.id}')" class="absolute top-2 right-2 text-slate-300 hover:text-rose-600 transition-all">
+                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        // View receipt photo
+        function viewFullReceipt(base64, filename) {
+            const w = window.open();
+            if (w) {
+                w.document.write(`<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#0f172a;"><img src="${base64}" style="max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);" alt="${filename}"></div>`);
+            } else {
+                showToast("โปรดอนุญาตให้เปิด Pop-up เพื่อดูรูปใบเสร็จขนาดใหญ่", "warning");
+            }
+        }
+
+        // Image file reading inside Web App
+        function previewReceiptFile(event) {
+            const input = event.target;
+            const preview = document.getElementById('receipt-upload-preview');
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                
+                preview.innerHTML = `
+                    <div class="flex items-center space-x-2 text-indigo-600 text-[10px] font-bold">
+                        <i class="fa-solid fa-circle-notch animate-spin text-lg"></i>
+                        <span>กำลังเตรียมไฟล์จำลองอัปโหลดเข้า Drive...</span>
+                    </div>
+                `;
+
+                reader.onload = function(e) {
+                    currentUploadedReceiptBase64 = e.target.result;
+                    setTimeout(() => {
+                        preview.innerHTML = `
+                            <div class="text-emerald-600 text-[10px] font-bold flex flex-col items-center justify-center">
+                                <div class="flex items-center gap-1.5 mb-1 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+                                    <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                                    <span>แนบเสร็จสิ้น: ${file.name.substring(0, 15)}...</span>
+                                </div>
+                            </div>
+                        `;
+                    }, 800);
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openOdometerModal() {
+            document.getElementById('odo-vehicle-select').value = state.selectedVehicleId;
+            document.getElementById('odo-mileage-input').value = getLatestOdometer(state.selectedVehicleId) || '';
+            document.getElementById('odometer-modal').classList.remove('hidden');
+        }
+
+        function openRepairModal() {
+            document.getElementById('rep-vehicle-select').value = state.selectedVehicleId;
+            updateOdoPlaceholder(state.selectedVehicleId);
+            
+            // Auto-fill active calendar with current date (June 6, 2026)
+            calendarTargetField = 'maintenance';
+            calendarSelectedDate = new Date();
+            calendarViewMonth = calendarSelectedDate.getMonth();
+            calendarViewYear = calendarSelectedDate.getFullYear();
+            syncCalendarDropdownSelectors();
+            selectCalendarDate(calendarSelectedDate.getDate()); // Force populate & sync the display field
+
+            document.getElementById('rep-category-other-container').classList.add('hidden');
+            document.getElementById('rep-category-other').value = '';
+            document.getElementById('rep-category-other').required = false;
+            document.getElementById('repair-modal').classList.remove('hidden');
+        }
+
+        function openFuelModal() {
+            const fuelSelect = document.getElementById('fuel-vehicle-select');
+            fuelSelect.value = state.selectedVehicleId;
+            
+            const lastOdo = getLatestOdometer(state.selectedVehicleId);
+            document.getElementById('fuel-odo').value = lastOdo || '';
+            document.getElementById('fuel-liters').value = '';
+            document.getElementById('fuel-price-liter').value = '';
+            document.getElementById('fuel-total-cost').value = '';
+
+            // Auto-fill active calendar with current date (June 6, 2026)
+            calendarTargetField = 'fuel';
+            calendarSelectedDate = new Date();
+            calendarViewMonth = calendarSelectedDate.getMonth();
+            calendarViewYear = calendarSelectedDate.getFullYear();
+            syncCalendarDropdownSelectors();
+            selectCalendarDate(calendarSelectedDate.getDate()); // Force populate & sync the display field
+
+            // Reset fuel type selection UI state to default (oil)
+            updateFuelTypeSelection('oil');
+
+            document.getElementById('fuel-modal').classList.remove('hidden');
+        }
+
+        // Custom Fuel type switcher helper function
+        function updateFuelTypeSelection(type) {
+            document.getElementById('fuel-type-input').value = type;
+            const oilLabel = document.getElementById('label-fuel-type-oil');
+            const gasLabel = document.getElementById('label-fuel-type-gas');
+
+            if (type === 'oil') {
+                oilLabel.className = "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg cursor-pointer text-xs font-bold transition-all bg-emerald-600 text-white shadow-md";
+                gasLabel.className = "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg cursor-pointer text-xs font-bold transition-all text-slate-500 hover:bg-slate-200/60";
+            } else {
+                oilLabel.className = "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg cursor-pointer text-xs font-bold transition-all text-slate-500 hover:bg-slate-200/60";
+                gasLabel.className = "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg cursor-pointer text-xs font-bold transition-all bg-amber-600 text-white shadow-md";
+            }
+        }
+
+        function updateOdoPlaceholder(vehicleId) {
+            const lastOdo = getLatestOdometer(vehicleId);
+            document.getElementById('rep-mileage').placeholder = `ระยะสะสมล่าสุด: ${lastOdo.toLocaleString()} กม.`;
+            document.getElementById('rep-mileage').value = lastOdo || '';
+        }
+
+        // Modal closer helper
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById('custom-calendar-dropdown').classList.add('hidden');
+        }
+
+        function toggleAlertInputs() {
+            const kmChecked = document.getElementById('alert-km-enable').checked;
+            const monthChecked = document.getElementById('alert-month-enable').checked;
+
+            document.getElementById('alert-km-offset').disabled = !kmChecked;
+            document.getElementById('alert-month-offset').disabled = !monthChecked;
+        }
+
+        // Calculate Cost sum for Fuel Logging dynamically
+        function calculateFuelCostSum() {
+            const liters = parseFloat(document.getElementById('fuel-liters').value) || 0;
+            const price = parseFloat(document.getElementById('fuel-price-liter').value) || 0;
+            const sumInput = document.getElementById('fuel-total-cost');
+            
+            if (liters > 0 && price > 0) {
+                sumInput.value = (liters * price).toFixed(2);
+            } else {
+                sumInput.value = '';
+            }
+        }
+
+        // REUSABLE CUSTOM THAI CALENDAR INTERACTIVE POPOVER
+        function initCustomCalendar() {
+            renderCustomCalendar();
+        }
+
+        function toggleCustomCalendar(type) {
+            calendarTargetField = type; // Either 'maintenance' or 'fuel'
+            const triggerBtn = type === 'maintenance' 
+                ? document.getElementById('calendar-trigger-btn') 
+                : document.getElementById('fuel-calendar-trigger-btn');
+
+            const dropdown = document.getElementById('custom-calendar-dropdown');
+            
+            // Adjust position dynamic popover relative to target button
+            const rect = triggerBtn.getBoundingClientRect();
+            const parentRect = triggerBtn.offsetParent.getBoundingClientRect();
+
+            dropdown.style.left = `${rect.left - parentRect.left}px`;
+            dropdown.style.top = `${rect.bottom - parentRect.top + 8}px`;
+
+            dropdown.classList.toggle('hidden');
+            syncCalendarDropdownSelectors();
+        }
+
+        function toggleCustomCalendarDropdownDirectly() {
+            document.getElementById('custom-calendar-dropdown').classList.add('hidden');
+        }
+
+        // Calendar Month/Year shifting controls
+        function prevCalendarMonth() {
+            calendarViewMonth--;
+            if (calendarViewMonth < 0) {
+                calendarViewMonth = 11;
+                calendarViewYear--;
+            }
+            syncCalendarDropdownSelectors();
+            renderCustomCalendar();
+        }
+
+        // Calendar Month/Year shifting controls
+        function nextCalendarMonth() {
+            calendarViewMonth++;
+            if (calendarViewMonth > 11) {
+                calendarViewMonth = 0;
+                calendarViewYear++;
+            }
+            syncCalendarDropdownSelectors();
+            renderCustomCalendar();
+        }
+
+        function setCalendarToToday() {
+            // Static Time context representation (June 6, 2026)
+            calendarSelectedDate = new Date(2026, 5, 6);
+            calendarViewMonth = 5; 
+            calendarViewYear = 2026;
+            
+            calendarSelectedDate = new Date();
+            calendarViewMonth = calendarSelectedDate.getMonth();
+            calendarViewYear = calendarSelectedDate.getFullYear();
+            syncCalendarDropdownSelectors();
+            selectCalendarDate(calendarSelectedDate.getDate());
+        }
+
+        // Show LINE API logs modal
+        function showLineLogs() {
+            const logConsole = document.getElementById('line-api-console-log');
+            if (logConsole) {
+                logConsole.innerHTML = '';
+                state.lineLogs.forEach(log => {
+                    logConsole.innerHTML += `<div class="border-b border-slate-900 pb-1 font-mono">${log}</div>`;
+                });
+            }
+            document.getElementById('line-logs-modal').classList.remove('hidden');
+        }
+
+        function populateCalendarDropdownSelectors() {
+            const monthSel = document.getElementById('calendar-month-select');
+            const yearSel = document.getElementById('calendar-year-select');
+
+            if (!monthSel || !yearSel) return;
+
+            monthSel.innerHTML = '';
+            yearSel.innerHTML = '';
+
+            thaiMonthsFull.forEach((m, idx) => {
+                monthSel.innerHTML += `<option value="${idx}">${m}</option>`;
+            });
+
+            for (let yr = 2017; yr <= 2035; yr++) {
+                yearSel.innerHTML += `<option value="${yr}">พ.ศ. ${yr + 543}</option>`;
+            }
+            syncCalendarDropdownSelectors();
+        }
+
+        // Sync local component state calendar dropdown
+        function syncCalendarDropdownSelectors() {
+            const monthSel = document.getElementById('calendar-month-select');
+            const yearSel = document.getElementById('calendar-year-select');
+
+            if (monthSel) monthSel.value = calendarViewMonth;
+            if (yearSel) yearSel.value = calendarViewYear;
+        }
+
+        function handleCalendarSelectChange() {
+            const monthSel = document.getElementById('calendar-month-select');
+            const yearSel = document.getElementById('calendar-year-select');
+
+            if (monthSel) calendarViewMonth = parseInt(monthSel.value);
+            if (yearSel) calendarViewYear = parseInt(yearSel.value);
+
+            renderCustomCalendar();
+        }
+
+        function selectCalendarDate(day) {
+            calendarSelectedDate = new Date(calendarViewYear, calendarViewMonth, day);
+            
+            const offsetDate = new Date(calendarSelectedDate.getTime() - (calendarSelectedDate.getTimezoneOffset() * 60000));
+            const formattedIso = offsetDate.toISOString().split('T')[0];
+
+            const displayThaiStr = `${day} ${thaiMonthsShort[calendarViewMonth]} ${calendarViewYear + 543}`;
+
+            // Distribute value into target fields
+            if (calendarTargetField === 'maintenance') {
+                document.getElementById('rep-date').value = formattedIso;
+                document.getElementById('calendar-trigger-text').textContent = displayThaiStr;
+            } else {
+                document.getElementById('fuel-date').value = formattedIso;
+                document.getElementById('fuel-calendar-trigger-text').textContent = displayThaiStr;
+            }
+
+            renderCustomCalendar();
+            document.getElementById('custom-calendar-dropdown').classList.add('hidden');
+        }
+
+        function renderCustomCalendar() {
+            const gridEl = document.getElementById('calendar-days-grid');
+            if (!gridEl) return;
+
+            gridEl.innerHTML = '';
+
+            const firstDayIndex = new Date(calendarViewYear, calendarViewMonth, 1).getDay();
+            const totalDays = new Date(calendarViewYear, calendarViewMonth + 1, 0).getDate();
+            const totalDaysPrevMonth = new Date(calendarViewYear, calendarViewMonth, 0).getDate();
+
+            for (let i = firstDayIndex; i > 0; i--) {
+                const prevDay = totalDaysPrevMonth - i + 1;
+                gridEl.innerHTML += `<div class="p-2 text-[11px] text-slate-300 font-medium text-center pointer-events-none">${prevDay}</div>`;
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const isSelected = calendarSelectedDate.getDate() === day && 
+                                   calendarSelectedDate.getMonth() === calendarViewMonth && 
+                                   calendarSelectedDate.getFullYear() === calendarViewYear;
+                
+                const today = new Date();
+                const isToday = day === today.getDate() && calendarViewMonth === today.getMonth() && calendarViewYear === today.getFullYear();
+
+                let dayClass = "p-2 text-[11px] font-bold text-center rounded-xl cursor-pointer hover:bg-indigo-50 hover:text-indigo-600 transition-all ";
+                
+                if (isSelected) {
+                    dayClass += "bg-indigo-600 text-white hover:bg-indigo-700 hover:text-white shadow-md shadow-indigo-100";
+                } else if (isToday) {
+                    dayClass += "bg-emerald-50 text-emerald-700 border border-emerald-300/60";
+                } else {
+                    dayClass += "text-slate-700";
+                }
+
+                gridEl.innerHTML += `<div onclick="selectCalendarDate(${day})" class="${dayClass}">${day}</div>`;
+            }
+
+            const totalRendered = firstDayIndex + totalDays;
+            const remainingGridSpaces = (7 - (totalRendered % 7)) % 7;
+            for (let i = 1; i <= remainingGridSpaces; i++) {
+                gridEl.innerHTML += `<div class="p-2 text-[11px] text-slate-300 font-medium text-center pointer-events-none">${i}</div>`;
+            }
+        }
+
+        // Action: Save mileage without repair logs (Odometer only)
+        function saveOdometerOnly(e) {
+            e.preventDefault();
+            const vId = document.getElementById('odo-vehicle-select').value;
+            const odoVal = parseInt(document.getElementById('odo-mileage-input').value);
+
+            const lastOdo = getLatestOdometer(vId);
+            if (odoVal < lastOdo) {
+                showToast("กิโลเมตรปัจจุบันน้อยกว่าครั้งล่าสุด!", "error");
+                return;
+            }
+
+            const newLog = {
+                id: `LOG-${Date.now()}`,
+                vehicleId: vId,
+                odo: odoVal,
+                shop: "-",
+                category: "-",
+                cost: 0,
+                receipt: "",
+                fileLink: "",
+                alertKm: 0,
+                alertMonth: 0,
+                date: new Date().toISOString().split('T')[0],
+                type: "Odometer_Update"
+            };
+
+            state.maintenanceLogs.push(newLog);
+            saveToLocalStorage();
+            closeModal('odometer-modal');
+            showToast("อัปเดตระยะกิโลเมตรเรียบร้อยแล้ว");
+            
+            selectVehicle(vId);
+            renderReports();
+            checkLineAlerts(true); 
+        }
+
+        // Action: Save maintenance log
+        function saveMaintenanceLog(e) {
+            e.preventDefault();
+            const vId = document.getElementById('rep-vehicle-select').value;
+            const odoVal = parseInt(document.getElementById('rep-mileage').value);
+            let category = document.getElementById('rep-category').value;
+            const cost = parseFloat(document.getElementById('rep-cost').value);
+            const shop = document.getElementById('rep-shop').value;
+            const receiptInput = document.getElementById('rep-receipt');
+            const repairDate = document.getElementById('rep-date').value || new Date().toISOString().split('T')[0];
+
+            const lastOdo = getLatestOdometer(vId);
+            if (odoVal < lastOdo) {
+                showToast("เลขไมล์ปัจจุบันต่ำกว่าไมล์ครั้งล่าสุด!", "error");
+                return;
+            }
+
+            if (category === 'OTHER') {
+                const otherCategoryName = document.getElementById('rep-category-other').value.trim();
+                if (!otherCategoryName) {
+                    showToast("กรุณาระบุประเภทงานซ่อมอื่นๆ", "error");
+                    return;
+                }
+
+                let matchedCat = state.categories.find(c => c.name.toLowerCase() === otherCategoryName.toLowerCase());
+                if (!matchedCat) {
+                    const newCatId = `CAT-${Date.now()}`;
+                    matchedCat = { id: newCatId, name: otherCategoryName };
+                    state.categories.push(matchedCat);
+                    populateDropdowns();
+                }
+                category = matchedCat.id;
+            }
+
+            let receiptName = "";
+            let fileLink = "";
+            if (receiptInput.files && receiptInput.files[0]) {
+                receiptName = receiptInput.files[0].name;
+                fileLink = "https://drive.google.com/drive/folders/1O_L7QryZNzdnzzisWI76bzW269RzhRyd";
+                state.lineLogs.push(`📁 [${new Date().toLocaleTimeString()}] สำเร็จ: ส่งภาพหลักฐาน "${receiptName}" เข้าโฟลเดอร์ Google Drive`);
+            }
+
+            const alertKmEnabled = document.getElementById('alert-km-enable').checked;
+            const alertMonthEnabled = document.getElementById('alert-month-enable').checked;
+
+            const alertKm = alertKmEnabled ? parseInt(document.getElementById('alert-km-offset').value) : 0;
+            const alertMonth = alertMonthEnabled ? parseInt(document.getElementById('alert-month-offset').value) : 0;
+
+            const logId = `LOG-${Date.now()}`;
+
+            const newLog = {
+                id: logId,
+                vehicleId: vId,
+                odo: odoVal,
+                shop: shop,
+                category: category,
+                cost: cost,
+                receipt: receiptName,
+                receiptBase64: currentUploadedReceiptBase64,
+                fileLink: fileLink,
+                alertKm: alertKm,
+                alertMonth: alertMonth,
+                date: repairDate,
+                type: "Maintenance"
+            };
+
+            state.maintenanceLogs.push(newLog);
+
+            if (alertKmEnabled || alertMonthEnabled) {
+                const targetKm = alertKmEnabled ? (odoVal + alertKm) : 99999999;
+                let targetDateStr = "2099-12-31";
+                if (alertMonthEnabled) {
+                    const d = new Date(repairDate);
+                    d.setMonth(d.getMonth() + alertMonth);
+                    targetDateStr = d.toISOString().split('T')[0];
+                }
+
+                state.alerts = state.alerts.filter(a => a.vehicleId !== vId);
+                state.alerts.push({
+                    vehicleId: vId,
+                    targetKm: targetKm,
+                    targetDate: targetDateStr,
+                    status: 'Active',
+                    lastUpdated: repairDate
+                });
+
+                state.lineLogs.push(`⏰ [${new Date().toLocaleTimeString()}] ตั้งค่ารอบตรวจสอบของคัน ${vId}: เป้าหมาย ${targetKm.toLocaleString()} กม. หรือ ${targetDateStr}`);
+            }
+
+            saveToLocalStorage();
+            closeModal('repair-modal');
+            showToast("บันทึกการซ่อมบำรุงเรียบร้อย");
+            
+            document.getElementById('repair-form').reset();
+            currentUploadedReceiptBase64 = "";
+            document.getElementById('receipt-upload-preview').innerHTML = `
+                <i class="fa-solid fa-cloud-arrow-up text-lg text-indigo-500 mb-1"></i>
+                <div class="text-[9px] font-bold">แตะเพื่อถ่ายภาพหรือเลือกใบเสร็จรับเงิน</div>
+            `;
+            toggleAlertInputs();
+            setDefaultDates(); // Reset display dates to default state
+
+            selectVehicle(vId);
+            renderReports();
+        }
+
+        // Action: Save Fuel Logs Fill in (Rule: ค่าน้ำมัน อัตราสิ้นเปลือง Fuelio)
+        function saveFuelLog(e) {
+            e.preventDefault();
+            const vId = document.getElementById('fuel-vehicle-select').value;
+            const odo = parseInt(document.getElementById('fuel-odo').value);
+            const liters = parseFloat(document.getElementById('fuel-liters').value);
+            const price = parseFloat(document.getElementById('fuel-price-liter').value);
+            const totalCost = parseFloat(document.getElementById('fuel-total-cost').value);
+            const fullTank = document.getElementById('fuel-full-tank').checked;
+            const fuelDate = document.getElementById('fuel-date').value || new Date().toISOString().split('T')[0];
+            const fuelType = document.getElementById('fuel-type-input').value; // 'oil' or 'gas'
+
+            const lastOdo = getLatestOdometer(vId);
+            if (odo < lastOdo) {
+                showToast("ระยะไมล์ปัจจุบันน้อยกว่าระยะล่าสุดของรถ!", "error");
+                return;
+            }
+
+            const newFuelEntry = {
+                id: `FUEL-${Date.now()}`,
+                vehicleId: vId,
+                odo: odo,
+                date: fuelDate,
+                liters: liters,
+                pricePerLiter: price,
+                totalCost: totalCost,
+                fullTank: fullTank,
+                fuelType: fuelType
+            };
+
+            state.fuelLogs.push(newFuelEntry);
+            saveToLocalStorage();
+            closeModal('fuel-modal');
+            
+            const typeLabelText = fuelType === 'gas' ? 'แก๊ส (GAS)' : 'น้ำมัน';
+            showToast(`บันทึกประวัติการเติม${typeLabelText} เรียบร้อยแล้ว`);
+
+            selectVehicle(vId);
+            renderFuelLogs();
+        }
+
+        // Action: Delete fuel log item
+        function deleteFuelLog(id) {
+            state.fuelLogs = state.fuelLogs.filter(l => l.id !== id);
+            saveToLocalStorage();
+            showToast("ลบบันทึกเติมน้ำมันสำเร็จ", "warning");
+            renderFuelLogs();
+        }
+
+        // Check Line Alerts Simulator
+        function checkLineAlerts(isManual = false) {
+            state.lineLogs.push(`⚡ [${new Date().toLocaleTimeString()}] สแกนระยะซ่อมบำรุง...`);
+            let notificationTriggered = false;
+            let alertedVehicleNames = [];
+
+            state.alerts.forEach(alert => {
+                if (alert.status !== 'Active') return;
+
+                const v = state.vehicles.find(v => v.id === alert.vehicleId);
+                if (!v) return;
+
+                const currentOdo = getLatestOdometer(v.id);
+                const currentDate = new Date();
+                const targetDate = new Date(alert.targetDate);
+
+                const isKmReached = currentOdo >= alert.targetKm;
+                const isTimeReached = currentDate >= targetDate;
+
+                if (isKmReached || isTimeReached) {
+                    const reason = isKmReached && isTimeReached ? "ครบกำหนดทั้งระยะทางและเวลา" 
+                        : isKmReached ? `ระยะไมล์สะสมถึงกำหนด (${currentOdo.toLocaleString()} กม.)` 
+                        : `ถึงกำหนดครบเวลาบำรุงรักษาแล้ว (${formatThaiDate(alert.targetDate)})`;
+
+                    state.lineLogs.push(`📢 [${new Date().toLocaleTimeString()}] LINE NOTIFY API: แจ้งเตือนครอบครัวรถ "${v.name}" ครบระยะซ่อมเนื่องจาก ${reason}`);
+                    alertedVehicleNames.push(`🚗 ${v.name}: ${reason}`);
+                    alert.status = 'Notified'; 
+                    notificationTriggered = true;
+                }
+            });
+
+            if (notificationTriggered) {
+                showLineBubble(alertedVehicleNames.join('\n'));
+                showToast("LINE แจ้งเตือนครอบครัวเรียบร้อย!", "warning");
+            } else if (isManual) {
+                showToast("รถทุกคันอยู่ในสภาพปกติและปลอดภัย");
+            }
+            saveToLocalStorage();
+        }
+
+        function showLineBubble(text) {
+            const bubble = document.getElementById('line-notification-bubble');
+            const txt = document.getElementById('line-notification-text');
+            if (txt) txt.innerHTML = text.replace(/\n/g, '<br>');
+            if (bubble) bubble.classList.remove('hidden');
+            setTimeout(() => {
+                if (bubble) bubble.style.transform = "translateY(0)";
+            }, 100);
+        }
+
+        function dismissLineBubble() {
+            const bubble = document.getElementById('line-notification-bubble');
+            if (bubble) bubble.style.transform = "translateY(-100px)";
+            setTimeout(() => {
+                if (bubble) bubble.classList.add('hidden');
+            }, 300);
+        }
+
+        // Render Reports (Annual spending visualization inside tab 1)
+        function renderReports() {
+            const yearFilterEl = document.getElementById('report-year-filter');
+            if (!yearFilterEl) return;
+
+            const targetYear = yearFilterEl.value;
+            const targetVehicle = state.selectedVehicleId;
+            
+            const yearLogs = state.maintenanceLogs.filter(l => {
+                if (l.type !== 'Maintenance') return false;
+                const logYear = new Date(l.date).getFullYear().toString();
+                return logYear === targetYear && l.vehicleId === targetVehicle;
+            });
+
+            const total = yearLogs.reduce((acc, current) => acc + current.cost, 0);
+            document.getElementById('yearly-total-spend').textContent = `฿${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('yearly-repairs-count').textContent = `${yearLogs.length} รายการ`;
+
+            const categorySums = {};
+            state.categories.forEach(cat => {
+                categorySums[cat.id] = 0;
+            });
+
+            yearLogs.forEach(l => {
+                if (categorySums[l.category] !== undefined) {
+                    categorySums[l.category] += l.cost;
+                } else {
+                    categorySums['other'] = (categorySums['other'] || 0) + l.cost;
+                }
+            });
+
+            const barContainer = document.getElementById('chart-bar-container');
+            if (!barContainer) return;
+            barContainer.innerHTML = '';
+
+            const categoriesSorted = Object.keys(categorySums).map(catId => {
+                const catObj = state.categories.find(c => c.id === catId);
+                return {
+                    id: catId,
+                    name: catObj ? catObj.name : 'อื่นๆ',
+                    sum: categorySums[catId]
+                };
+            }).sort((a, b) => b.sum - a.sum);
+
+            categoriesSorted.forEach(cat => {
+                if (cat.sum === 0) return;
+                const pct = total > 0 ? ((cat.sum / total) * 100).toFixed(0) : 0;
+
+                barContainer.innerHTML += `
+                    <div class="space-y-1 text-[11px]">
+                        <div class="flex justify-between text-slate-700 font-bold">
+                            <span>${cat.name}</span>
+                            <span>${pct}% (฿${cat.sum.toLocaleString()})</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (total === 0) {
+                barContainer.innerHTML = `
+                    <div class="text-center py-6 text-slate-400 text-[10px] font-bold bg-slate-50 border border-slate-200 border-dashed rounded-xl">
+                        ไม่พบประวัติการใช้จ่ายในปี พ.ศ. ${parseInt(targetYear) + 543} ของรถคันนี้
+                    </div>
+                `;
+            }
+        }
+
+        // ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมินรหัส 1234)
+        function renderAdminPanelState() {
+            if (state.adminAuthenticated) {
+                document.getElementById('admin-tab-auth-view').classList.add('hidden');
+                document.getElementById('admin-tab-controls').classList.remove('hidden');
+                renderAdminVehicles();
+                renderAdminCategories();
+            } else {
+                document.getElementById('admin-tab-auth-view').classList.remove('hidden');
+                document.getElementById('admin-tab-controls').classList.add('hidden');
+            }
+        }
+
+        function authenticateAdmin() {
+            const pass = document.getElementById('admin-passcode').value;
+            if (pass === '1234') {
+                state.adminAuthenticated = true;
+                showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
+                renderAdminPanelState();
+            } else {
+                showToast("รหัสผ่านไม่ถูกต้อง! ลองใส่ 1234", "error");
+            }
+        }
+
+        function logoutAdmin() {
+            state.adminAuthenticated = false;
+            document.getElementById('admin-passcode').value = '';
+            renderAdminPanelState();
+            showToast("ออกจากระบบแอดมินเรียบร้อย");
+        }
+
+        function switchAdminSubTab(tab) {
+            const btnCars = document.getElementById('btn-admin-tab-cars');
+            const btnCats = document.getElementById('btn-admin-tab-categories');
+            const viewCars = document.getElementById('admin-view-cars');
+            const viewCats = document.getElementById('admin-view-categories');
+
+            if (tab === 'cars') {
+                btnCars.className = "flex-1 py-2 text-center font-bold bg-indigo-50 text-indigo-700";
+                btnCats.className = "flex-1 py-2 text-center font-bold text-slate-400 hover:bg-slate-50";
+                viewCars.classList.remove('hidden');
+                viewCats.classList.add('hidden');
+            } else {
+                btnCats.className = "flex-1 py-2 text-center font-bold bg-indigo-50 text-indigo-700";
+                btnCars.className = "flex-1 py-2 text-center font-bold text-slate-400 hover:bg-slate-50";
+                viewCats.classList.remove('hidden');
+                viewCars.classList.add('hidden');
+            }
+        }
+
+        function renderAdminVehicles() {
+            const list = document.getElementById('admin-vehicles-list');
+            if (!list) return;
+            list.innerHTML = '';
+            
+            state.vehicles.forEach(v => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <div>
+                            <span class="font-extrabold text-slate-800 text-xs">${v.name}</span>
+                            <span class="text-[9px] text-slate-500 block font-bold font-mono">${v.license}</span>
+                        </div>
+                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function addVehicleAdmin(e) {
+            e.preventDefault();
+            const name = document.getElementById('add-car-name').value;
+            const license = document.getElementById('add-car-license').value;
+
+            const newId = `V-00${state.vehicles.length + 1}`;
+            state.vehicles.push({
+                id: newId,
+                name: name,
+                license: license,
+                createdDate: new Date().toISOString().split('T')[0]
+            });
+
+            // Seed logs
+            state.maintenanceLogs.push({
+                id: `LOG-${Date.now()}`,
+                vehicleId: newId,
+                odo: 0,
+                shop: "-",
+                category: "-",
+                cost: 0,
+                receipt: "",
+                fileLink: "",
+                alertKm: 0,
+                alertMonth: 0,
+                date: new Date().toISOString().split('T')[0],
+                type: "Odometer_Update"
+            });
+
+            saveToLocalStorage();
+            document.getElementById('add-car-name').value = '';
+            document.getElementById('add-car-license').value = '';
+            renderAdminVehicles();
+            populateDropdowns();
+            renderVehiclesCarousel();
+            showToast("เพิ่มข้อมูลรถยนต์คันใหม่สำเร็จ");
+        }
+
+        function deleteVehicleAdmin(id) {
+            if (state.vehicles.length <= 1) {
+                showToast("ไม่สามารถลบรถคันสุดท้ายในระบบได้", "error");
+                return;
+            }
+            state.vehicles = state.vehicles.filter(v => v.id !== id);
+            if (state.selectedVehicleId === id) {
+                state.selectedVehicleId = state.vehicles[0].id;
+            }
+            saveToLocalStorage();
+            renderAdminVehicles();
+            populateDropdowns();
+            renderVehiclesCarousel();
+            selectVehicle(state.selectedVehicleId);
+            showToast("ลบรถสำเร็จ");
+        }
+
+        function renderAdminCategories() {
+            const list = document.getElementById('admin-categories-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            state.categories.forEach(c => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <span class="font-extrabold text-slate-800 text-xs">${c.name}</span>
+                        <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function addCategoryAdmin(e) {
+            e.preventDefault();
+            const name = document.getElementById('add-cat-name').value;
+
+            const newId = `CAT-${Date.now()}`;
+            state.categories.push({ id: newId, name: name });
+
+            saveToLocalStorage();
+            document.getElementById('add-cat-name').value = '';
+            renderAdminCategories();
+            populateDropdowns();
+            showToast("เพิ่มประเภทงานบริการสำเร็จ");
+        }
+
+        function deleteCategoryAdmin(id) {
+            if (state.categories.length <= 1) {
+                showToast("จำเป็นต้องเหลือหมวดหมู่ไว้อย่างน้อย 1 ประเภท", "error");
+                return;
+            }
+            state.categories = state.categories.filter(c => c.id !== id);
+            saveToLocalStorage();
+            renderAdminCategories();
+            populateDropdowns();
+            showToast("ลบประเภทเรียบร้อย");
+        }
+
+        // EDIT LOG MODAL IMPLEMENTATION
+        function openEditLogModal(logId) {
+            const log = state.maintenanceLogs.find(l => l.id === logId);
+            if (!log) return;
+
+            document.getElementById('edit-log-id').value = log.id;
+            document.getElementById('edit-log-odo').value = log.odo;
+            document.getElementById('edit-log-shop').value = log.shop === '-' ? '' : log.shop;
+            document.getElementById('edit-log-cost').value = log.cost;
+
+            document.getElementById('edit-log-modal').classList.remove('hidden');
+        }
+
+        // Save edited log entry values
+        function saveEditedLog(e) {
+            e.preventDefault();
+            const logId = document.getElementById('edit-log-id').value;
+            const log = state.maintenanceLogs.find(l => l.id === logId);
+            if (!log) return;
+
+            log.odo = parseInt(document.getElementById('edit-log-odo').value);
+            log.shop = document.getElementById('edit-log-shop').value || '-';
+            log.cost = parseFloat(document.getElementById('edit-log-cost').value);
+
+            saveToLocalStorage();
+            closeModal('edit-log-modal');
+            showToast("แก้ไขข้อมูลการซ่อมบำรุงสำเร็จ");
+            selectVehicle(state.selectedVehicleId);
+            renderReports();
+        }
+
+        // Delete maintenance log
+        function deleteMaintenanceLog() {
+            const logId = document.getElementById('edit-log-id').value;
+            state.maintenanceLogs = state.maintenanceLogs.filter(l => l.id !== logId);
+            saveToLocalStorage();
+            closeModal('edit-log-modal');
+            showToast("ลบรายการออกจากบันทึกสำเร็จ", "warning");
+            selectVehicle(state.selectedVehicleId);
+            renderReports();
+        }
+
+        // Tab routing helper
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            const tabs = ['dashboard', 'fuelio', 'admin'];
+            tabs.forEach(t => {
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    navBtn.className = "flex flex-col items-center justify-center w-16 text-indigo-600 transition-all font-bold";
+                } else {
+                    navBtn.className = "flex flex-col items-center justify-center w-16 text-slate-400 transition-all";
+                }
+            });
+
+            if (tabId === 'dashboard') {
+                selectVehicle(state.selectedVehicleId);
+            } else if (tabId === 'fuelio') {
+                renderFuelLogs();
+            } else if (tabId === 'admin') {
+                renderAdminPanelState();
+            }
+        }
+
+        
+        function exportReportPdf() {
+            const year = document.getElementById('report-year-filter').value;
+            const vehicleId = state.selectedVehicleId;
+            if (!vehicleId) {
+                showToast('กรุณาเลือกรถก่อนส่งออกรายงาน', 'error');
+                return;
+            }
+            const vehicle = state.vehicles.find(v => v.id === vehicleId);
+            if (!vehicle) {
+                showToast('ไม่พบรถ', 'error');
+                return;
+            }
+            const logs = state.maintenanceLogs.filter(l => {
+                if (l.type !== 'Maintenance' || l.vehicleId !== vehicleId) return false;
+                return String(new Date(l.date).getFullYear()) === String(year);
+            });
+            const total = logs.reduce((sum, l) => sum + l.cost, 0);
+            const categorySums = {};
+            logs.forEach(l => {
+                const cat = state.categories.find(c => c.id === l.category);
+                const name = cat ? cat.name : 'อื่นๆ';
+                categorySums[name] = (categorySums[name] || 0) + l.cost;
+            });
+            const buddhistYear = parseInt(year, 10) + 543;
+            const fmtNum = n => Number(n || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            const fmtMoney = n => Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            const rows = logs.map(l =>
+                '<tr><td>' + l.date + '</td><td>' + l.shop + '</td><td>' + fmtNum(l.odo) +
+                '</td><td style="text-align:right">฿' + l.cost.toFixed(2) + '</td></tr>'
+            ).join('');
+            const catList = Object.keys(categorySums).map(name => {
+                const sum = categorySums[name];
+                const pct = total > 0 ? ((sum / total) * 100).toFixed(0) : 0;
+                return '<li>' + name + ': ฿' + fmtNum(sum) + ' (' + pct + '%)</li>';
+            }).join('');
+            const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงาน ' + vehicle.license + '</title>' +
+                '<style>body{font-family:Sarabun,Arial,sans-serif;padding:24px;color:#1e293b}' +
+                'h1{font-size:20px;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:16px}' +
+                'th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px}th{background:#eef2ff}' +
+                '.summary{background:#f8fafc;padding:12px;border-radius:8px;margin-top:12px}' +
+                '@media print{body{padding:12px}}</style></head><body>' +
+                '<h1>MyHome CarCare - รายงานค่าบำรุงรักษา</h1>' +
+                '<p>รถ: <strong>' + vehicle.name + '</strong> (' + vehicle.license + ')</p>' +
+                '<p>ปี พ.ศ. ' + buddhistYear + ' (ค.ศ. ' + year + ')</p>' +
+                '<div class="summary"><p>ยอดรวม: <strong>฿' + fmtMoney(total) + '</strong></p>' +
+                '<p>จำนวนรายการ: ' + logs.length + '</p><ul>' + catList + '</ul></div>' +
+                '<table><thead><tr><th>วันที่</th><th>ร้าน/ศูนย์</th><th>ไมล์</th><th>ค่าใช้จ่าย</th></tr></thead><tbody>' +
+                (rows || '<tr><td colspan="4">ไม่มีข้อมูลในปีนี้</td></tr>') + '</tbody></table>' +
+                '<p style="font-size:10px;color:#64748b;margin-top:24px">MyHome CarCare v2.0.0 GitHub Pages — ' +
+                new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + '</p></body></html>';
+            const w = window.open('', '_blank');
+            if (!w) {
+                showToast('โปรดอนุญาต Pop-up เพื่อส่งออก PDF', 'warning');
+                return;
+            }
+            w.document.write(html);
+            w.document.close();
+            w.focus();
+            setTimeout(function() { w.print(); }, 400);
+            showToast('เปิดหน้าต่างพิมพ์/บันทึก PDF แล้ว');
+        }
+
+        window.onload = function () {
+            initApp();
+        }
+    
+    </script>
+</body>
+</html>
