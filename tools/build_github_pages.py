@@ -235,7 +235,7 @@ script = script.replace(
 )
 
 script = script.replace(
-    'let calendarSelectedDate = new Date(2026, 5, 6); // Default 6 June 2026',
+    'let calendarSelectedDate = new Date(2026, 5, 6);',
     'let calendarSelectedDate = new Date();'
 )
 script = script.replace('let calendarViewMonth = 5;', 'let calendarViewMonth = new Date().getMonth();')
@@ -245,16 +245,9 @@ script = re.sub(
     r'function setDefaultDates\(\) \{[\s\S]*?\n        \}',
     """function setDefaultDates() {
             const now = new Date();
-            const iso = now.toISOString().split('T')[0];
-            const thaiStr = formatThaiDate(iso);
-            const repDate = document.getElementById('rep-date');
-            const calText = document.getElementById('calendar-trigger-text');
-            const fuelDate = document.getElementById('fuel-date');
-            const fuelCalText = document.getElementById('fuel-calendar-trigger-text');
-            if (repDate) repDate.value = iso;
-            if (calText) calText.textContent = thaiStr;
-            if (fuelDate) fuelDate.value = iso;
-            if (fuelCalText) fuelCalText.textContent = thaiStr;
+            const iso = toLocalIsoDate(now);
+            setThaiDatePicker('rep-date', 'calendar-trigger-text', iso);
+            setThaiDatePicker('fuel-date', 'fuel-calendar-trigger-text', iso);
             calendarSelectedDate = now;
             calendarViewMonth = now.getMonth();
             calendarViewYear = now.getFullYear();

@@ -436,14 +436,22 @@
             </div>
 
             <!-- พรบ. / ประกัน expiry -->
-            <div class="grid grid-cols-1 gap-2" id="vehicle-expiry-rows">
-                <div class="flex justify-between items-center text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-100" id="prb-expiry-row">
-                    <span class="text-slate-500 font-bold"><i class="fa-solid fa-shield-halved text-indigo-400 mr-1"></i> พรบ. หมดอายุ:</span>
-                    <span id="prb-expiry-val" class="font-bold text-slate-600">-</span>
+            <div class="space-y-1.5" id="vehicle-expiry-section">
+                <div class="flex justify-between items-center px-0.5">
+                    <span class="text-[10px] font-bold text-slate-500">พรบ. / ประกัน</span>
+                    <button type="button" onclick="openExpiryEditModal()" class="text-[9px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 px-1.5 py-0.5 rounded-lg hover:bg-indigo-50 transition-colors" title="แก้ไขวันหมดอายุ">
+                        <i class="fa-solid fa-pen"></i> แก้ไข
+                    </button>
                 </div>
-                <div class="flex justify-between items-center text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-100" id="insurance-expiry-row">
-                    <span class="text-slate-500 font-bold"><i class="fa-solid fa-file-contract text-indigo-400 mr-1"></i> ประกัน หมดอายุ:</span>
-                    <span id="insurance-expiry-val" class="font-bold text-slate-600">-</span>
+                <div class="grid grid-cols-1 gap-2" id="vehicle-expiry-rows">
+                    <button type="button" onclick="openExpiryEditModal()" class="flex justify-between items-center text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-left w-full hover:bg-indigo-50/60 hover:border-indigo-100 transition-colors" id="prb-expiry-row">
+                        <span class="text-slate-500 font-bold"><i class="fa-solid fa-shield-halved text-indigo-400 mr-1"></i> พรบ. หมดอายุ:</span>
+                        <span id="prb-expiry-val" class="font-bold text-slate-600">-</span>
+                    </button>
+                    <button type="button" onclick="openExpiryEditModal()" class="flex justify-between items-center text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-left w-full hover:bg-indigo-50/60 hover:border-indigo-100 transition-colors" id="insurance-expiry-row">
+                        <span class="text-slate-500 font-bold"><i class="fa-solid fa-file-contract text-indigo-400 mr-1"></i> ประกัน หมดอายุ:</span>
+                        <span id="insurance-expiry-val" class="font-bold text-slate-600">-</span>
+                    </button>
                 </div>
             </div>
 
@@ -654,12 +662,20 @@
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุ พรบ.</label>
-                                    <input type="date" id="add-car-prb-expiry" class="w-full bg-white border p-2 rounded-lg outline-none text-xs">
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุ พรบ. (พ.ศ.)</label>
+                                    <button type="button" onclick="toggleCustomCalendar('add-prb')" id="add-car-prb-expiry-btn" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-indigo-50/50 hover:border-indigo-200">
+                                        <span id="add-car-prb-expiry-text" class="text-slate-400">เลือกวันที่...</span>
+                                        <i class="fa-regular fa-calendar-days text-indigo-500 text-sm shrink-0"></i>
+                                    </button>
+                                    <input type="hidden" id="add-car-prb-expiry">
                                 </div>
                                 <div>
-                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุประกัน</label>
-                                    <input type="date" id="add-car-insurance-expiry" class="w-full bg-white border p-2 rounded-lg outline-none text-xs">
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุประกัน (พ.ศ.)</label>
+                                    <button type="button" onclick="toggleCustomCalendar('add-insurance')" id="add-car-insurance-expiry-btn" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-indigo-50/50 hover:border-indigo-200">
+                                        <span id="add-car-insurance-expiry-text" class="text-slate-400">เลือกวันที่...</span>
+                                        <i class="fa-regular fa-calendar-days text-indigo-500 text-sm shrink-0"></i>
+                                    </button>
+                                    <input type="hidden" id="add-car-insurance-expiry">
                                 </div>
                             </div>
                             <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 rounded-lg font-bold text-xs transition-all">ยืนยันบันทึกเพิ่มรถใหม่</button>
@@ -920,7 +936,7 @@
     </div>
 
     <!-- SHARED REUSABLE CUSTOM PREMIUM THAI CALENDAR POPOVER BOX -->
-    <div id="custom-calendar-dropdown" class="hidden absolute z-50 bg-white border border-slate-200 rounded-2xl shadow-2xl p-3.5 space-y-2.5 animate-slide-up w-[280px]">
+    <div id="custom-calendar-dropdown" class="hidden absolute z-[9999] bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-2xl p-3.5 space-y-2.5 animate-slide-up w-[280px]">
         <div class="flex justify-between items-center text-xs font-bold text-slate-800 pb-2 border-b border-slate-100 gap-1.5">
             <button type="button" onclick="prevCalendarMonth()" class="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-all"><i class="fa-solid fa-chevron-left"></i></button>
             <div class="flex items-center gap-1">
@@ -936,6 +952,43 @@
         <div class="flex gap-1.5 pt-1.5 border-t border-slate-100">
             <button type="button" onclick="setCalendarToToday()" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold py-1.5 rounded-lg transition-all">วันนี้</button>
             <button type="button" onclick="toggleCustomCalendarDropdownDirectly()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold py-1.5 rounded-lg transition-all">ตกลง</button>
+        </div>
+    </div>
+
+    <!-- Expiry Edit Modal -->
+    <div id="expiry-edit-modal" class="modal-backdrop hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="modal-dialog-inner bg-white w-full max-w-sm p-5 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1">
+                    <i class="fa-solid fa-shield-halved text-indigo-600"></i> แก้ไขวันหมดอายุ
+                </h3>
+                <button type="button" onclick="closeModal('expiry-edit-modal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="expiry-edit-form" onsubmit="saveVehicleExpiryDates(event)" class="space-y-3 text-xs text-slate-700">
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">วันหมดอายุ พรบ. (พ.ศ.)</label>
+                    <button type="button" onclick="toggleCustomCalendar('expiry-prb')" id="expiry-edit-prb-btn" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-indigo-50/50 hover:border-indigo-200">
+                        <span id="expiry-edit-prb-text" class="text-slate-400">เลือกวันที่...</span>
+                        <i class="fa-regular fa-calendar-days text-indigo-500 text-sm shrink-0"></i>
+                    </button>
+                    <input type="hidden" id="expiry-edit-prb">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">วันหมดอายุประกัน (พ.ศ.)</label>
+                    <button type="button" onclick="toggleCustomCalendar('expiry-insurance')" id="expiry-edit-insurance-btn" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-indigo-50/50 hover:border-indigo-200">
+                        <span id="expiry-edit-insurance-text" class="text-slate-400">เลือกวันที่...</span>
+                        <i class="fa-regular fa-calendar-days text-indigo-500 text-sm shrink-0"></i>
+                    </button>
+                    <input type="hidden" id="expiry-edit-insurance">
+                </div>
+                <p class="text-[10px] text-slate-400 leading-relaxed">เว้นว่างช่องใดช่องหนึ่งได้ หากยังไม่มีข้อมูล</p>
+                <div class="flex gap-2 pt-1">
+                    <button type="button" onclick="closeModal('expiry-edit-modal')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl transition-all">ยกเลิก</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl transition-all shadow-md">บันทึก</button>
+                </div>
+            </form>
         </div>
     </div>
 

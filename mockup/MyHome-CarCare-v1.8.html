@@ -397,12 +397,20 @@
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุ พรบ.</label>
-                                    <input type="date" id="add-car-prb-expiry" class="w-full bg-white border p-2 rounded-lg outline-none text-xs">
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุ พรบ. (พ.ศ.)</label>
+                                    <button type="button" onclick="toggleCustomCalendar('add-prb')" id="add-car-prb-expiry-btn" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-indigo-50/50 hover:border-indigo-200">
+                                        <span id="add-car-prb-expiry-text" class="text-slate-400">เลือกวันที่...</span>
+                                        <i class="fa-regular fa-calendar-days text-indigo-500 text-sm shrink-0"></i>
+                                    </button>
+                                    <input type="hidden" id="add-car-prb-expiry">
                                 </div>
                                 <div>
-                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุประกัน</label>
-                                    <input type="date" id="add-car-insurance-expiry" class="w-full bg-white border p-2 rounded-lg outline-none text-xs">
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุประกัน (พ.ศ.)</label>
+                                    <button type="button" onclick="toggleCustomCalendar('add-insurance')" id="add-car-insurance-expiry-btn" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-indigo-50/50 hover:border-indigo-200">
+                                        <span id="add-car-insurance-expiry-text" class="text-slate-400">เลือกวันที่...</span>
+                                        <i class="fa-regular fa-calendar-days text-indigo-500 text-sm shrink-0"></i>
+                                    </button>
+                                    <input type="hidden" id="add-car-insurance-expiry">
                                 </div>
                             </div>
                             <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 rounded-lg font-bold text-xs transition-all">ยืนยันบันทึกเพิ่มรถใหม่</button>
@@ -663,7 +671,7 @@
     </div>
 
     <!-- SHARED REUSABLE CUSTOM PREMIUM THAI CALENDAR POPOVER BOX -->
-    <div id="custom-calendar-dropdown" class="hidden absolute z-50 bg-white border border-slate-200 rounded-2xl shadow-2xl p-3.5 space-y-2.5 animate-slide-up w-[280px]">
+    <div id="custom-calendar-dropdown" class="hidden absolute z-[9999] bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-2xl p-3.5 space-y-2.5 animate-slide-up w-[280px]">
         <div class="flex justify-between items-center text-xs font-bold text-slate-800 pb-2 border-b border-slate-100 gap-1.5">
             <button type="button" onclick="prevCalendarMonth()" class="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-all"><i class="fa-solid fa-chevron-left"></i></button>
             <div class="flex items-center gap-1">
@@ -713,12 +721,20 @@
             </div>
             <form id="expiry-edit-form" onsubmit="saveVehicleExpiryDates(event)" class="space-y-3 text-xs text-slate-700">
                 <div>
-                    <label class="block font-bold text-slate-500 mb-1">วันหมดอายุ พรบ.</label>
-                    <input type="date" id="expiry-edit-prb" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs">
+                    <label class="block font-bold text-slate-500 mb-1">วันหมดอายุ พรบ. (พ.ศ.)</label>
+                    <button type="button" onclick="toggleCustomCalendar('expiry-prb')" id="expiry-edit-prb-btn" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-indigo-50/50 hover:border-indigo-200">
+                        <span id="expiry-edit-prb-text" class="text-slate-400">เลือกวันที่...</span>
+                        <i class="fa-regular fa-calendar-days text-indigo-500 text-sm shrink-0"></i>
+                    </button>
+                    <input type="hidden" id="expiry-edit-prb">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-500 mb-1">วันหมดอายุประกัน</label>
-                    <input type="date" id="expiry-edit-insurance" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs">
+                    <label class="block font-bold text-slate-500 mb-1">วันหมดอายุประกัน (พ.ศ.)</label>
+                    <button type="button" onclick="toggleCustomCalendar('expiry-insurance')" id="expiry-edit-insurance-btn" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-indigo-50/50 hover:border-indigo-200">
+                        <span id="expiry-edit-insurance-text" class="text-slate-400">เลือกวันที่...</span>
+                        <i class="fa-regular fa-calendar-days text-indigo-500 text-sm shrink-0"></i>
+                    </button>
+                    <input type="hidden" id="expiry-edit-insurance">
                 </div>
                 <p class="text-[10px] text-slate-400 leading-relaxed">เว้นว่างช่องใดช่องหนึ่งได้ หากยังไม่มีข้อมูล</p>
                 <div class="flex gap-2 pt-1">
@@ -800,10 +816,22 @@
         };
 
         // Shared Custom Thai Calendar State Variables
-        let calendarTargetField = 'maintenance'; // 'maintenance' or 'fuel'
-        let calendarSelectedDate = new Date(2026, 5, 6); // Default 6 June 2026
-        let calendarViewMonth = 5; 
+        let calendarTargetField = 'maintenance';
+        let calendarSelectedDate = new Date(2026, 5, 6);
+        let calendarViewMonth = 5;
         let calendarViewYear = 2026;
+
+        const CALENDAR_TARGETS = {
+            maintenance: { isoId: 'rep-date', textId: 'calendar-trigger-text', btnId: 'calendar-trigger-btn' },
+            fuel: { isoId: 'fuel-date', textId: 'fuel-calendar-trigger-text', btnId: 'fuel-calendar-trigger-btn' },
+            'expiry-prb': { isoId: 'expiry-edit-prb', textId: 'expiry-edit-prb-text', btnId: 'expiry-edit-prb-btn' },
+            'expiry-insurance': { isoId: 'expiry-edit-insurance', textId: 'expiry-edit-insurance-text', btnId: 'expiry-edit-insurance-btn' },
+            'add-prb': { isoId: 'add-car-prb-expiry', textId: 'add-car-prb-expiry-text', btnId: 'add-car-prb-expiry-btn' },
+            'add-insurance': { isoId: 'add-car-insurance-expiry', textId: 'add-car-insurance-expiry-text', btnId: 'add-car-insurance-expiry-btn' }
+        };
+
+        const CALENDAR_YEAR_MIN = 1980;
+        const CALENDAR_YEAR_MAX = 2099;
 
         const thaiMonthsFull = [
             'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -842,16 +870,10 @@
             switchTab('dashboard');
         }
 
-        // Set Default Date Helper for both forms (June 6, 2026)
         function setDefaultDates() {
             const defaultIso = "2026-06-06";
-            const defaultThaiStr = "6 มิ.ย. 2569";
-
-            document.getElementById('rep-date').value = defaultIso;
-            document.getElementById('calendar-trigger-text').textContent = defaultThaiStr;
-
-            document.getElementById('fuel-date').value = defaultIso;
-            document.getElementById('fuel-calendar-trigger-text').textContent = defaultThaiStr;
+            setThaiDatePicker('rep-date', 'calendar-trigger-text', defaultIso);
+            setThaiDatePicker('fuel-date', 'fuel-calendar-trigger-text', defaultIso);
         }
 
         function saveToLocalStorage() {
@@ -1024,6 +1046,59 @@
             });
         }
 
+        function setThaiDatePicker(isoId, textId, isoStr) {
+            const isoEl = document.getElementById(isoId);
+            const textEl = document.getElementById(textId);
+            const normalized = isoStr ? normalizeIsoDate(isoStr) : '';
+            if (isoEl) isoEl.value = normalized || '';
+            if (textEl) {
+                if (normalized) {
+                    textEl.textContent = formatThaiDate(normalized);
+                    textEl.className = 'text-slate-800';
+                } else {
+                    textEl.textContent = 'เลือกวันที่...';
+                    textEl.className = 'text-slate-400';
+                }
+            }
+        }
+
+        function registerAdminVehicleCalendarTargets(v) {
+            const prbKey = `edit-prb-${v.id}`;
+            const insKey = `edit-ins-${v.id}`;
+            CALENDAR_TARGETS[prbKey] = {
+                isoId: `edit-car-prb-${v.id}`,
+                textId: `edit-car-prb-text-${v.id}`,
+                btnId: `edit-car-prb-btn-${v.id}`
+            };
+            CALENDAR_TARGETS[insKey] = {
+                isoId: `edit-car-insurance-${v.id}`,
+                textId: `edit-car-insurance-text-${v.id}`,
+                btnId: `edit-car-insurance-btn-${v.id}`
+            };
+        }
+
+        function thaiDatePickerFieldHtml(calTarget, isoId, textId, btnId, value, btnClass) {
+            const iso = normalizeIsoDate(value) || '';
+            const display = iso ? formatThaiDate(iso) : 'เลือกวันที่...';
+            const textClass = iso ? 'text-slate-800' : 'text-slate-400';
+            return `
+                <button type="button" onclick="toggleCustomCalendar('${calTarget}')" id="${btnId}" class="${btnClass}">
+                    <span id="${textId}" class="${textClass}">${display}</span>
+                    <i class="fa-regular fa-calendar-days text-indigo-500 text-sm shrink-0"></i>
+                </button>
+                <input type="hidden" id="${isoId}" value="${iso}">
+            `;
+        }
+
+        function toLocalIsoDate(date) {
+            const d = date instanceof Date ? date : parseIsoDate(date);
+            if (isNaN(d.getTime())) return '';
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
         function formatExpiryPreview(dateStr) {
             const n = normalizeIsoDate(dateStr);
             return n ? formatThaiDate(n) : 'ยังไม่ได้ตั้งค่า';
@@ -1168,8 +1243,8 @@
                 showToast('กรุณาเลือกรถก่อน', 'error');
                 return;
             }
-            document.getElementById('expiry-edit-prb').value = normalizeIsoDate(v.prbExpiryDate) || '';
-            document.getElementById('expiry-edit-insurance').value = normalizeIsoDate(v.insuranceExpiryDate) || '';
+            setThaiDatePicker('expiry-edit-prb', 'expiry-edit-prb-text', v.prbExpiryDate);
+            setThaiDatePicker('expiry-edit-insurance', 'expiry-edit-insurance-text', v.insuranceExpiryDate);
             document.getElementById('expiry-edit-modal').classList.remove('hidden');
         }
 
@@ -1686,22 +1761,41 @@
         }
 
         function toggleCustomCalendar(type) {
-            calendarTargetField = type; // Either 'maintenance' or 'fuel'
-            const triggerBtn = type === 'maintenance' 
-                ? document.getElementById('calendar-trigger-btn') 
-                : document.getElementById('fuel-calendar-trigger-btn');
+            calendarTargetField = type;
+            const target = CALENDAR_TARGETS[type];
+            if (!target) return;
 
+            const triggerBtn = document.getElementById(target.btnId);
             const dropdown = document.getElementById('custom-calendar-dropdown');
-            
-            // Adjust position dynamic popover relative to target button
+            if (!triggerBtn || !dropdown) return;
+
+            const isoEl = document.getElementById(target.isoId);
+            if (isoEl && isoEl.value) {
+                const d = parseIsoDate(isoEl.value);
+                if (!isNaN(d.getTime())) {
+                    calendarSelectedDate = d;
+                    calendarViewMonth = d.getMonth();
+                    calendarViewYear = d.getFullYear();
+                }
+            }
+
             const rect = triggerBtn.getBoundingClientRect();
-            const parentRect = triggerBtn.offsetParent.getBoundingClientRect();
+            const inModal = triggerBtn.closest('[id$="-modal"]');
+            if (inModal) {
+                dropdown.style.position = 'fixed';
+                dropdown.style.left = `${rect.left}px`;
+                dropdown.style.top = `${Math.min(rect.bottom + 8, window.innerHeight - 340)}px`;
+            } else {
+                const offsetParent = triggerBtn.offsetParent || document.body;
+                const parentRect = offsetParent.getBoundingClientRect();
+                dropdown.style.position = 'absolute';
+                dropdown.style.left = `${rect.left - parentRect.left}px`;
+                dropdown.style.top = `${rect.bottom - parentRect.top + 8}px`;
+            }
 
-            dropdown.style.left = `${rect.left - parentRect.left}px`;
-            dropdown.style.top = `${rect.bottom - parentRect.top + 8}px`;
-
-            dropdown.classList.toggle('hidden');
             syncCalendarDropdownSelectors();
+            renderCustomCalendar();
+            dropdown.classList.toggle('hidden');
         }
 
         function toggleCustomCalendarDropdownDirectly() {
@@ -1763,7 +1857,7 @@
                 monthSel.innerHTML += `<option value="${idx}">${m}</option>`;
             });
 
-            for (let yr = 2017; yr <= 2035; yr++) {
+            for (let yr = CALENDAR_YEAR_MIN; yr <= CALENDAR_YEAR_MAX; yr++) {
                 yearSel.innerHTML += `<option value="${yr}">พ.ศ. ${yr + 543}</option>`;
             }
             syncCalendarDropdownSelectors();
@@ -1790,19 +1884,12 @@
 
         function selectCalendarDate(day) {
             calendarSelectedDate = new Date(calendarViewYear, calendarViewMonth, day);
-            
-            const offsetDate = new Date(calendarSelectedDate.getTime() - (calendarSelectedDate.getTimezoneOffset() * 60000));
-            const formattedIso = offsetDate.toISOString().split('T')[0];
-
+            const formattedIso = toLocalIsoDate(calendarSelectedDate);
             const displayThaiStr = `${day} ${thaiMonthsShort[calendarViewMonth]} ${calendarViewYear + 543}`;
 
-            // Distribute value into target fields
-            if (calendarTargetField === 'maintenance') {
-                document.getElementById('rep-date').value = formattedIso;
-                document.getElementById('calendar-trigger-text').textContent = displayThaiStr;
-            } else {
-                document.getElementById('fuel-date').value = formattedIso;
-                document.getElementById('fuel-calendar-trigger-text').textContent = displayThaiStr;
+            const target = CALENDAR_TARGETS[calendarTargetField];
+            if (target) {
+                setThaiDatePicker(target.isoId, target.textId, formattedIso);
             }
 
             renderCustomCalendar();
@@ -1824,12 +1911,17 @@
                 gridEl.innerHTML += `<div class="p-2 text-[11px] text-slate-300 font-medium text-center pointer-events-none">${prevDay}</div>`;
             }
 
+            const today = new Date();
+            const todayDay = today.getDate();
+            const todayMonth = today.getMonth();
+            const todayYear = today.getFullYear();
+
             for (let day = 1; day <= totalDays; day++) {
-                const isSelected = calendarSelectedDate.getDate() === day && 
-                                   calendarSelectedDate.getMonth() === calendarViewMonth && 
+                const isSelected = calendarSelectedDate.getDate() === day &&
+                                   calendarSelectedDate.getMonth() === calendarViewMonth &&
                                    calendarSelectedDate.getFullYear() === calendarViewYear;
-                
-                const isToday = day === 6 && calendarViewMonth === 5 && calendarViewYear === 2026;
+
+                const isToday = day === todayDay && calendarViewMonth === todayMonth && calendarViewYear === todayYear;
 
                 let dayClass = "p-2 text-[11px] font-bold text-center rounded-xl cursor-pointer hover:bg-indigo-50 hover:text-indigo-600 transition-all ";
                 
@@ -2305,6 +2397,8 @@
 
             state.vehicles.forEach(v => {
                 if (adminVehicleEditId === v.id) {
+                    registerAdminVehicleCalendarTargets(v);
+                    const pickerBtnClass = 'w-full bg-white border border-slate-200 p-2 rounded-lg text-xs font-bold text-left flex justify-between items-center transition-all hover:bg-indigo-50/50 hover:border-indigo-200';
                     list.innerHTML += `
                         <form onsubmit="saveVehicleEditAdmin(event, '${v.id}')" class="bg-indigo-50/80 p-2.5 rounded-lg border border-indigo-200 space-y-2 text-[11px]">
                             <div class="grid grid-cols-2 gap-2">
@@ -2319,12 +2413,12 @@
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุ พรบ.</label>
-                                    <input type="date" id="edit-car-prb-${v.id}" value="${normalizeIsoDate(v.prbExpiryDate) || ''}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs">
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุ พรบ. (พ.ศ.)</label>
+                                    ${thaiDatePickerFieldHtml(`edit-prb-${v.id}`, `edit-car-prb-${v.id}`, `edit-car-prb-text-${v.id}`, `edit-car-prb-btn-${v.id}`, v.prbExpiryDate, pickerBtnClass)}
                                 </div>
                                 <div>
-                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุประกัน</label>
-                                    <input type="date" id="edit-car-insurance-${v.id}" value="${normalizeIsoDate(v.insuranceExpiryDate) || ''}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs">
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">วันหมดอายุประกัน (พ.ศ.)</label>
+                                    ${thaiDatePickerFieldHtml(`edit-ins-${v.id}`, `edit-car-insurance-${v.id}`, `edit-car-insurance-text-${v.id}`, `edit-car-insurance-btn-${v.id}`, v.insuranceExpiryDate, pickerBtnClass)}
                                 </div>
                             </div>
                             <div class="flex gap-2 justify-end">
@@ -2438,8 +2532,8 @@
             saveToLocalStorage();
             document.getElementById('add-car-name').value = '';
             document.getElementById('add-car-license').value = '';
-            document.getElementById('add-car-prb-expiry').value = '';
-            document.getElementById('add-car-insurance-expiry').value = '';
+            setThaiDatePicker('add-car-prb-expiry', 'add-car-prb-expiry-text', '');
+            setThaiDatePicker('add-car-insurance-expiry', 'add-car-insurance-expiry-text', '');
             renderAdminVehicles();
             populateDropdowns();
             renderVehiclesCarousel();
@@ -2634,12 +2728,9 @@
                 bits.push('ตรวจระยะรอบต่อไป: ' + (log.odo + log.alertKm).toLocaleString() + ' กม.');
             }
             if (log.alertMonth > 0) {
-                const d = new Date(log.date);
+                const d = parseIsoDate(log.date);
                 d.setMonth(d.getMonth() + log.alertMonth);
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                bits.push(y + '-' + m + '-' + day);
+                bits.push(formatThaiDate(toLocalIsoDate(d)));
             }
             return bits.join(' — ');
         }
@@ -2653,7 +2744,7 @@
             let html = '<p>รายการถัดไป: <strong>' + serviceLabel + '</strong></p>';
             html += '<p>ตรวจระยะรอบต่อไป: <strong>' + alertObj.targetKm.toLocaleString() + ' กม.</strong>';
             if (alertObj.targetDate) {
-                html += ' / ' + alertObj.targetDate;
+                html += ' / ' + formatThaiDate(alertObj.targetDate);
             }
             html += '</p>';
             return html;
@@ -2687,7 +2778,7 @@
             const fmtNum = n => Number(n || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             const fmtMoney = n => Number(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             const rows = logs.map(l =>
-                '<tr><td>' + l.date + '</td><td>' + l.shop + '</td><td>' + fmtNum(l.odo) +
+                '<tr><td>' + formatThaiDate(l.date) + '</td><td>' + l.shop + '</td><td>' + fmtNum(l.odo) +
                 '</td><td>' + formatPdfNextCycleFromLog(l) +
                 '</td><td style="text-align:right">฿' + l.cost.toFixed(2) + '</td></tr>'
             ).join('');
