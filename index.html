@@ -1034,6 +1034,54 @@ html {
             'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
         ];
 
+        // Local-date helpers (mirrors lib/car-logic.js — avoids UTC timezone drift)
+        function parseIsoDate(dateStr) {
+            const parts = String(dateStr).split('-');
+            if (parts.length !== 3) return new Date(dateStr);
+            const year = Number(parts[0]);
+            const month = Number(parts[1]);
+            const day = Number(parts[2]);
+            if (month < 1 || month > 12 || day < 1 || day > new Date(year, month, 0).getDate()) {
+                return new Date(NaN);
+            }
+            return new Date(year, month - 1, day);
+        }
+
+        function toLocalIsoDate(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function addMonthsToIsoDate(isoStr, months) {
+            const d = parseIsoDate(isoStr);
+            d.setMonth(d.getMonth() + months);
+            return toLocalIsoDate(d);
+        }
+
+        function getCalendarYearBounds() {
+            const currentYear = new Date().getFullYear();
+            let min = currentYear - 75;
+            let max = currentYear + 75;
+            const scanYear = (iso) => {
+                if (!iso || typeof iso !== 'string') return;
+                const y = parseInt(iso.slice(0, 4), 10);
+                if (!Number.isNaN(y)) {
+                    min = Math.min(min, y);
+                    max = Math.max(max, y);
+                }
+            };
+            state.maintenanceLogs.forEach(l => scanYear(l.date));
+            state.fuelLogs.forEach(l => scanYear(l.date));
+            state.alerts.forEach(a => scanYear(a.targetDate));
+            state.vehicles.forEach(v => {
+                scanYear(v.prbExpiryDate);
+                scanYear(v.insuranceExpiryDate);
+            });
+            return {
+                min: Math.max(1726, Math.min(min, currentYear - 10)),
+                max: Math.min(2326, Math.max(max, currentYear + 10)),
+            };
+        }
+
         let currentUploadedReceiptBase64 = "";
         let searchDebounceTimer = null;
         let adminVehicleEditId = null;
@@ -1065,7 +1113,7 @@ html {
         // Set Default Date Helper for both forms (June 6, 2026)
         function setDefaultDates() {
             const now = new Date();
-            const iso = now.toISOString().split('T')[0];
+            const iso = toLocalIsoDate(now);
             const thaiStr = formatThaiDate(iso);
             const repDate = document.getElementById('rep-date');
             const calText = document.getElementById('calendar-trigger-text');
@@ -1203,7 +1251,11 @@ html {
 
         // Helper to format Date to Thai Buddhist Era representation (Fixed missing function bug)
         function formatThaiDate(dateStr) {
-            const date = new Date(dateStr);
+            const date = dateStr instanceof Date
+                ? dateStr
+                : (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr))
+                    ? parseIsoDate(dateStr)
+                    : new Date(dateStr);
             if (isNaN(date.getTime())) return '-';
             return `${date.getDate()} ${thaiMonthsShort[date.getMonth()]} ${date.getFullYear() + 543}`;
         }
@@ -1307,7 +1359,8 @@ html {
             const target = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            const days = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            return days === 0 ? 0 : days;
         }
 
         function renderVehicleExpiryRow(dateStr, valId, rowId) {
@@ -1373,7 +1426,7 @@ html {
                     targetTimeSpan.innerHTML = `<i class="fa-solid fa-clock"></i> เตือนล่วงหน้า: ${formatThaiDate(alertObj.targetDate)}`;
                     
                     const kmDifference = alertObj.targetKm - latestOdo;
-                    const daysRemaining = Math.ceil((new Date(alertObj.targetDate) - new Date()) / (1000 * 60 * 60 * 24));
+                    const daysRemaining = daysUntilDate(alertObj.targetDate, new Date());
                     maintenanceUrgent = kmDifference <= 1000 || daysRemaining <= 15;
                 } else {
                     if (targetServiceSpan) targetServiceSpan.innerHTML = '';
@@ -1902,7 +1955,8 @@ html {
                 monthSel.innerHTML += `<option value="${idx}">${m}</option>`;
             });
 
-            for (let yr = 2017; yr <= 2035; yr++) {
+            const { min, max } = getCalendarYearBounds();
+            for (let yr = min; yr <= max; yr++) {
                 yearSel.innerHTML += `<option value="${yr}">พ.ศ. ${yr + 543}</option>`;
             }
             syncCalendarDropdownSelectors();
@@ -1929,9 +1983,7 @@ html {
 
         function selectCalendarDate(day) {
             calendarSelectedDate = new Date(calendarViewYear, calendarViewMonth, day);
-            
-            const offsetDate = new Date(calendarSelectedDate.getTime() - (calendarSelectedDate.getTimezoneOffset() * 60000));
-            const formattedIso = offsetDate.toISOString().split('T')[0];
+            const formattedIso = toLocalIsoDate(calendarSelectedDate);
 
             const displayThaiStr = `${day} ${thaiMonthsShort[calendarViewMonth]} ${calendarViewYear + 543}`;
 
@@ -2014,7 +2066,7 @@ html {
                 fileLink: "",
                 alertKm: 0,
                 alertMonth: 0,
-                date: new Date().toISOString().split('T')[0],
+                date: toLocalIsoDate(new Date()),
                 type: "Odometer_Update"
             };
 
@@ -2037,7 +2089,7 @@ html {
             const cost = parseFloat(document.getElementById('rep-cost').value);
             const shop = document.getElementById('rep-shop').value;
             const receiptInput = document.getElementById('rep-receipt');
-            const repairDate = document.getElementById('rep-date').value || new Date().toISOString().split('T')[0];
+            const repairDate = document.getElementById('rep-date').value || toLocalIsoDate(new Date());
 
             const lastOdo = getLatestOdometer(vId);
             if (odoVal < lastOdo) {
@@ -2100,9 +2152,7 @@ html {
                 const targetKm = alertKmEnabled ? (odoVal + alertKm) : 99999999;
                 let targetDateStr = "2099-12-31";
                 if (alertMonthEnabled) {
-                    const d = new Date(repairDate);
-                    d.setMonth(d.getMonth() + alertMonth);
-                    targetDateStr = d.toISOString().split('T')[0];
+                    targetDateStr = addMonthsToIsoDate(repairDate, alertMonth);
                 }
 
                 const catObj = state.categories.find(c => c.id === category);
@@ -2148,7 +2198,7 @@ html {
             const price = parseFloat(document.getElementById('fuel-price-liter').value);
             const totalCost = parseFloat(document.getElementById('fuel-total-cost').value);
             const fullTank = document.getElementById('fuel-full-tank').checked;
-            const fuelDate = document.getElementById('fuel-date').value || new Date().toISOString().split('T')[0];
+            const fuelDate = document.getElementById('fuel-date').value || toLocalIsoDate(new Date());
             const fuelType = document.getElementById('fuel-type-input').value; // 'oil' or 'gas'
 
             const lastOdo = getLatestOdometer(vId);
@@ -2202,7 +2252,7 @@ html {
 
                 const currentOdo = getLatestOdometer(v.id);
                 const currentDate = new Date();
-                const targetDate = new Date(alert.targetDate);
+                const targetDate = parseIsoDate(alert.targetDate);
 
                 const isKmReached = currentOdo >= alert.targetKm;
                 const isTimeReached = currentDate >= targetDate;
@@ -2552,7 +2602,7 @@ html {
                 id: newId,
                 name: name,
                 license: license,
-                createdDate: new Date().toISOString().split('T')[0]
+                createdDate: toLocalIsoDate(new Date())
             };
             if (prbDate) newVehicle.prbExpiryDate = prbDate;
             if (insDate) newVehicle.insuranceExpiryDate = insDate;
@@ -2570,7 +2620,7 @@ html {
                 fileLink: "",
                 alertKm: 0,
                 alertMonth: 0,
-                date: new Date().toISOString().split('T')[0],
+                date: toLocalIsoDate(new Date()),
                 type: "Odometer_Update"
             });
 
