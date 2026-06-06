@@ -31,19 +31,20 @@ body = body_match.group(1).strip() if body_match else ''
 style_match = re.search(r'<style>(.*?)</style>', gas_index, re.DOTALL)
 inline_styles = style_match.group(1).strip() if style_match else ''
 
-# Version badge (GitHub Pages)
+# Version badge (GitHub Pages) — inject GitHub icon if shell already has version-badge
 body = re.sub(
-    r'<span class="version-badge">.*?</span>',
-    '<span class="version-badge"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v2.0.0 GitHub Pages</span>',
+    r'(<span class="version-badge[^"]*"[^>]*>)(?!.*fa-github)(.*?)(</span>)',
+    r'\1<i class="fa-brands fa-github text-[8px] opacity-80"></i> v2.1.0 Premium\3',
     body,
     count=1,
     flags=re.DOTALL
 )
 body = re.sub(
-    r'v[\d.]+ \([^)]+\)',
-    'v2.0.0 GitHub Pages',
+    r'<span class="version-badge">.*?</span>',
+    '<span class="version-badge text-[9px] text-indigo-100 font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v2.1.0 Premium</span>',
     body,
-    count=1
+    count=1,
+    flags=re.DOTALL
 )
 
 # Remove loading overlay (instant localStorage app) — match nested inner div
@@ -66,7 +67,7 @@ if 'autocomplete="off"' not in body and 'id="log-search-input"' in body:
 # Year filter populated dynamically from maintenance logs per vehicle
 body = re.sub(
     r'<select id="report-year-filter"[^>]*>.*?</select>',
-    '<select id="report-year-filter" onchange="renderReportStats()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>',
+    '<select id="report-year-filter" onchange="renderReportStats()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40"></select>',
     body,
     count=1,
     flags=re.DOTALL
@@ -598,7 +599,7 @@ if "'Itim'" not in inline_styles:
         "font-family: 'Inter', 'Sarabun', sans-serif;",
         "font-family: 'Itim', 'Inter', sans-serif;"
     )
-if '.nav-tab-active::after' not in inline_styles:
+if '--radius-sm' not in inline_styles and '.nav-tab-active::after' not in inline_styles:
     inline_styles += """
         .nav-tab { position: relative; min-height: 3rem; }
         .nav-tab-active::after {
@@ -610,17 +611,34 @@ if '.nav-tab-active::after' not in inline_styles:
             background: linear-gradient(90deg, #6366f1, #818cf8);
             border-radius: 9999px;
         }
-        .empty-state { animation: fade-in 0.3s ease; }
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
         #log-search-input:focus {
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
             border-color: #a5b4fc;
         }
         button:active { transform: scale(0.97); }
 """
+
+def apply_premium_tailwind(text):
+    """Upgrade legacy Tailwind classes to premium rounded variants."""
+    replacements = [
+        ('rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500',
+         'rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/40'),
+        ('vehicle-card snap-start shrink-0 w-[145px] md:w-auto p-3 rounded-xl border',
+         'vehicle-card snap-start shrink-0 w-[150px] md:w-auto p-3.5 rounded-2xl border transition-all duration-300'),
+        ("? 'vehicle-card vehicle-card--active border-indigo-500 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg ring-2 ring-indigo-400/30' ",
+         "? 'vehicle-card vehicle-card--active border-indigo-400/50 bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 text-white ring-2 ring-indigo-400/40' "),
+        ('toast-item p-3.5 rounded-xl shadow-lg', 'toast-item p-4 rounded-2xl shadow-xl backdrop-blur-sm'),
+        ('bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm hover:shadow transition-all relative overflow-hidden',
+         'log-card p-4 relative overflow-hidden'),
+        ('text-center py-6 text-slate-400 text-[10px] font-bold bg-slate-50 border border-slate-200 border-dashed rounded-xl',
+         'empty-state text-center py-6 text-slate-400 text-[10px] font-bold'),
+    ]
+    for old, new in replacements:
+        text = text.replace(old, new)
+    return text
+
+body = apply_premium_tailwind(body)
+script = apply_premium_tailwind(script)
 
 # Next maintenance plan: show service type (serviceLabel on alerts)
 if 'target-service-val' not in body:
@@ -740,6 +758,24 @@ index_html = f'''<!DOCTYPE html>
     <script>
         tailwind.config = {{
             theme: {{
+                extend: {{
+                    colors: {{
+                        premium: {{
+                            gold: '#c9a227',
+                            champagne: '#f5ead6',
+                            navy: '#0c0a1d',
+                        }},
+                    }},
+                    borderRadius: {{
+                        '4xl': '2rem',
+                        '5xl': '2.5rem',
+                    }},
+                    boxShadow: {{
+                        premium: '0 4px 24px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(99, 102, 241, 0.05)',
+                        'premium-lg': '0 20px 60px rgba(15, 23, 42, 0.12), 0 4px 16px rgba(201, 162, 39, 0.08)',
+                        'premium-glow': '0 0 0 1px rgba(255,255,255,0.08), 0 8px 32px rgba(79, 70, 229, 0.18)',
+                    }},
+                }},
                 screens: {{
                     xs: '400px',
                     sm: '640px',
