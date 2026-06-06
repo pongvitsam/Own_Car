@@ -170,7 +170,7 @@
                         </div>
                         <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">สถิติค่าบริการรายคัน</h3>
                     </div>
-                    <select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>
+                    <select id="report-year-filter" onchange="renderReportStats()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>
                 </div>
             </div>
 
@@ -703,6 +703,9 @@
         ];
 
         let currentUploadedReceiptBase64 = "";
+        let adminVehicleEditId = null;
+        let lastReportVehicleId = null;
+        let reportYearFilterVehicleId = null;
 
         // App Initializer
         function initApp() {
@@ -967,7 +970,8 @@
             if (!v) return;
 
             // Load values for selected tab
-            const activeTab = document.querySelector('.tab-content:not(.hidden)').id;
+            const activeTabEl = document.querySelector('.tab-content:not(.hidden)');
+            const activeTab = activeTabEl ? activeTabEl.id : '';
 
             if (activeTab === 'tab-dashboard') {
                 const latestOdo = getLatestOdometer(id);
@@ -1014,11 +1018,22 @@
                 }
 
                 calculateVehicleMetrics(id);
+                clearLogSearch();
+                refreshVehicleAnnualReport(id);
                 renderLogsHistory(id);
-                renderReports();
             } else if (activeTab === 'tab-fuelio') {
+                reportYearFilterVehicleId = null;
                 renderFuelLogs();
+            } else {
+                reportYearFilterVehicleId = null;
             }
+        }
+
+        function clearLogSearch() {
+            const searchInput = document.getElementById('log-search-input');
+            const clearBtn = document.getElementById('clear-search-btn');
+            if (searchInput) searchInput.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
         }
 
         // Render maintenance logs inside first page tab
@@ -1849,7 +1864,7 @@
             return match ? parseInt(match[1], 10) : null;
         }
 
-        function populateReportYearFilter(vehicleId) {
+        function populateReportYearFilter(vehicleId, resetYear) {
             const yearFilterEl = document.getElementById('report-year-filter');
             if (!yearFilterEl) return null;
 
@@ -1866,15 +1881,17 @@
                 years = [new Date().getFullYear()];
             }
 
-            const previousValue = yearFilterEl.value;
+            const preserveYear = !resetYear && reportYearFilterVehicleId === vehicleId;
+            const previousValue = preserveYear ? yearFilterEl.value : null;
             yearFilterEl.innerHTML = years.map(y =>
                 `<option value="${y}">พ.ศ. ${y + 543}</option>`
             ).join('');
 
             const currentYear = new Date().getFullYear();
             let selectedYear;
-            if (previousValue && years.includes(parseInt(previousValue, 10))) {
-                selectedYear = parseInt(previousValue, 10);
+            const prev = previousValue != null ? parseInt(previousValue, 10) : NaN;
+            if (!Number.isNaN(prev) && years.includes(prev)) {
+                selectedYear = prev;
             } else if (yearCounts[currentYear]) {
                 selectedYear = currentYear;
             } else {
@@ -1882,18 +1899,23 @@
                     (yearCounts[y] > (yearCounts[best] || 0)) ? y : best, years[0]);
             }
             yearFilterEl.value = String(selectedYear);
+            reportYearFilterVehicleId = vehicleId;
             return selectedYear;
         }
 
-        // Render Reports (Annual spending visualization inside tab 1)
-        function renderReports() {
+        function refreshVehicleAnnualReport(vehicleId) {
+            populateReportYearFilter(vehicleId, true);
+            renderReportStats();
+        }
+
+        // Render annual stats for the selected vehicle + year (no year-dropdown reset)
+        function renderReportStats() {
             const yearFilterEl = document.getElementById('report-year-filter');
             if (!yearFilterEl) return;
 
             const targetVehicle = state.selectedVehicleId;
             if (!targetVehicle) return;
 
-            populateReportYearFilter(targetVehicle);
             const targetYear = yearFilterEl.value;
 
             const yearLogs = state.maintenanceLogs.filter(l => {
@@ -1958,6 +1980,14 @@
             }
         }
 
+        // Repopulate year options when logs change; preserve year for same vehicle
+        function renderReports() {
+            const targetVehicle = state.selectedVehicleId;
+            if (!targetVehicle) return;
+            populateReportYearFilter(targetVehicle, false);
+            renderReportStats();
+        }
+
         // ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมิน admin / 1234)
         function renderAdminPanelState() {
             if (state.adminAuthenticated) {
@@ -2010,35 +2040,106 @@
             }
         }
 
+        function escAttr(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        }
+
         function renderAdminVehicles() {
             const list = document.getElementById('admin-vehicles-list');
             if (!list) return;
             list.innerHTML = '';
             
             if (state.vehicles.length === 0) {
+                adminVehicleEditId = null;
                 list.innerHTML = `<div class="empty-state py-6"><i class="fa-solid fa-car text-2xl text-indigo-200 mb-2 block"></i>ยังไม่มีรถในระบบ — เพิ่มรถคันแรกด้านบน</div>`;
                 return;
             }
 
             state.vehicles.forEach(v => {
-                list.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
-                        <div class="min-w-0 flex-1">
-                            <span class="font-extrabold text-slate-800 text-xs block truncate" title="${v.name}">${v.name}</span>
-                            <span class="text-[9px] text-slate-500 block font-bold font-mono truncate">${v.license}</span>
+                if (adminVehicleEditId === v.id) {
+                    list.innerHTML += `
+                        <form onsubmit="saveVehicleEditAdmin(event, '${v.id}')" class="bg-indigo-50/80 p-2.5 rounded-lg border border-indigo-200 space-y-2 text-[11px]">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">ชื่อรถ</label>
+                                    <input type="text" id="edit-car-name-${v.id}" value="${escAttr(v.name)}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs focus:ring-2 focus:ring-indigo-500" required>
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">ทะเบียน</label>
+                                    <input type="text" id="edit-car-license-${v.id}" value="${escAttr(v.license)}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs font-mono focus:ring-2 focus:ring-indigo-500" required>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 justify-end">
+                                <button type="button" onclick="cancelVehicleEditAdmin()" class="px-3 py-1 rounded-lg font-bold text-xs text-slate-600 bg-white border border-slate-200 hover:bg-slate-50">ยกเลิก</button>
+                                <button type="submit" class="px-3 py-1 rounded-lg font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-700">บันทึก</button>
+                            </div>
+                        </form>
+                    `;
+                } else {
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                            <div class="min-w-0 flex-1">
+                                <span class="font-extrabold text-slate-800 text-xs block truncate" title="${escAttr(v.name)}">${v.name}</span>
+                                <span class="text-[9px] text-slate-500 block font-bold font-mono truncate">${v.license}</span>
+                            </div>
+                            <div class="flex items-center shrink-0 gap-0.5">
+                                <button type="button" onclick="startVehicleEditAdmin('${v.id}')" class="text-indigo-500 hover:text-indigo-700 p-1" title="แก้ไข">
+                                    <i class="fa-solid fa-pencil"></i>
+                                </button>
+                                <button type="button" onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1" title="ลบ">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
                         </div>
-                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                `;
+                    `;
+                }
             });
+        }
+
+        function startVehicleEditAdmin(id) {
+            adminVehicleEditId = id;
+            renderAdminVehicles();
+        }
+
+        function cancelVehicleEditAdmin() {
+            adminVehicleEditId = null;
+            renderAdminVehicles();
+        }
+
+        function saveVehicleEditAdmin(e, id) {
+            e.preventDefault();
+            const name = document.getElementById(`edit-car-name-${id}`).value.trim();
+            const license = document.getElementById(`edit-car-license-${id}`).value.trim();
+            if (!name || !license) {
+                showToast('กรุณากรอกชื่อรถและทะเบียน', 'error');
+                return;
+            }
+            const idx = state.vehicles.findIndex(v => v.id === id);
+            if (idx === -1) {
+                showToast('ไม่พบรถ', 'error');
+                return;
+            }
+            state.vehicles[idx].name = name;
+            state.vehicles[idx].license = license;
+            adminVehicleEditId = null;
+            saveToLocalStorage();
+            renderAdminVehicles();
+            populateDropdowns();
+            renderVehiclesCarousel();
+            if (state.selectedVehicleId === id) {
+                selectVehicle(id);
+            }
+            showToast('บันทึกข้อมูลรถสำเร็จ');
         }
 
         function addVehicleAdmin(e) {
             e.preventDefault();
-            const name = document.getElementById('add-car-name').value;
-            const license = document.getElementById('add-car-license').value;
+            const name = document.getElementById('add-car-name').value.trim();
+            const license = document.getElementById('add-car-license').value.trim();
+            if (!name || !license) {
+                showToast('กรุณากรอกชื่อรถและทะเบียน', 'error');
+                return;
+            }
 
             const newId = `V-00${state.vehicles.length + 1}`;
             state.vehicles.push({
@@ -2078,6 +2179,7 @@
                 showToast("ไม่สามารถลบรถคันสุดท้ายในระบบได้", "error");
                 return;
             }
+            if (adminVehicleEditId === id) adminVehicleEditId = null;
             state.vehicles = state.vehicles.filter(v => v.id !== id);
             if (state.selectedVehicleId === id) {
                 state.selectedVehicleId = state.vehicles[0].id;

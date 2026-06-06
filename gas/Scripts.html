@@ -89,6 +89,7 @@
         ];
 
         let currentUploadedReceiptBase64 = "";
+        let adminVehicleEditId = null;
 
         // App Initializer
         function initApp() {
@@ -1287,35 +1288,100 @@
             }
         }
 
+        function escAttr(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        }
+
         function renderAdminVehicles() {
             const list = document.getElementById('admin-vehicles-list');
             if (!list) return;
             list.innerHTML = '';
             
             if (state.vehicles.length === 0) {
+                adminVehicleEditId = null;
                 list.innerHTML = `<div class="empty-state py-6"><i class="fa-solid fa-car text-2xl text-indigo-200 mb-2 block"></i>ยังไม่มีรถในระบบ — เพิ่มรถคันแรกด้านบน</div>`;
                 return;
             }
 
             state.vehicles.forEach(v => {
-                list.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
-                        <div class="min-w-0 flex-1">
-                            <span class="font-extrabold text-slate-800 text-xs block truncate" title="${v.name}">${v.name}</span>
-                            <span class="text-[9px] text-slate-500 block font-bold font-mono truncate">${v.license}</span>
+                if (adminVehicleEditId === v.id) {
+                    list.innerHTML += `
+                        <form onsubmit="saveVehicleEditAdmin(event, '${v.id}')" class="bg-indigo-50/80 p-2.5 rounded-lg border border-indigo-200 space-y-2 text-[11px]">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">ชื่อรถ</label>
+                                    <input type="text" id="edit-car-name-${v.id}" value="${escAttr(v.name)}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs focus:ring-2 focus:ring-indigo-500" required>
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-slate-500 block mb-0.5">ทะเบียน</label>
+                                    <input type="text" id="edit-car-license-${v.id}" value="${escAttr(v.license)}" class="w-full bg-white border border-slate-200 p-2 rounded-lg outline-none text-xs font-mono focus:ring-2 focus:ring-indigo-500" required>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 justify-end">
+                                <button type="button" onclick="cancelVehicleEditAdmin()" class="px-3 py-1 rounded-lg font-bold text-xs text-slate-600 bg-white border border-slate-200 hover:bg-slate-50">ยกเลิก</button>
+                                <button type="submit" class="px-3 py-1 rounded-lg font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-700">บันทึก</button>
+                            </div>
+                        </form>
+                    `;
+                } else {
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                            <div class="min-w-0 flex-1">
+                                <span class="font-extrabold text-slate-800 text-xs block truncate" title="${escAttr(v.name)}">${v.name}</span>
+                                <span class="text-[9px] text-slate-500 block font-bold font-mono truncate">${v.license}</span>
+                            </div>
+                            <div class="flex items-center shrink-0 gap-0.5">
+                                <button type="button" onclick="startVehicleEditAdmin('${v.id}')" class="text-indigo-500 hover:text-indigo-700 p-1" title="แก้ไข">
+                                    <i class="fa-solid fa-pencil"></i>
+                                </button>
+                                <button type="button" onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1" title="ลบ">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
                         </div>
-                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                `;
+                    `;
+                }
+            });
+        }
+
+        function startVehicleEditAdmin(id) {
+            adminVehicleEditId = id;
+            renderAdminVehicles();
+        }
+
+        function cancelVehicleEditAdmin() {
+            adminVehicleEditId = null;
+            renderAdminVehicles();
+        }
+
+        function saveVehicleEditAdmin(e, id) {
+            e.preventDefault();
+            const name = document.getElementById(`edit-car-name-${id}`).value.trim();
+            const license = document.getElementById(`edit-car-license-${id}`).value.trim();
+            if (!name || !license) {
+                showToast('กรุณากรอกชื่อรถและทะเบียน', 'error');
+                return;
+            }
+            runGas('updateVehicle', { id: id, name: name, license: license, selectedVehicleId: state.selectedVehicleId }, function(result) {
+                adminVehicleEditId = null;
+                applyState(result.state);
+                renderAdminVehicles();
+                refreshUI();
+                if (state.selectedVehicleId === id) {
+                    selectVehicle(id);
+                }
+                showToast('บันทึกข้อมูลรถสำเร็จ');
             });
         }
 
         function addVehicleAdmin(e) {
             e.preventDefault();
-            const name = document.getElementById('add-car-name').value;
-            const license = document.getElementById('add-car-license').value;
+            const name = document.getElementById('add-car-name').value.trim();
+            const license = document.getElementById('add-car-license').value.trim();
+            if (!name || !license) {
+                showToast('กรุณากรอกชื่อรถและทะเบียน', 'error');
+                return;
+            }
             runGas('addVehicle', { name: name, license: license }, function(result) {
                 applyState(result.state);
                 document.getElementById('add-car-name').value = '';

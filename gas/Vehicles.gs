@@ -43,6 +43,36 @@ function addVehicle(data) {
   }
 }
 
+function updateVehicle(data) {
+  try {
+    var id = String(data.id || '');
+    if (!id) {
+      return { success: false, error: 'ไม่พบรถ' };
+    }
+    var name = String(data.name || '').trim();
+    var license = String(data.license || '').trim();
+    if (!name || !license) {
+      return { success: false, error: 'กรุณากรอกชื่อรถและทะเบียน' };
+    }
+    var existing = getAllRowsAsObjects_(SHEET_NAMES.VEHICLES).find(function (r) {
+      return String(r.vehicleId) === id;
+    });
+    if (!existing) {
+      return { success: false, error: 'ไม่พบรถ' };
+    }
+    upsertRow_(SHEET_NAMES.VEHICLES, 'vehicleId', id, {
+      vehicleId: id,
+      'ชื่อ': name,
+      'ทะเบียน': license,
+      'สร้างเมื่อ': existing['สร้างเมื่อ'] || getBangkokToday_()
+    });
+    var selectedId = data.selectedVehicleId || id;
+    return { success: true, state: getAppState(selectedId, { skipCache: true }) };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
 function deleteVehicle(vehicleId) {
   try {
     var vehicles = getVehicles_();

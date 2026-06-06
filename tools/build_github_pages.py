@@ -66,7 +66,7 @@ if 'autocomplete="off"' not in body and 'id="log-search-input"' in body:
 # Year filter populated dynamically from maintenance logs per vehicle
 body = re.sub(
     r'<select id="report-year-filter"[^>]*>.*?</select>',
-    '<select id="report-year-filter" onchange="renderReports()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>',
+    '<select id="report-year-filter" onchange="renderReportStats()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>',
     body,
     count=1,
     flags=re.DOTALL
@@ -347,7 +347,13 @@ if "user === 'admin' && pass === '1234'" not in script:
         '// ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมิน admin / 1234)'
     )
 
-# Truncate long names in admin lists
+# Vehicle admin edit (ชื่อรถ + ทะเบียน) — mockup is source; verify after other patches
+if 'function saveVehicleEditAdmin' not in script:
+    raise SystemExit(
+        'FAIL: mockup must define saveVehicleEditAdmin / vehicle edit UI before build'
+    )
+
+# Truncate long names in admin lists (legacy mockups without gap-2)
 script = script.replace(
     """                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                         <div>

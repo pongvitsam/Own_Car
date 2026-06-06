@@ -1,3 +1,8 @@
+/** Admin vehicle edit — delegates to Vehicles.gs updateVehicle */
+function updateVehicleAdmin(data) {
+  return updateVehicle(data);
+}
+
 function verifyAdmin(credentials) {
   var user = '';
   var pass = '';
