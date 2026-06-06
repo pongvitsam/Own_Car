@@ -179,7 +179,7 @@
                 warning: 'bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 border-amber-300 shadow-amber-500/20',
                 error: 'bg-gradient-to-r from-rose-600 to-rose-700 text-white border-rose-500 shadow-rose-900/20'
             };
-            toast.className = `toast-item p-3.5 rounded-xl shadow-lg text-xs font-bold flex justify-between items-center pointer-events-auto border ${styles[type] || styles.success}`;
+            toast.className = `toast-item p-4 rounded-2xl shadow-premium-lg text-xs font-bold flex justify-between items-center pointer-events-auto border ${styles[type] || styles.success}`;
             
             let icon = 'fa-circle-check';
             if (type === 'warning') icon = 'fa-bell';
@@ -210,13 +210,13 @@
             state.vehicles.forEach(v => {
                 const isActive = v.id === state.selectedVehicleId;
                 const activeClasses = isActive 
-                    ? 'vehicle-card vehicle-card--active border-indigo-500 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg ring-2 ring-indigo-400/30' 
-                    : 'vehicle-card border-slate-200 bg-white hover:border-indigo-200 hover:shadow-md text-slate-800';
+                    ? 'vehicle-card--active border-indigo-400/60 bg-gradient-to-br from-indigo-900 via-violet-950 to-indigo-950 text-white ring-2 ring-indigo-400/25' 
+                    : 'border-slate-200/80 bg-white/95 hover:border-indigo-200 hover:shadow-premium text-slate-800';
 
                 const latestOdo = getLatestOdometer(v.id);
 
                 carousel.innerHTML += `
-                    <div onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[145px] md:w-auto p-3 rounded-xl border ${activeClasses} cursor-pointer">
+                    <div onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[145px] md:w-auto p-3.5 border cursor-pointer ${activeClasses}">
                         <div class="vehicle-card-license text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
                         <div class="vehicle-card-name font-extrabold text-xs truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
                         <div class="mt-4 pt-1.5 border-t ${isActive ? 'border-indigo-800/60' : 'border-slate-100'} text-[10px] flex justify-between items-center font-mono">
@@ -319,6 +319,23 @@
             return logsBeforeDate.length > 0 ? logsBeforeDate[0].odo : 0;
         }
 
+        function resolveAlertServiceLabel(alert) {
+            if (!alert) return 'บำรุงรักษาตามกำหนด';
+            if (alert.serviceLabel) return alert.serviceLabel;
+            if (alert.categoryId) {
+                const cat = state.categories.find(c => c.id === alert.categoryId);
+                if (cat) return cat.name;
+            }
+            const logs = state.maintenanceLogs.filter(
+                l => l.vehicleId === alert.vehicleId && l.date === alert.lastUpdated && (l.alertKm > 0 || l.alertMonth > 0)
+            );
+            if (logs.length > 0) {
+                const cat = state.categories.find(c => c.id === logs[0].category);
+                if (cat) return cat.name;
+            }
+            return 'บำรุงรักษาตามกำหนด';
+        }
+
         function daysUntilDate(dateStr) {
             if (!dateStr) return null;
             const parts = String(dateStr).split('-');
@@ -347,23 +364,6 @@
                 rowEl.classList.add('border-rose-200', 'bg-rose-50');
             }
             return { urgent, days };
-        }
-
-        function resolveAlertServiceLabel(alert) {
-            if (!alert) return 'บำรุงรักษาตามกำหนด';
-            if (alert.serviceLabel) return alert.serviceLabel;
-            if (alert.categoryId) {
-                const cat = state.categories.find(c => c.id === alert.categoryId);
-                if (cat) return cat.name;
-            }
-            const logs = state.maintenanceLogs.filter(
-                l => l.vehicleId === alert.vehicleId && l.date === alert.lastUpdated && (l.alertKm > 0 || l.alertMonth > 0)
-            );
-            if (logs.length > 0) {
-                const cat = state.categories.find(c => c.id === logs[0].category);
-                if (cat) return cat.name;
-            }
-            return 'บำรุงรักษาตามกำหนด';
         }
 
         function selectVehicle(id) {
@@ -492,7 +492,7 @@
                 const catName = catObj ? catObj.name : 'ไม่ได้จัดหมวดหมู่';
 
                 container.innerHTML += `
-                    <div class="bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm hover:shadow transition-all relative overflow-hidden">
+                    <div class="log-card p-4 relative overflow-hidden">
                         <div class="flex justify-between items-start">
                             <div class="space-y-1">
                                 <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
@@ -672,7 +672,7 @@
                     : `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[8px] font-black flex items-center gap-1"><i class="fa-solid fa-gas-pump"></i> น้ำมัน OIL</span>`;
 
                 container.innerHTML += `
-                    <div class="bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm hover:shadow transition-all relative">
+                    <div class="log-card p-4 relative overflow-hidden">
                         <div class="flex justify-between items-start">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-1.5 flex-wrap">
@@ -1228,6 +1228,7 @@
             renderReportStats();
         }
 
+        // Render annual stats for the selected vehicle + year (no year-dropdown reset)
         function renderReportStats() {
             const yearFilterEl = document.getElementById('report-year-filter');
             if (!yearFilterEl) return;
@@ -1299,6 +1300,7 @@
             }
         }
 
+        // Repopulate year options when logs change; preserve year for same vehicle
         function renderReports() {
             const targetVehicle = state.selectedVehicleId;
             if (!targetVehicle) return;
@@ -1444,13 +1446,15 @@
                 showToast('กรุณากรอกชื่อรถและทะเบียน', 'error');
                 return;
             }
+            const prbEl = document.getElementById(`edit-car-prb-${id}`);
+            const insEl = document.getElementById(`edit-car-insurance-${id}`);
             runGas('updateVehicle', {
                 id: id,
                 name: name,
                 license: license,
-                prbExpiryDate: document.getElementById(`edit-car-prb-${id}`).value,
-                insuranceExpiryDate: document.getElementById(`edit-car-insurance-${id}`).value,
-                selectedVehicleId: state.selectedVehicleId
+                selectedVehicleId: state.selectedVehicleId,
+                prbExpiryDate: prbEl ? prbEl.value : '',
+                insuranceExpiryDate: insEl ? insEl.value : ''
             }, function(result) {
                 adminVehicleEditId = null;
                 applyState(result.state);
@@ -1471,12 +1475,12 @@
                 showToast('กรุณากรอกชื่อรถและทะเบียน', 'error');
                 return;
             }
-            runGas('addVehicle', {
-                name: name,
-                license: license,
-                prbExpiryDate: document.getElementById('add-car-prb-expiry').value,
-                insuranceExpiryDate: document.getElementById('add-car-insurance-expiry').value
-            }, function(result) {
+            const prbDate = document.getElementById('add-car-prb-expiry').value;
+            const insDate = document.getElementById('add-car-insurance-expiry').value;
+            const payload = { name: name, license: license };
+            if (prbDate) payload.prbExpiryDate = prbDate;
+            if (insDate) payload.insuranceExpiryDate = insDate;
+            runGas('addVehicle', payload, function(result) {
                 applyState(result.state);
                 document.getElementById('add-car-name').value = '';
                 document.getElementById('add-car-license').value = '';
@@ -1591,9 +1595,12 @@
                 id: logId,
                 odo: parseInt(document.getElementById('edit-log-odo').value)
             };
-            if (!log || log.type !== 'Odometer_Update') {
+            if (log && log.type !== 'Odometer_Update') {
                 payload.shop = document.getElementById('edit-log-shop').value || '-';
                 payload.cost = parseFloat(document.getElementById('edit-log-cost').value);
+            } else {
+                payload.shop = '-';
+                payload.cost = 0;
             }
             runGas('saveEditedLog', payload, function(result) {
                 applyState(result.state);
