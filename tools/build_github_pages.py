@@ -29,21 +29,35 @@ body = body_match.group(1).strip() if body_match else ''
 style_match = re.search(r'<style>(.*?)</style>', gas_index, re.DOTALL)
 inline_styles = style_match.group(1).strip() if style_match else ''
 
-# Version badge
+# Version badge (GitHub Pages)
+body = re.sub(
+    r'<span class="version-badge">.*?</span>',
+    '<span class="version-badge"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v2.0.0 GitHub Pages</span>',
+    body,
+    count=1,
+    flags=re.DOTALL
+)
 body = re.sub(
     r'v[\d.]+ \([^)]+\)',
-    'v2.0.0 (GitHub Pages)',
+    'v2.0.0 GitHub Pages',
     body,
     count=1
 )
 
-# Remove loading overlay (instant localStorage app)
+# Remove loading overlay (instant localStorage app) — match nested inner div
 body = re.sub(
-    r'\s*<div id="loading-overlay"[^>]*>.*?</div>\s*',
+    r'\s*<div id="loading-overlay"[^>]*>[\s\S]*?</div>\s*</div>\s*',
     '',
     body,
     count=1,
-    flags=re.DOTALL
+)
+# Clean any stray closing tag left by older builds
+body = re.sub(r'^\s*</div>\s*\n', '', body, count=1)
+
+# Search input: disable browser autocomplete (was suggesting "admin")
+body = body.replace(
+    'id="log-search-input" oninput="filterLogsList()"',
+    'id="log-search-input" autocomplete="off" autocorrect="off" spellcheck="false" oninput="filterLogsList()"'
 )
 
 # Dynamic year options
@@ -195,7 +209,7 @@ EXPORT_FN = '''
                 return '<li>' + name + ': ฿' + fmtNum(sum) + ' (' + pct + '%)</li>';
             }).join('');
             const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงาน ' + vehicle.license + '</title>' +
-                '<style>body{font-family:Sarabun,Arial,sans-serif;padding:24px;color:#1e293b}' +
+                '<style>body{font-family:Itim,Inter,Arial,sans-serif;padding:24px;color:#1e293b}' +
                 'h1{font-size:20px;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:16px}' +
                 'th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px}th{background:#eef2ff}' +
                 '.summary{background:#f8fafc;padding:12px;border-radius:8px;margin-top:12px}' +
@@ -228,6 +242,233 @@ if 'function exportReportPdf' not in script:
         EXPORT_FN + '\n        window.onload = function () {'
     )
 
+# Ensure setupDailyTrigger exists for GitHub Pages (simulation)
+SETUP_TRIGGER_FN = '''
+        function setupDailyTrigger() {
+            const statusEl = document.getElementById('setup-trigger-status');
+            const ts = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+            state.lineLogs.push(`⏰ [${ts}] จำลองสร้าง Daily Trigger 08:00 น. สำเร็จ (GitHub Pages — ไม่มี Apps Script จริง)`);
+            saveToLocalStorage();
+            if (statusEl) {
+                statusEl.textContent = '✓ จำลองสร้าง trigger สำเร็จ — ใน GAS จริงจะรันที่ Apps Script';
+                statusEl.classList.remove('hidden');
+            }
+            showToast('จำลองสร้าง Daily Trigger 08:00 น. สำเร็จ (GitHub Pages)');
+        }
+'''
+if 'function setupDailyTrigger' not in script:
+    script = script.replace(
+        '        // Tab routing helper',
+        SETUP_TRIGGER_FN + '\n        // Tab routing helper',
+        1
+    )
+
+# Fix search matching "admin" inside "Maintenance" type string
+script = script.replace(
+    """                logs = logs.filter(l => {
+                    const shopMatch = l.shop.toLowerCase().includes(kw);
+                    const catObj = state.categories.find(c => c.id === l.category);
+                    const catMatch = catObj && catObj.name.toLowerCase().includes(kw);
+                    const typeMatch = l.type.toLowerCase().includes(kw);
+                    return shopMatch || catMatch || typeMatch;
+                });""",
+    """                logs = logs.filter(l => {
+                    const shopMatch = (l.shop || '').toLowerCase().includes(kw);
+                    const catObj = state.categories.find(c => c.id === l.category);
+                    const catMatch = catObj && catObj.name.toLowerCase().includes(kw);
+                    const odoMatch = String(l.odo).includes(kw);
+                    return shopMatch || catMatch || odoMatch;
+                });"""
+)
+
+# Differentiate empty vs no-search-results in maintenance history
+script = script.replace(
+    """            if (logs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
+                        <i class="fa-solid fa-magnifying-glass text-2xl mb-2 text-slate-300 block"></i>
+                        ไม่พบประวัติการซ่อมบำรุงในขณะนี้
+                    </div>
+                `;
+                return;
+            }""",
+    """            if (logs.length === 0) {
+                const hasFilter = filterKeyword.trim() !== '';
+                const icon = hasFilter ? 'fa-magnifying-glass' : 'fa-clipboard-list';
+                const msg = hasFilter
+                    ? 'ไม่พบรายการที่ตรงกับ "' + filterKeyword.trim() + '"'
+                    : 'ยังไม่มีประวัติการซ่อมบำรุงของรถคันนี้';
+                container.innerHTML = `
+                    <div class="empty-state text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
+                        <i class="fa-solid ${icon} text-2xl mb-2 text-slate-300 block"></i>
+                        ${msg}
+                    </div>
+                `;
+                return;
+            }"""
+)
+
+# Truncate long names in admin lists + empty states
+script = script.replace(
+    """        function renderAdminVehicles() {
+            const list = document.getElementById('admin-vehicles-list');
+            if (!list) return;
+            list.innerHTML = '';
+            
+            state.vehicles.forEach(v => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <div>
+                            <span class="font-extrabold text-slate-800 text-xs">${v.name}</span>
+                            <span class="text-[9px] text-slate-500 block font-bold font-mono">${v.license}</span>
+                        </div>
+                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }""",
+    """        function renderAdminVehicles() {
+            const list = document.getElementById('admin-vehicles-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            if (state.vehicles.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state text-center py-6 text-slate-400 text-[10px] bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                        <i class="fa-solid fa-car text-xl mb-2 text-slate-300 block"></i>
+                        ยังไม่มีรถในระบบ — เพิ่มรถด้านบน
+                    </div>`;
+                return;
+            }
+
+            state.vehicles.forEach(v => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                        <div class="min-w-0 flex-1">
+                            <span class="font-extrabold text-slate-800 text-xs block truncate" title="${v.name}">${v.name}</span>
+                            <span class="text-[9px] text-slate-500 block font-bold font-mono truncate">${v.license}</span>
+                        </div>
+                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }"""
+)
+
+script = script.replace(
+    """        function renderAdminCategories() {
+            const list = document.getElementById('admin-categories-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            state.categories.forEach(c => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <span class="font-extrabold text-slate-800 text-xs">${c.name}</span>
+                        <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }""",
+    """        function renderAdminCategories() {
+            const list = document.getElementById('admin-categories-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            if (state.categories.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state text-center py-6 text-slate-400 text-[10px] bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                        <i class="fa-solid fa-tags text-xl mb-2 text-slate-300 block"></i>
+                        ยังไม่มีหมวดหมู่ — เพิ่มหมวดด้านบน
+                    </div>`;
+                return;
+            }
+
+            state.categories.forEach(c => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                        <span class="font-extrabold text-slate-800 text-xs truncate min-w-0 flex-1" title="${c.name}">${c.name}</span>
+                        <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }"""
+)
+
+# Vehicle carousel: truncate on mobile, full name on desktop
+script = script.replace(
+    """                    <div onclick="selectVehicle('${v.id}')" class="snap-start shrink-0 w-[145px] p-3 rounded-xl border ${activeClasses} cursor-pointer transition-all duration-200">
+                        <div class="text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
+                        <div class="font-extrabold text-xs truncate mt-0.5">${v.name}</div>""",
+    """                    <div onclick="selectVehicle('${v.id}')" class="snap-start shrink-0 w-[145px] md:w-auto p-3 rounded-xl border ${activeClasses} cursor-pointer transition-all duration-200 hover:shadow-md">
+                        <div class="text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate md:whitespace-normal" title="${v.license}"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
+                        <div class="font-extrabold text-xs truncate md:whitespace-normal mt-0.5" title="${v.name}">${v.name}</div>"""
+)
+
+# Footer nav active indicator
+script = script.replace(
+    """            tabs.forEach(t => {
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    navBtn.className = "flex flex-col items-center justify-center w-16 text-indigo-600 transition-all font-bold";
+                } else {
+                    navBtn.className = "flex flex-col items-center justify-center w-16 text-slate-400 transition-all";
+                }
+            });""",
+    """            tabs.forEach(t => {
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    navBtn.className = "nav-tab nav-tab-active flex flex-col items-center justify-center w-16 text-indigo-600 transition-all";
+                } else {
+                    navBtn.className = "nav-tab flex flex-col items-center justify-center w-16 text-slate-400 hover:text-indigo-400 transition-all";
+                }
+            });"""
+)
+
+# Itim typography + UI polish in inline CSS
+inline_styles = inline_styles.replace(
+    "font-family: 'Inter', 'Sarabun', sans-serif;",
+    "font-family: 'Itim', 'Inter', sans-serif;"
+)
+inline_styles += """
+        .font-mono, .tabular-nums { font-family: 'Inter', ui-monospace, monospace; }
+        .nav-tab { position: relative; min-height: 3rem; }
+        .nav-tab-active::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            width: 1.25rem;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1, #818cf8);
+            border-radius: 9999px;
+        }
+        .empty-state { animation: fade-in 0.3s ease; }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #log-search-input:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            border-color: #a5b4fc;
+        }
+        .tab-content > section,
+        .bg-white.rounded-2xl {
+            transition: box-shadow 0.2s ease;
+        }
+        .tab-content > section:hover {
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+        }
+        button:active { transform: scale(0.97); }
+"""
+
 index_html = f'''<!DOCTYPE html>
 <html lang="th" class="h-full min-h-full bg-slate-100 sm:bg-slate-200/80">
 <head>
@@ -251,7 +492,7 @@ index_html = f'''<!DOCTYPE html>
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Itim&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
 {inline_styles}

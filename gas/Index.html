@@ -23,7 +23,7 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Itim&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
     <style>
@@ -36,14 +36,22 @@
             padding: 0;
             background-color: #f1f5f9;
         }
+        body, button, input, select, textarea, h1, h2, h3, h4 {
+            font-family: 'Itim', 'Inter', sans-serif;
+        }
         body {
-            font-family: 'Inter', 'Sarabun', sans-serif;
+            font-weight: 400;
             width: 100%;
             min-height: 100vh;
             min-height: 100dvh;
             margin: 0;
             padding: 0;
             background-color: #f1f5f9;
+            -webkit-font-smoothing: antialiased;
+        }
+        .font-mono, .font-mono span, [id*="odometer"], [id*="fuel-avg"], [id*="yearly-total"] {
+            font-family: 'Inter', ui-monospace, monospace;
+            font-variant-numeric: tabular-nums;
         }
         @media (min-width: 640px) {
             html, body { background-color: rgba(226, 232, 240, 0.8); }
@@ -141,6 +149,55 @@
             #vehicles-carousel { grid-template-columns: repeat(4, 1fr); }
         }
         #loading-overlay.hidden { display: none !important; }
+        /* Vehicle cards — full names on desktop */
+        @media (min-width: 768px) {
+            #vehicles-carousel > .vehicle-card { width: auto; min-width: 0; }
+            #vehicles-carousel > .vehicle-card .vehicle-card-name,
+            #vehicles-carousel > .vehicle-card .vehicle-card-license {
+                overflow: visible; white-space: normal; text-overflow: unset;
+            }
+        }
+        .vehicle-card { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+        .vehicle-card:hover { transform: translateY(-1px); }
+        .vehicle-card--active {
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.35), 0 0 0 2px rgba(99, 102, 241, 0.25);
+        }
+        /* Bottom nav active indicator */
+        .nav-tab-btn { min-width: 4.5rem; min-height: 3rem; padding: 0.35rem 0.5rem; border-radius: 0.75rem; position: relative; }
+        .nav-tab-btn--active { color: #4338ca; background: #eef2ff; }
+        .nav-tab-btn--active .nav-tab-dot { opacity: 1; transform: scale(1); }
+        .nav-tab-dot {
+            width: 4px; height: 4px; border-radius: 9999px; background: #4f46e5;
+            margin-top: 2px; opacity: 0; transform: scale(0); transition: all 0.2s ease;
+        }
+        .nav-tab-btn--fuel.nav-tab-btn--active { color: #047857; background: #ecfdf5; }
+        .nav-tab-btn--fuel.nav-tab-btn--active .nav-tab-dot { background: #059669; }
+        /* Toast slide-in */
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .toast-item { animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        /* Modal backdrop fade */
+        @keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+        .modal-backdrop:not(.hidden) { animation: modal-backdrop-in 0.25s ease forwards; }
+        /* Touch targets on mobile */
+        @media (max-width: 639px) {
+            footer button, header button { min-height: 44px; min-width: 44px; }
+        }
+        /* Version badge */
+        .version-badge {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            font-family: 'Inter', monospace; font-size: 0.625rem; font-weight: 600;
+            background: linear-gradient(135deg, rgba(99,102,241,0.35), rgba(79,70,229,0.2));
+            color: #c7d2fe; padding: 0.15rem 0.45rem; border-radius: 0.375rem;
+            border: 1px solid rgba(129,140,248,0.35); letter-spacing: 0.02em;
+        }
+        .empty-state {
+            text-align: center; padding: 2rem 1rem; color: #94a3b8; font-size: 0.75rem;
+            background: #fff; border-radius: 1rem; border: 1px dashed #e2e8f0;
+        }
+        .tab-content > section:hover { box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); }
     </style>
 </head>
 <body class="app-shell relative">
@@ -161,7 +218,7 @@
                 </div>
                 <div class="min-w-0">
                     <h1 class="text-sm sm:text-base lg:text-lg font-bold leading-tight tracking-wide truncate">MyHome CarCare</h1>
-                    <span class="text-[9px] sm:text-[10px] bg-indigo-500/30 text-indigo-200 px-1.5 py-0.2 rounded-md font-mono">v1.9.0 (Performance)</span>
+                    <span class="version-badge"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v2.0.0 GitHub Pages</span>
                 </div>
             </div>
             <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
@@ -324,7 +381,8 @@
             <div class="flex flex-col gap-2">
                 <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">ประวัติการดูแลและใบเสร็จ</h3>
                 <div class="relative w-full">
-                    <input type="text" id="log-search-input" oninput="filterLogsList()" placeholder="🔍 ค้นหาประวัติซ่อมบำรุง..." class="w-full bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-[11px] outline-none focus:ring-1 focus:ring-indigo-500">
+                    <input type="search" id="log-search-input" name="maintenance-log-search" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" oninput="filterLogsList()" placeholder="ค้นหาประวัติซ่อมบำรุง..." class="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-9 text-xs outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-300 shadow-sm transition-shadow">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-xs pointer-events-none"></i>
                     <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-2.5 text-slate-300 hover:text-slate-500">
                         <i class="fa-solid fa-circle-xmark text-xs"></i>
                     </button>
@@ -406,9 +464,10 @@
                     </div>
                     <h3 class="text-xs font-bold text-slate-900">แผงควบคุมระบบของแอดมิน</h3>
                     <p class="text-[10px] text-slate-500">กรุณากรอกรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>
+                    <p class="text-[9px] text-indigo-500 bg-indigo-50/80 rounded-lg px-2 py-1.5"><i class="fa-solid fa-cloud mr-1"></i>โหมด GitHub Pages — ข้อมูลเก็บในเบราว์เซอร์ของคุณ</p>
                 </div>
                 <div class="space-y-2">
-                    <input type="password" id="admin-passcode" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="new-password" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                     <button onclick="authenticateAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all active:scale-95 shadow-md">
                         ยืนยันรหัสผ่านเพื่อเข้าใช้งาน
                     </button>
@@ -468,9 +527,9 @@
                         <i class="fa-solid fa-screwdriver-wrench text-amber-600"></i> ตั้งค่าระบบ (ครั้งแรก)
                     </h3>
                     <ul class="text-[10px] text-amber-900/80 space-y-1 list-disc pl-4">
-                        <li>กดปุ่มด้านล่างเพื่อสร้าง trigger แจ้งเตือนอัตโนมัติทุกวัน 08:00 น.</li>
-                        <li>LINE Notify: ตั้ง Script property <code class="bg-white px-1 rounded">LINE_NOTIFY_TOKEN</code> ใน Apps Script editor</li>
-                        <li>รหัสแอดมินเริ่มต้น: <strong>1234</strong> (เปลี่ยนได้ที่ property <code class="bg-white px-1 rounded">ADMIN_PASS</code>)</li>
+                        <li>กดปุ่มด้านล่างเพื่อจำลองการสร้าง trigger แจ้งเตือนอัตโนมัติทุกวัน 08:00 น. (GitHub Pages)</li>
+                        <li>LINE Notify: ในเวอร์ชัน GAS ตั้ง Script property <code class="bg-white px-1 rounded">LINE_NOTIFY_TOKEN</code></li>
+                        <li>รหัสแอดมินเริ่มต้น: <strong>1234</strong></li>
                     </ul>
                     <button type="button" onclick="setupDailyTrigger()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
                         <i class="fa-solid fa-clock mr-1"></i> สร้าง Daily Trigger (08:00)
@@ -484,23 +543,26 @@
     </div>
 
     <!-- PERSISTENT BOTTOM NAVIGATION BAR (True Multi-Tab Controller) -->
-    <footer class="bg-white border-t border-slate-100 h-16 flex items-center justify-around px-2 sm:px-4 md:px-8 lg:px-12 xl:px-24 sticky bottom-0 z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] shrink-0">
-        <button onclick="switchTab('dashboard')" class="flex flex-col items-center justify-center w-16 text-indigo-600 transition-all" id="nav-dashboard">
+    <footer class="bg-white/95 backdrop-blur-sm border-t border-slate-200/80 h-[4.25rem] flex items-center justify-around px-2 sm:px-4 md:px-8 lg:px-12 xl:px-24 sticky bottom-0 z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.05)] shrink-0">
+        <button onclick="switchTab('dashboard')" class="nav-tab-btn nav-tab-btn--active flex flex-col items-center justify-center text-indigo-600 transition-all" id="nav-dashboard">
             <i class="fa-solid fa-screwdriver-wrench text-lg"></i>
-            <span class="text-[9px] mt-1 font-bold">บำรุงรักษา</span>
+            <span class="text-[10px] mt-0.5 font-bold leading-tight">บำรุงรักษา</span>
+            <span class="nav-tab-dot"></span>
         </button>
-        <button onclick="switchTab('fuelio')" class="flex flex-col items-center justify-center w-16 text-slate-400 transition-all" id="nav-fuelio">
+        <button onclick="switchTab('fuelio')" class="nav-tab-btn nav-tab-btn--fuel flex flex-col items-center justify-center text-slate-400 hover:text-emerald-600 transition-all" id="nav-fuelio">
             <i class="fa-solid fa-gas-pump text-lg"></i>
-            <span class="text-[9px] mt-1 font-bold">บันทึกน้ำมัน</span>
+            <span class="text-[10px] mt-0.5 font-bold leading-tight">น้ำมัน/เชื้อเพลิง</span>
+            <span class="nav-tab-dot"></span>
         </button>
-        <button onclick="switchTab('admin')" class="flex flex-col items-center justify-center w-16 text-slate-400 transition-all" id="nav-admin">
+        <button onclick="switchTab('admin')" class="nav-tab-btn flex flex-col items-center justify-center text-slate-400 hover:text-indigo-600 transition-all" id="nav-admin">
             <i class="fa-solid fa-users-gear text-lg"></i>
-            <span class="text-[9px] mt-1 font-bold">แอดมินบ้าน</span>
+            <span class="text-[10px] mt-0.5 font-bold leading-tight">แอดมินบ้าน</span>
+            <span class="nav-tab-dot"></span>
         </button>
     </footer>
 
     <!-- MODAL 1: Odometer Only Update Form -->
-    <div id="odometer-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6">
+    <div id="odometer-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6">
         <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 animate-slide-up shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -531,7 +593,7 @@
     </div>
 
     <!-- MODAL 2: Repair / Maintenance Form with alerts & receipt simulation -->
-    <div id="repair-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
+    <div id="repair-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
         <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -636,7 +698,7 @@
     </div>
 
     <!-- MODAL 5: Fuelio Style - Add Fuel Fill Log Modal -->
-    <div id="fuel-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
+    <div id="fuel-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
         <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -737,7 +799,7 @@
     </div>
 
     <!-- MODAL 3: Console Line API Simulation logs -->
-    <div id="line-logs-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+    <div id="line-logs-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
         <div class="bg-white w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
@@ -755,7 +817,7 @@
     </div>
 
     <!-- Edit Log Modal -->
-    <div id="edit-log-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+    <div id="edit-log-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
         <div class="bg-white w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1">

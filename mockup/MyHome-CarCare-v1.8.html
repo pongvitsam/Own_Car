@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th" class="h-full bg-slate-100">
 <head>
     <meta charset="UTF-8">
@@ -799,32 +799,32 @@
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className = `p-3 rounded-xl shadow-lg text-xs font-bold transition-all transform translate-y-2 flex justify-between items-center pointer-events-auto border ${
-                type === 'success' ? 'bg-indigo-950 text-white border-indigo-900' : 
-                type === 'warning' ? 'bg-amber-500 text-slate-900 border-amber-400' : 'bg-rose-600 text-white border-rose-500'
-            }`;
+            const styles = {
+                success: 'bg-gradient-to-r from-indigo-950 to-indigo-900 text-white border-indigo-700/50 shadow-indigo-900/20',
+                warning: 'bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 border-amber-300 shadow-amber-500/20',
+                error: 'bg-gradient-to-r from-rose-600 to-rose-700 text-white border-rose-500 shadow-rose-900/20'
+            };
+            toast.className = `toast-item p-3.5 rounded-xl shadow-lg text-xs font-bold flex justify-between items-center pointer-events-auto border ${styles[type] || styles.success}`;
             
             let icon = 'fa-circle-check';
             if (type === 'warning') icon = 'fa-bell';
             if (type === 'error') icon = 'fa-circle-exclamation';
 
             toast.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid ${icon}"></i>
-                    <span>${message}</span>
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid ${icon} text-sm opacity-90"></i>
+                    <span class="leading-snug">${message}</span>
                 </div>
-                <button onclick="this.parentElement.remove()" class="text-white/60 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="this.parentElement.remove()" class="opacity-60 hover:opacity-100 ml-2 p-1 rounded-lg transition-opacity"><i class="fa-solid fa-xmark"></i></button>
             `;
             container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2');
-                toast.classList.add('translate-y-0');
-            }, 10);
 
             setTimeout(() => {
-                toast.remove();
-            }, 4000);
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-8px)';
+                toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4200);
         }
 
         // Render cars selection inside header carousel
@@ -835,15 +835,15 @@
             state.vehicles.forEach(v => {
                 const isActive = v.id === state.selectedVehicleId;
                 const activeClasses = isActive 
-                    ? 'border-indigo-600 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg scale-102 ring-2 ring-indigo-500/20' 
-                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800';
+                    ? 'vehicle-card vehicle-card--active border-indigo-500 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg ring-2 ring-indigo-400/30' 
+                    : 'vehicle-card border-slate-200 bg-white hover:border-indigo-200 hover:shadow-md text-slate-800';
 
                 const latestOdo = getLatestOdometer(v.id);
 
                 carousel.innerHTML += `
-                    <div onclick="selectVehicle('${v.id}')" class="snap-start shrink-0 w-[145px] p-3 rounded-xl border ${activeClasses} cursor-pointer transition-all duration-200">
-                        <div class="text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
-                        <div class="font-extrabold text-xs truncate mt-0.5">${v.name}</div>
+                    <div onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[145px] md:w-auto p-3 rounded-xl border ${activeClasses} cursor-pointer">
+                        <div class="vehicle-card-license text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
+                        <div class="vehicle-card-name font-extrabold text-xs truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
                         <div class="mt-4 pt-1.5 border-t ${isActive ? 'border-indigo-800/60' : 'border-slate-100'} text-[10px] flex justify-between items-center font-mono">
                             <span class="${isActive ? 'text-indigo-200' : 'text-slate-400'}">ไมล์ล่าสุด:</span>
                             <span class="font-bold text-right">${latestOdo.toLocaleString()} กม.</span>
@@ -1012,19 +1012,23 @@
             if (filterKeyword.trim() !== '') {
                 const kw = filterKeyword.toLowerCase().trim();
                 logs = logs.filter(l => {
-                    const shopMatch = l.shop.toLowerCase().includes(kw);
+                    const shopMatch = (l.shop || '').toLowerCase().includes(kw);
                     const catObj = state.categories.find(c => c.id === l.category);
                     const catMatch = catObj && catObj.name.toLowerCase().includes(kw);
-                    const typeMatch = l.type.toLowerCase().includes(kw);
-                    return shopMatch || catMatch || typeMatch;
+                    const odoMatch = String(l.odo).includes(kw);
+                    return shopMatch || catMatch || odoMatch;
                 });
             }
 
             if (logs.length === 0) {
+                const emptyMsg = filterKeyword.trim() !== ''
+                    ? 'ไม่พบผลลัพธ์ที่ตรงกับคำค้นหา'
+                    : 'ยังไม่มีประวัติการซ่อมบำรุงของรถคันนี้';
                 container.innerHTML = `
-                    <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
-                        <i class="fa-solid fa-magnifying-glass text-2xl mb-2 text-slate-300 block"></i>
-                        ไม่พบประวัติการซ่อมบำรุงในขณะนี้
+                    <div class="empty-state space-y-2">
+                        <i class="fa-solid fa-wrench text-3xl text-indigo-200 block"></i>
+                        <p class="font-bold text-slate-500">${emptyMsg}</p>
+                        <p class="text-[10px] text-slate-400">กด "บันทึกการซ่อมบำรุง" เพื่อเพิ่มรายการแรก</p>
                     </div>
                 `;
                 return;
@@ -1181,9 +1185,10 @@
             const reversedLogs = [...logs].reverse();
             if (reversedLogs.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
-                        <i class="fa-solid fa-gas-pump text-2xl mb-2 text-slate-300 block"></i>
-                        ยังไม่มีบันทึกการเติมเชื้อเพลิงของรถคันนี้
+                    <div class="empty-state space-y-2">
+                        <i class="fa-solid fa-gas-pump text-3xl text-emerald-200 block"></i>
+                        <p class="font-bold text-slate-500">ยังไม่มีบันทึกการเติมเชื้อเพลิง</p>
+                        <p class="text-[10px] text-slate-400">กดปุ่ม "บันทึกรายการเติมน้ำมันด่วน" เพื่อเริ่มติดตามอัตราสิ้นเปลือง</p>
                     </div>
                 `;
                 return;
@@ -1441,13 +1446,11 @@
         }
 
         function setCalendarToToday() {
-            // Static Time context representation (June 6, 2026)
-            calendarSelectedDate = new Date(2026, 5, 6);
-            calendarViewMonth = 5; 
-            calendarViewYear = 2026;
-            
+            calendarSelectedDate = new Date();
+            calendarViewMonth = calendarSelectedDate.getMonth();
+            calendarViewYear = calendarSelectedDate.getFullYear();
             syncCalendarDropdownSelectors();
-            selectCalendarDate(6);
+            selectCalendarDate(calendarSelectedDate.getDate());
         }
 
         // Show LINE API logs modal
@@ -1938,14 +1941,19 @@
             if (!list) return;
             list.innerHTML = '';
             
+            if (state.vehicles.length === 0) {
+                list.innerHTML = `<div class="empty-state py-6"><i class="fa-solid fa-car text-2xl text-indigo-200 mb-2 block"></i>ยังไม่มีรถในระบบ — เพิ่มรถคันแรกด้านบน</div>`;
+                return;
+            }
+
             state.vehicles.forEach(v => {
                 list.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                        <div>
-                            <span class="font-extrabold text-slate-800 text-xs">${v.name}</span>
-                            <span class="text-[9px] text-slate-500 block font-bold font-mono">${v.license}</span>
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                        <div class="min-w-0 flex-1">
+                            <span class="font-extrabold text-slate-800 text-xs block truncate" title="${v.name}">${v.name}</span>
+                            <span class="text-[9px] text-slate-500 block font-bold font-mono truncate">${v.license}</span>
                         </div>
-                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -2013,11 +2021,16 @@
             if (!list) return;
             list.innerHTML = '';
 
+            if (state.categories.length === 0) {
+                list.innerHTML = `<div class="empty-state py-6"><i class="fa-solid fa-tags text-2xl text-indigo-200 mb-2 block"></i>ยังไม่มีหมวดหมู่ — เพิ่มประเภทงานด้านบน</div>`;
+                return;
+            }
+
             state.categories.forEach(c => {
                 list.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                        <span class="font-extrabold text-slate-800 text-xs">${c.name}</span>
-                        <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                        <span class="font-extrabold text-slate-800 text-xs truncate min-w-0 flex-1" title="${c.name}">${c.name}</span>
+                        <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -2093,6 +2106,19 @@
             renderReports();
         }
 
+        // GitHub Pages: simulate daily trigger setup (GAS uses google.script.run)
+        function setupDailyTrigger() {
+            const statusEl = document.getElementById('setup-trigger-status');
+            const ts = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+            state.lineLogs.push(`⏰ [${ts}] จำลองสร้าง Daily Trigger 08:00 น. สำเร็จ (GitHub Pages — ไม่มี Apps Script จริง)`);
+            saveToLocalStorage();
+            if (statusEl) {
+                statusEl.textContent = '✓ จำลองสร้าง trigger สำเร็จ — ใน GAS จริงจะรันที่ Apps Script';
+                statusEl.classList.remove('hidden');
+            }
+            showToast('จำลองสร้าง Daily Trigger 08:00 น. สำเร็จ (GitHub Pages)');
+        }
+
         // Tab routing helper
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -2101,11 +2127,12 @@
             const tabs = ['dashboard', 'fuelio', 'admin'];
             tabs.forEach(t => {
                 const navBtn = document.getElementById(`nav-${t}`);
-                if (t === tabId) {
-                    navBtn.className = "flex flex-col items-center justify-center w-16 text-indigo-600 transition-all font-bold";
-                } else {
-                    navBtn.className = "flex flex-col items-center justify-center w-16 text-slate-400 transition-all";
-                }
+                const isActive = t === tabId;
+                const isFuel = t === 'fuelio';
+                const base = 'nav-tab-btn flex flex-col items-center justify-center transition-all';
+                const active = isFuel ? ' nav-tab-btn--fuel nav-tab-btn--active text-emerald-700' : ' nav-tab-btn--active text-indigo-600';
+                const inactive = isFuel ? ' nav-tab-btn--fuel text-slate-400 hover:text-emerald-600' : ' text-slate-400 hover:text-indigo-600';
+                navBtn.className = base + (isActive ? active : inactive);
             });
 
             if (tabId === 'dashboard') {

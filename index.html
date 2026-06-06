@@ -21,7 +21,7 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Itim&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
 html {
@@ -33,14 +33,22 @@ html {
             padding: 0;
             background-color: #f1f5f9;
         }
+        body, button, input, select, textarea, h1, h2, h3, h4 {
+            font-family: 'Itim', 'Inter', sans-serif;
+        }
         body {
-            font-family: 'Inter', 'Sarabun', sans-serif;
+            font-weight: 400;
             width: 100%;
             min-height: 100vh;
             min-height: 100dvh;
             margin: 0;
             padding: 0;
             background-color: #f1f5f9;
+            -webkit-font-smoothing: antialiased;
+        }
+        .font-mono, .font-mono span, [id*="odometer"], [id*="fuel-avg"], [id*="yearly-total"] {
+            font-family: 'Inter', ui-monospace, monospace;
+            font-variant-numeric: tabular-nums;
         }
         @media (min-width: 640px) {
             html, body { background-color: rgba(226, 232, 240, 0.8); }
@@ -138,11 +146,87 @@ html {
             #vehicles-carousel { grid-template-columns: repeat(4, 1fr); }
         }
         #loading-overlay.hidden { display: none !important; }
+        /* Vehicle cards — full names on desktop */
+        @media (min-width: 768px) {
+            #vehicles-carousel > .vehicle-card { width: auto; min-width: 0; }
+            #vehicles-carousel > .vehicle-card .vehicle-card-name,
+            #vehicles-carousel > .vehicle-card .vehicle-card-license {
+                overflow: visible; white-space: normal; text-overflow: unset;
+            }
+        }
+        .vehicle-card { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+        .vehicle-card:hover { transform: translateY(-1px); }
+        .vehicle-card--active {
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.35), 0 0 0 2px rgba(99, 102, 241, 0.25);
+        }
+        /* Bottom nav active indicator */
+        .nav-tab-btn { min-width: 4.5rem; min-height: 3rem; padding: 0.35rem 0.5rem; border-radius: 0.75rem; position: relative; }
+        .nav-tab-btn--active { color: #4338ca; background: #eef2ff; }
+        .nav-tab-btn--active .nav-tab-dot { opacity: 1; transform: scale(1); }
+        .nav-tab-dot {
+            width: 4px; height: 4px; border-radius: 9999px; background: #4f46e5;
+            margin-top: 2px; opacity: 0; transform: scale(0); transition: all 0.2s ease;
+        }
+        .nav-tab-btn--fuel.nav-tab-btn--active { color: #047857; background: #ecfdf5; }
+        .nav-tab-btn--fuel.nav-tab-btn--active .nav-tab-dot { background: #059669; }
+        /* Toast slide-in */
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .toast-item { animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        /* Modal backdrop fade */
+        @keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+        .modal-backdrop:not(.hidden) { animation: modal-backdrop-in 0.25s ease forwards; }
+        /* Touch targets on mobile */
+        @media (max-width: 639px) {
+            footer button, header button { min-height: 44px; min-width: 44px; }
+        }
+        /* Version badge */
+        .version-badge {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            font-family: 'Inter', monospace; font-size: 0.625rem; font-weight: 600;
+            background: linear-gradient(135deg, rgba(99,102,241,0.35), rgba(79,70,229,0.2));
+            color: #c7d2fe; padding: 0.15rem 0.45rem; border-radius: 0.375rem;
+            border: 1px solid rgba(129,140,248,0.35); letter-spacing: 0.02em;
+        }
+        .empty-state {
+            text-align: center; padding: 2rem 1rem; color: #94a3b8; font-size: 0.75rem;
+            background: #fff; border-radius: 1rem; border: 1px dashed #e2e8f0;
+        }
+        .tab-content > section:hover { box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); }
+        .font-mono, .tabular-nums { font-family: 'Inter', ui-monospace, monospace; }
+        .nav-tab { position: relative; min-height: 3rem; }
+        .nav-tab-active::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            width: 1.25rem;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1, #818cf8);
+            border-radius: 9999px;
+        }
+        .empty-state { animation: fade-in 0.3s ease; }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #log-search-input:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            border-color: #a5b4fc;
+        }
+        .tab-content > section,
+        .bg-white.rounded-2xl {
+            transition: box-shadow 0.2s ease;
+        }
+        .tab-content > section:hover {
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+        }
+        button:active { transform: scale(0.97); }
+
     </style>
 </head>
 <body class="app-shell relative">
-</div>
-
 <!-- Top Navigation Header -->
     <header class="bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 text-white px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 sticky top-0 z-50 shadow-md shrink-0">
         <div class="flex justify-between items-center gap-2 sm:gap-4">
@@ -152,7 +236,7 @@ html {
                 </div>
                 <div class="min-w-0">
                     <h1 class="text-sm sm:text-base lg:text-lg font-bold leading-tight tracking-wide truncate">MyHome CarCare</h1>
-                    <span class="text-[9px] sm:text-[10px] bg-indigo-500/30 text-indigo-200 px-1.5 py-0.2 rounded-md font-mono">v2.0.0 (GitHub Pages)</span>
+                    <span class="version-badge"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v2.0.0 GitHub Pages</span>
                 </div>
             </div>
             <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
@@ -315,7 +399,8 @@ html {
             <div class="flex flex-col gap-2">
                 <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">ประวัติการดูแลและใบเสร็จ</h3>
                 <div class="relative w-full">
-                    <input type="text" id="log-search-input" oninput="filterLogsList()" placeholder="🔍 ค้นหาประวัติซ่อมบำรุง..." class="w-full bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-[11px] outline-none focus:ring-1 focus:ring-indigo-500">
+                    <input type="search" id="log-search-input" name="maintenance-log-search" autocomplete="off" autocorrect="off" spellcheck="false" data-lpignore="true" oninput="filterLogsList()" placeholder="ค้นหาประวัติซ่อมบำรุง..." class="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-9 text-xs outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-300 shadow-sm transition-shadow">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-xs pointer-events-none"></i>
                     <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-2.5 text-slate-300 hover:text-slate-500">
                         <i class="fa-solid fa-circle-xmark text-xs"></i>
                     </button>
@@ -397,9 +482,10 @@ html {
                     </div>
                     <h3 class="text-xs font-bold text-slate-900">แผงควบคุมระบบของแอดมิน</h3>
                     <p class="text-[10px] text-slate-500">กรุณากรอกรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>
+                    <p class="text-[9px] text-indigo-500 bg-indigo-50/80 rounded-lg px-2 py-1.5"><i class="fa-solid fa-cloud mr-1"></i>โหมด GitHub Pages — ข้อมูลเก็บในเบราว์เซอร์ของคุณ</p>
                 </div>
                 <div class="space-y-2">
-                    <input type="password" id="admin-passcode" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="new-password" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                     <button onclick="authenticateAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all active:scale-95 shadow-md">
                         ยืนยันรหัสผ่านเพื่อเข้าใช้งาน
                     </button>
@@ -459,9 +545,9 @@ html {
                         <i class="fa-solid fa-screwdriver-wrench text-amber-600"></i> ตั้งค่าระบบ (ครั้งแรก)
                     </h3>
                     <ul class="text-[10px] text-amber-900/80 space-y-1 list-disc pl-4">
-                        <li>กดปุ่มด้านล่างเพื่อสร้าง trigger แจ้งเตือนอัตโนมัติทุกวัน 08:00 น.</li>
-                        <li>LINE Notify: ตั้ง Script property <code class="bg-white px-1 rounded">LINE_NOTIFY_TOKEN</code> ใน Apps Script editor</li>
-                        <li>รหัสแอดมินเริ่มต้น: <strong>1234</strong> (เปลี่ยนได้ที่ property <code class="bg-white px-1 rounded">ADMIN_PASS</code>)</li>
+                        <li>กดปุ่มด้านล่างเพื่อจำลองการสร้าง trigger แจ้งเตือนอัตโนมัติทุกวัน 08:00 น. (GitHub Pages)</li>
+                        <li>LINE Notify: ในเวอร์ชัน GAS ตั้ง Script property <code class="bg-white px-1 rounded">LINE_NOTIFY_TOKEN</code></li>
+                        <li>รหัสแอดมินเริ่มต้น: <strong>1234</strong></li>
                     </ul>
                     <button type="button" onclick="setupDailyTrigger()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-sm">
                         <i class="fa-solid fa-clock mr-1"></i> สร้าง Daily Trigger (08:00)
@@ -475,23 +561,26 @@ html {
     </div>
 
     <!-- PERSISTENT BOTTOM NAVIGATION BAR (True Multi-Tab Controller) -->
-    <footer class="bg-white border-t border-slate-100 h-16 flex items-center justify-around px-2 sm:px-4 md:px-8 lg:px-12 xl:px-24 sticky bottom-0 z-40 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] shrink-0">
-        <button onclick="switchTab('dashboard')" class="flex flex-col items-center justify-center w-16 text-indigo-600 transition-all" id="nav-dashboard">
+    <footer class="bg-white/95 backdrop-blur-sm border-t border-slate-200/80 h-[4.25rem] flex items-center justify-around px-2 sm:px-4 md:px-8 lg:px-12 xl:px-24 sticky bottom-0 z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.05)] shrink-0">
+        <button onclick="switchTab('dashboard')" class="nav-tab-btn nav-tab-btn--active flex flex-col items-center justify-center text-indigo-600 transition-all" id="nav-dashboard">
             <i class="fa-solid fa-screwdriver-wrench text-lg"></i>
-            <span class="text-[9px] mt-1 font-bold">บำรุงรักษา</span>
+            <span class="text-[10px] mt-0.5 font-bold leading-tight">บำรุงรักษา</span>
+            <span class="nav-tab-dot"></span>
         </button>
-        <button onclick="switchTab('fuelio')" class="flex flex-col items-center justify-center w-16 text-slate-400 transition-all" id="nav-fuelio">
+        <button onclick="switchTab('fuelio')" class="nav-tab-btn nav-tab-btn--fuel flex flex-col items-center justify-center text-slate-400 hover:text-emerald-600 transition-all" id="nav-fuelio">
             <i class="fa-solid fa-gas-pump text-lg"></i>
-            <span class="text-[9px] mt-1 font-bold">บันทึกน้ำมัน</span>
+            <span class="text-[10px] mt-0.5 font-bold leading-tight">น้ำมัน/เชื้อเพลิง</span>
+            <span class="nav-tab-dot"></span>
         </button>
-        <button onclick="switchTab('admin')" class="flex flex-col items-center justify-center w-16 text-slate-400 transition-all" id="nav-admin">
+        <button onclick="switchTab('admin')" class="nav-tab-btn flex flex-col items-center justify-center text-slate-400 hover:text-indigo-600 transition-all" id="nav-admin">
             <i class="fa-solid fa-users-gear text-lg"></i>
-            <span class="text-[9px] mt-1 font-bold">แอดมินบ้าน</span>
+            <span class="text-[10px] mt-0.5 font-bold leading-tight">แอดมินบ้าน</span>
+            <span class="nav-tab-dot"></span>
         </button>
     </footer>
 
     <!-- MODAL 1: Odometer Only Update Form -->
-    <div id="odometer-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6">
+    <div id="odometer-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6">
         <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 animate-slide-up shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -522,7 +611,7 @@ html {
     </div>
 
     <!-- MODAL 2: Repair / Maintenance Form with alerts & receipt simulation -->
-    <div id="repair-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
+    <div id="repair-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
         <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -627,7 +716,7 @@ html {
     </div>
 
     <!-- MODAL 5: Fuelio Style - Add Fuel Fill Log Modal -->
-    <div id="fuel-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
+    <div id="fuel-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center overflow-y-auto p-0 sm:p-4 md:p-6">
         <div class="modal-sheet-inner bg-white w-full max-w-full sm:max-w-md md:max-w-lg lg:max-w-xl rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -728,7 +817,7 @@ html {
     </div>
 
     <!-- MODAL 3: Console Line API Simulation logs -->
-    <div id="line-logs-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+    <div id="line-logs-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
         <div class="bg-white w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
@@ -746,7 +835,7 @@ html {
     </div>
 
     <!-- Edit Log Modal -->
-    <div id="edit-log-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+    <div id="edit-log-modal" class="modal-backdrop hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
         <div class="bg-white w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1">
@@ -933,32 +1022,32 @@ html {
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className = `p-3 rounded-xl shadow-lg text-xs font-bold transition-all transform translate-y-2 flex justify-between items-center pointer-events-auto border ${
-                type === 'success' ? 'bg-indigo-950 text-white border-indigo-900' : 
-                type === 'warning' ? 'bg-amber-500 text-slate-900 border-amber-400' : 'bg-rose-600 text-white border-rose-500'
-            }`;
+            const styles = {
+                success: 'bg-gradient-to-r from-indigo-950 to-indigo-900 text-white border-indigo-700/50 shadow-indigo-900/20',
+                warning: 'bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 border-amber-300 shadow-amber-500/20',
+                error: 'bg-gradient-to-r from-rose-600 to-rose-700 text-white border-rose-500 shadow-rose-900/20'
+            };
+            toast.className = `toast-item p-3.5 rounded-xl shadow-lg text-xs font-bold flex justify-between items-center pointer-events-auto border ${styles[type] || styles.success}`;
             
             let icon = 'fa-circle-check';
             if (type === 'warning') icon = 'fa-bell';
             if (type === 'error') icon = 'fa-circle-exclamation';
 
             toast.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid ${icon}"></i>
-                    <span>${message}</span>
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid ${icon} text-sm opacity-90"></i>
+                    <span class="leading-snug">${message}</span>
                 </div>
-                <button onclick="this.parentElement.remove()" class="text-white/60 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="this.parentElement.remove()" class="opacity-60 hover:opacity-100 ml-2 p-1 rounded-lg transition-opacity"><i class="fa-solid fa-xmark"></i></button>
             `;
             container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2');
-                toast.classList.add('translate-y-0');
-            }, 10);
 
             setTimeout(() => {
-                toast.remove();
-            }, 4000);
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-8px)';
+                toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4200);
         }
 
         // Render cars selection inside header carousel
@@ -969,15 +1058,15 @@ html {
             state.vehicles.forEach(v => {
                 const isActive = v.id === state.selectedVehicleId;
                 const activeClasses = isActive 
-                    ? 'border-indigo-600 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg scale-102 ring-2 ring-indigo-500/20' 
-                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800';
+                    ? 'vehicle-card vehicle-card--active border-indigo-500 bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-lg ring-2 ring-indigo-400/30' 
+                    : 'vehicle-card border-slate-200 bg-white hover:border-indigo-200 hover:shadow-md text-slate-800';
 
                 const latestOdo = getLatestOdometer(v.id);
 
                 carousel.innerHTML += `
-                    <div onclick="selectVehicle('${v.id}')" class="snap-start shrink-0 w-[145px] p-3 rounded-xl border ${activeClasses} cursor-pointer transition-all duration-200">
-                        <div class="text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
-                        <div class="font-extrabold text-xs truncate mt-0.5">${v.name}</div>
+                    <div onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[145px] md:w-auto p-3 rounded-xl border ${activeClasses} cursor-pointer">
+                        <div class="vehicle-card-license text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
+                        <div class="vehicle-card-name font-extrabold text-xs truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
                         <div class="mt-4 pt-1.5 border-t ${isActive ? 'border-indigo-800/60' : 'border-slate-100'} text-[10px] flex justify-between items-center font-mono">
                             <span class="${isActive ? 'text-indigo-200' : 'text-slate-400'}">ไมล์ล่าสุด:</span>
                             <span class="font-bold text-right">${latestOdo.toLocaleString()} กม.</span>
@@ -1146,19 +1235,23 @@ html {
             if (filterKeyword.trim() !== '') {
                 const kw = filterKeyword.toLowerCase().trim();
                 logs = logs.filter(l => {
-                    const shopMatch = l.shop.toLowerCase().includes(kw);
+                    const shopMatch = (l.shop || '').toLowerCase().includes(kw);
                     const catObj = state.categories.find(c => c.id === l.category);
                     const catMatch = catObj && catObj.name.toLowerCase().includes(kw);
-                    const typeMatch = l.type.toLowerCase().includes(kw);
-                    return shopMatch || catMatch || typeMatch;
+                    const odoMatch = String(l.odo).includes(kw);
+                    return shopMatch || catMatch || odoMatch;
                 });
             }
 
             if (logs.length === 0) {
+                const emptyMsg = filterKeyword.trim() !== ''
+                    ? 'ไม่พบผลลัพธ์ที่ตรงกับคำค้นหา'
+                    : 'ยังไม่มีประวัติการซ่อมบำรุงของรถคันนี้';
                 container.innerHTML = `
-                    <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
-                        <i class="fa-solid fa-magnifying-glass text-2xl mb-2 text-slate-300 block"></i>
-                        ไม่พบประวัติการซ่อมบำรุงในขณะนี้
+                    <div class="empty-state space-y-2">
+                        <i class="fa-solid fa-wrench text-3xl text-indigo-200 block"></i>
+                        <p class="font-bold text-slate-500">${emptyMsg}</p>
+                        <p class="text-[10px] text-slate-400">กด "บันทึกการซ่อมบำรุง" เพื่อเพิ่มรายการแรก</p>
                     </div>
                 `;
                 return;
@@ -1318,9 +1411,10 @@ html {
             const reversedLogs = [...logs].reverse();
             if (reversedLogs.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/50 shadow-sm border-dashed">
-                        <i class="fa-solid fa-gas-pump text-2xl mb-2 text-slate-300 block"></i>
-                        ยังไม่มีบันทึกการเติมเชื้อเพลิงของรถคันนี้
+                    <div class="empty-state space-y-2">
+                        <i class="fa-solid fa-gas-pump text-3xl text-emerald-200 block"></i>
+                        <p class="font-bold text-slate-500">ยังไม่มีบันทึกการเติมเชื้อเพลิง</p>
+                        <p class="text-[10px] text-slate-400">กดปุ่ม "บันทึกรายการเติมน้ำมันด่วน" เพื่อเริ่มติดตามอัตราสิ้นเปลือง</p>
                     </div>
                 `;
                 return;
@@ -1578,11 +1672,6 @@ html {
         }
 
         function setCalendarToToday() {
-            // Static Time context representation (June 6, 2026)
-            calendarSelectedDate = new Date(2026, 5, 6);
-            calendarViewMonth = 5; 
-            calendarViewYear = 2026;
-            
             calendarSelectedDate = new Date();
             calendarViewMonth = calendarSelectedDate.getMonth();
             calendarViewYear = calendarSelectedDate.getFullYear();
@@ -2079,14 +2168,19 @@ html {
             if (!list) return;
             list.innerHTML = '';
             
+            if (state.vehicles.length === 0) {
+                list.innerHTML = `<div class="empty-state py-6"><i class="fa-solid fa-car text-2xl text-indigo-200 mb-2 block"></i>ยังไม่มีรถในระบบ — เพิ่มรถคันแรกด้านบน</div>`;
+                return;
+            }
+
             state.vehicles.forEach(v => {
                 list.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                        <div>
-                            <span class="font-extrabold text-slate-800 text-xs">${v.name}</span>
-                            <span class="text-[9px] text-slate-500 block font-bold font-mono">${v.license}</span>
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                        <div class="min-w-0 flex-1">
+                            <span class="font-extrabold text-slate-800 text-xs block truncate" title="${v.name}">${v.name}</span>
+                            <span class="text-[9px] text-slate-500 block font-bold font-mono truncate">${v.license}</span>
                         </div>
-                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                        <button onclick="deleteVehicleAdmin('${v.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -2154,11 +2248,16 @@ html {
             if (!list) return;
             list.innerHTML = '';
 
+            if (state.categories.length === 0) {
+                list.innerHTML = `<div class="empty-state py-6"><i class="fa-solid fa-tags text-2xl text-indigo-200 mb-2 block"></i>ยังไม่มีหมวดหมู่ — เพิ่มประเภทงานด้านบน</div>`;
+                return;
+            }
+
             state.categories.forEach(c => {
                 list.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                        <span class="font-extrabold text-slate-800 text-xs">${c.name}</span>
-                        <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                    <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200 gap-2">
+                        <span class="font-extrabold text-slate-800 text-xs truncate min-w-0 flex-1" title="${c.name}">${c.name}</span>
+                        <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -2234,6 +2333,19 @@ html {
             renderReports();
         }
 
+        // GitHub Pages: simulate daily trigger setup (GAS uses google.script.run)
+        function setupDailyTrigger() {
+            const statusEl = document.getElementById('setup-trigger-status');
+            const ts = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+            state.lineLogs.push(`⏰ [${ts}] จำลองสร้าง Daily Trigger 08:00 น. สำเร็จ (GitHub Pages — ไม่มี Apps Script จริง)`);
+            saveToLocalStorage();
+            if (statusEl) {
+                statusEl.textContent = '✓ จำลองสร้าง trigger สำเร็จ — ใน GAS จริงจะรันที่ Apps Script';
+                statusEl.classList.remove('hidden');
+            }
+            showToast('จำลองสร้าง Daily Trigger 08:00 น. สำเร็จ (GitHub Pages)');
+        }
+
         // Tab routing helper
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -2242,11 +2354,12 @@ html {
             const tabs = ['dashboard', 'fuelio', 'admin'];
             tabs.forEach(t => {
                 const navBtn = document.getElementById(`nav-${t}`);
-                if (t === tabId) {
-                    navBtn.className = "flex flex-col items-center justify-center w-16 text-indigo-600 transition-all font-bold";
-                } else {
-                    navBtn.className = "flex flex-col items-center justify-center w-16 text-slate-400 transition-all";
-                }
+                const isActive = t === tabId;
+                const isFuel = t === 'fuelio';
+                const base = 'nav-tab-btn flex flex-col items-center justify-center transition-all';
+                const active = isFuel ? ' nav-tab-btn--fuel nav-tab-btn--active text-emerald-700' : ' nav-tab-btn--active text-indigo-600';
+                const inactive = isFuel ? ' nav-tab-btn--fuel text-slate-400 hover:text-emerald-600' : ' text-slate-400 hover:text-indigo-600';
+                navBtn.className = base + (isActive ? active : inactive);
             });
 
             if (tabId === 'dashboard') {
@@ -2295,7 +2408,7 @@ html {
                 return '<li>' + name + ': ฿' + fmtNum(sum) + ' (' + pct + '%)</li>';
             }).join('');
             const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงาน ' + vehicle.license + '</title>' +
-                '<style>body{font-family:Sarabun,Arial,sans-serif;padding:24px;color:#1e293b}' +
+                '<style>body{font-family:Itim,Inter,Arial,sans-serif;padding:24px;color:#1e293b}' +
                 'h1{font-size:20px;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:16px}' +
                 'th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px}th{background:#eef2ff}' +
                 '.summary{background:#f8fafc;padding:12px;border-radius:8px;margin-top:12px}' +
