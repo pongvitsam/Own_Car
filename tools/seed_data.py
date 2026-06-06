@@ -412,6 +412,8 @@ ALERTS = [
         "targetDate": "2026-08-25",
         "status": "Active",
         "lastUpdated": be_date(15, 11, 2568),
+        "serviceLabel": "แก๊ส/LPG",
+        "categoryId": "CAT-005",
     },
     {
         "vehicleId": V2,
@@ -419,6 +421,8 @@ ALERTS = [
         "targetDate": "2026-10-04",
         "status": "Active",
         "lastUpdated": be_date(6, 6, 2569),
+        "serviceLabel": "เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว",
+        "categoryId": "CAT-001",
     },
     {
         "vehicleId": V3,
@@ -426,6 +430,8 @@ ALERTS = [
         "targetDate": "2026-11-22",
         "status": "Active",
         "lastUpdated": be_date(14, 4, 2569),
+        "serviceLabel": "เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว",
+        "categoryId": "CAT-001",
     },
 ]
 

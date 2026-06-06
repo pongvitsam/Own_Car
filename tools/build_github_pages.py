@@ -474,6 +474,106 @@ if '.nav-tab-active::after' not in inline_styles:
         button:active { transform: scale(0.97); }
 """
 
+# Next maintenance plan: show service type (serviceLabel on alerts)
+if 'target-service-val' not in body:
+    body = body.replace(
+        '<div class="text-[10px] text-slate-400 font-bold">แผนการเปลี่ยนระยะถัดไป</div>\n'
+        '                    <div class="text-xs font-bold text-slate-700 mt-1.5" id="target-odometer-val">-</div>',
+        '<div class="text-[10px] text-slate-400 font-bold">แผนการเปลี่ยนระยะถัดไป</div>\n'
+        '                    <div class="text-[10px] text-indigo-700 font-bold mt-1" id="target-service-val">-</div>\n'
+        '                    <div class="text-xs font-bold text-slate-700 mt-1" id="target-odometer-val">-</div>',
+        1,
+    )
+
+if 'function resolveAlertServiceLabel' not in script:
+    script = script.replace(
+        '        function selectVehicle(id) {',
+        """        function resolveAlertServiceLabel(alert) {
+            if (!alert) return 'บำรุงรักษาตามกำหนด';
+            if (alert.serviceLabel) return alert.serviceLabel;
+            if (alert.categoryId) {
+                const cat = state.categories.find(c => c.id === alert.categoryId);
+                if (cat) return cat.name;
+            }
+            const logs = state.maintenanceLogs.filter(
+                l => l.vehicleId === alert.vehicleId && l.date === alert.lastUpdated && (l.alertKm > 0 || l.alertMonth > 0)
+            );
+            if (logs.length > 0) {
+                const cat = state.categories.find(c => c.id === logs[0].category);
+                if (cat) return cat.name;
+            }
+            return 'บำรุงรักษาตามกำหนด';
+        }
+
+        function selectVehicle(id) {""",
+        1,
+    )
+
+script = script.replace(
+    """                const alertObj = state.alerts.find(a => a.vehicleId === id && a.status === 'Active');
+                const targetKmSpan = document.getElementById('target-odometer-val');
+                const targetTimeSpan = document.getElementById('target-time-val');
+                const statusBadge = document.getElementById('vehicle-status-badge');
+
+                if (alertObj) {
+                    targetKmSpan.innerHTML = `ตรวจระยะรอบต่อไป: <span class="text-indigo-700 font-extrabold">${alertObj.targetKm.toLocaleString()} กม.</span>`;
+                    targetTimeSpan.innerHTML = `<i class="fa-solid fa-clock"></i> เตือนล่วงหน้า: ${formatThaiDate(alertObj.targetDate)}`;""",
+    """                const alertObj = state.alerts.find(a => a.vehicleId === id && a.status === 'Active');
+                const targetServiceSpan = document.getElementById('target-service-val');
+                const targetKmSpan = document.getElementById('target-odometer-val');
+                const targetTimeSpan = document.getElementById('target-time-val');
+                const statusBadge = document.getElementById('vehicle-status-badge');
+
+                if (alertObj) {
+                    const serviceLabel = resolveAlertServiceLabel(alertObj);
+                    if (targetServiceSpan) {
+                        targetServiceSpan.innerHTML = `รายการถัดไป: <span class="font-extrabold">${serviceLabel}</span>`;
+                    }
+                    targetKmSpan.innerHTML = `ตรวจระยะรอบต่อไป: <span class="text-indigo-700 font-extrabold">${alertObj.targetKm.toLocaleString()} กม.</span>`;
+                    targetTimeSpan.innerHTML = `<i class="fa-solid fa-clock"></i> เตือนล่วงหน้า: ${formatThaiDate(alertObj.targetDate)}`;""",
+    1,
+)
+
+script = script.replace(
+    """                } else {
+                    targetKmSpan.innerHTML = `<span class="text-slate-400">ยังไม่ได้รับการตั้งการเตือน</span>`;
+                    targetTimeSpan.innerHTML = `<i class="fa-solid fa-circle-info"></i> ปลอดภัย`;""",
+    """                } else {
+                    if (targetServiceSpan) targetServiceSpan.innerHTML = '';
+                    targetKmSpan.innerHTML = `<span class="text-slate-400">ยังไม่ได้รับการตั้งการเตือน</span>`;
+                    targetTimeSpan.innerHTML = `<i class="fa-solid fa-circle-info"></i> ปลอดภัย`;""",
+    1,
+)
+
+script = script.replace(
+    """                state.alerts = state.alerts.filter(a => a.vehicleId !== vId);
+                state.alerts.push({
+                    vehicleId: vId,
+                    targetKm: targetKm,
+                    targetDate: targetDateStr,
+                    status: 'Active',
+                    lastUpdated: repairDate
+                });
+
+                state.lineLogs.push(`⏰ [${new Date().toLocaleTimeString()}] ตั้งค่ารอบตรวจสอบของคัน ${vId}: เป้าหมาย ${targetKm.toLocaleString()} กม. หรือ ${targetDateStr}`);""",
+    """                const catObj = state.categories.find(c => c.id === category);
+                const serviceLabel = catObj ? catObj.name : 'บำรุงรักษาตามกำหนด';
+
+                state.alerts = state.alerts.filter(a => a.vehicleId !== vId);
+                state.alerts.push({
+                    vehicleId: vId,
+                    targetKm: targetKm,
+                    targetDate: targetDateStr,
+                    status: 'Active',
+                    lastUpdated: repairDate,
+                    serviceLabel: serviceLabel,
+                    categoryId: category
+                });
+
+                state.lineLogs.push(`⏰ [${new Date().toLocaleTimeString()}] ตั้งค่ารอบตรวจสอบของคัน ${vId}: ${serviceLabel} — เป้าหมาย ${targetKm.toLocaleString()} กม. หรือ ${targetDateStr}`);""",
+    1,
+)
+
 # Real vehicle seed data (Mazda, Click 160, Altis)
 script = re.sub(
     r'let state = \{[\s\S]*?\n        \};',

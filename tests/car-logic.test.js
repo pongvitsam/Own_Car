@@ -17,6 +17,7 @@ const {
   calculateFuelEfficiency,
   calculateCostPerKm,
   getEfficiencyTier,
+  resolveAlertServiceLabel,
   buildAlertReason,
   evaluateAlert,
   checkAlerts,
@@ -220,6 +221,35 @@ describe('maintenance cost per km', () => {
 describe('alerts', () => {
   const vehicle = { id: V1, name: 'Family SUV', license: '1กก 1234' };
   const today = new Date('2024-06-15');
+
+  it('resolveAlertServiceLabel prefers serviceLabel then categoryId then log', () => {
+    const categories = [
+      { id: 'CAT-001', name: 'เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว' },
+      { id: 'CAT-005', name: 'แก๊ส/LPG' },
+    ];
+    assert.equal(
+      resolveAlertServiceLabel({ serviceLabel: 'ตรวจแก๊ส LPG' }, categories, []),
+      'ตรวจแก๊ส LPG'
+    );
+    assert.equal(
+      resolveAlertServiceLabel({ categoryId: 'CAT-005' }, categories, []),
+      'แก๊ส/LPG'
+    );
+    const logs = [
+      {
+        vehicleId: V1,
+        date: '2025-06-06',
+        category: 'CAT-001',
+        alertKm: 3000,
+        alertMonth: 0,
+      },
+    ];
+    assert.equal(
+      resolveAlertServiceLabel({ vehicleId: V1, lastUpdated: '2025-06-06' }, categories, logs),
+      'เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว'
+    );
+    assert.equal(resolveAlertServiceLabel(null, categories, logs), 'บำรุงรักษาตามกำหนด');
+  });
 
   it('buildAlertReason covers km, time, and both triggers', () => {
     assert.equal(
