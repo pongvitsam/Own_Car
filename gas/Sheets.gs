@@ -199,43 +199,11 @@ function seedDefaultSettings_(ss) {
 function seedSampleDataIfEmpty_(ss) {
   var vehicles = getSheet_(SHEET_NAMES.VEHICLES);
   if (vehicles.getLastRow() > 1) return;
-
-  var today = getBangkokToday_();
-  var rows = [
-    ['V-001', 'Toyota Camry Hybrid', 'กข 555 กรุงเทพ', '2025-01-10'],
-    ['V-002', 'Tesla Model Y', 'ชภ 9999 นนทบุรี', '2025-03-15']
-  ];
-  rows.forEach(function (r) { vehicles.appendRow(r); });
-
-  var cats = getSheet_(SHEET_NAMES.CATEGORIES);
-  [
-    ['CAT-001', 'เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว'],
-    ['CAT-002', 'ระบบห้ามล้อและเบรก'],
-    ['CAT-003', 'เปลี่ยนยางและถ่วงล้อ'],
-    ['CAT-004', 'แบตเตอรี่และระบบขับเคลื่อน']
-  ].forEach(function (r) { cats.appendRow(r); });
-
-  var maint = getSheet_(SHEET_NAMES.MAINTENANCE);
-  var folderUrl = 'https://drive.google.com/drive/folders/' + CONFIG.DRIVE_FOLDER_ID;
-  [
-    ['LOG-001', 'V-001', today, '-', '-', 0, 148000, 'Odometer_Update', 0, 0, '', '', ''],
-    ['LOG-002', 'V-001', '2026-03-01', 'CAT-001', 'ศูนย์โตโยต้า พระราม 9', 3800, 152000, 'Maintenance', 10000, 6, '', folderUrl, 'receipt_camry_oil.jpg'],
-    ['LOG-003', 'V-002', '2025-11-20', 'CAT-003', 'ศูนย์เทสลา รามคำแหง', 32000, 24500, 'Maintenance', 20000, 12, '', folderUrl, 'tesla_invoice.pdf'],
-    ['LOG-004', 'V-001', '2025-08-14', 'CAT-002', 'บี-ควิก ติวานนท์', 5400, 135000, 'Maintenance', 15000, 12, '', folderUrl, 'bq_invoice.jpg']
-  ].forEach(function (r) { maint.appendRow(r); });
-
-  var fuel = getSheet_(SHEET_NAMES.FUEL);
-  [
-    ['FUEL-001', 'V-001', '2026-01-10', 'oil', 148500, 45, 38.5, 1732.5, true, ''],
-    ['FUEL-002', 'V-001', '2026-02-15', 'oil', 149200, 42, 39.2, 1646.4, true, ''],
-    ['FUEL-003', 'V-001', '2026-04-10', 'oil', 150050, 44.5, 40.1, 1784.45, true, '']
-  ].forEach(function (r) { fuel.appendRow(r); });
-
-  var alerts = getSheet_(SHEET_NAMES.ALERTS);
-  [
-    ['ALERT-001', 'V-001', 162000, '2026-09-01', 'Active', '2026-03-01', 'เปลี่ยนถ่ายน้ำมันเครื่อง/ของเหลว', 'CAT-001'],
-    ['ALERT-002', 'V-002', 44500, '2026-11-20', 'Active', '2025-11-20', 'เปลี่ยนยางและถ่วงล้อ', 'CAT-003']
-  ].forEach(function (r) { alerts.appendRow(r); });
+  // Prefer family seed (Mazda / Click / Altis) when SeedData.gs is present
+  if (typeof getFamilySeedState_ === 'function' && typeof writeFullStateToSheets_ === 'function') {
+    writeFullStateToSheets_(getFamilySeedState_());
+    return;
+  }
 }
 
 function findRowById_(sheet, idColIndex, id) {
