@@ -151,7 +151,7 @@ function dispatchApiAction_(action, payload) {
 
     case 'updateVehicle':
     case 'updateVehicleAdmin':
-      return withFullState_(updateVehicle(payload), payload.selectedVehicleId || payload.id);
+      return updateVehicle(payload);
 
     case 'deleteVehicle':
       return withFullState_(deleteVehicle(payload.id || payload.vehicleId), null);

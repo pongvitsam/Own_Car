@@ -2252,19 +2252,16 @@
 
         // JSONP works reliably across mobile/desktop without third-party iframe
         // restrictions. Large receipt uploads still use the iframe bridge.
-        window.__myhomeGasJsonp = window.__myhomeGasJsonp || {};
-
         function gasJsonpCall(action, payload) {
             if (!isGasSyncEnabled()) {
                 return Promise.reject(new Error('GAS sync ยังไม่เปิด'));
             }
             const baseUrl = getGasWebAppUrl();
-            const callbackName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-            const callbackPath = '__myhomeGasJsonp.' + callbackName;
+            const callbackName = 'gasJsonpCb' + Date.now() + Math.random().toString(36).slice(2, 8);
             const params = new URLSearchParams({
                 action: action,
                 payload: JSON.stringify(payload || {}),
-                callback: callbackPath,
+                callback: callbackName,
                 _: String(Date.now())
             });
             const src = baseUrl + (baseUrl.includes('?') ? '&' : '?') + params.toString();
@@ -2274,7 +2271,7 @@
                 let settled = false;
                 const cleanup = () => {
                     if (script.parentNode) script.remove();
-                    delete window.__myhomeGasJsonp[callbackName];
+                    delete window[callbackName];
                 };
                 const timer = setTimeout(() => {
                     if (settled) return;
@@ -2283,7 +2280,7 @@
                     reject(new Error('หมดเวลารอ Google Sheet (' + action + ')'));
                 }, 120000);
 
-                window.__myhomeGasJsonp[callbackName] = (result) => {
+                window[callbackName] = (result) => {
                     if (settled) return;
                     settled = true;
                     clearTimeout(timer);
