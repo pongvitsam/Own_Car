@@ -690,6 +690,35 @@ PREMIUM_INLINE_STYLES = """
             color: #059669;
             margin-top: 0.125rem;
         }
+        .fuel-trend-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.375rem;
+            min-height: 7rem;
+            padding: 0.25rem 0.125rem 0;
+        }
+        .fuel-trend-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.25rem;
+            min-width: 0;
+            height: 6.5rem;
+        }
+        .fuel-trend-bar {
+            width: 100%;
+            max-width: 1.75rem;
+            border-radius: 0.5rem 0.5rem 0.25rem 0.25rem;
+            min-height: 0.35rem;
+            transition: height var(--transition-smooth);
+        }
+        .fuel-trend-label {
+            font-size: 0.5625rem;
+            font-weight: 800;
+            color: var(--text-secondary);
+        }
         .toast-item {
             border-radius: var(--radius-xl) !important;
             box-shadow: var(--shadow-lift) !important;

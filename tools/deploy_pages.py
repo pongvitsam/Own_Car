@@ -1,4 +1,5 @@
 """Build, test, commit, and push GitHub Pages deployment."""
+import shutil
 import subprocess
 import sys
 import os
@@ -11,14 +12,33 @@ TRACKED = [
     'tools/deploy_pages.py',
     'package.json',
     'index.html',
+    'manifest.webmanifest',
+    'sw.js',
+    'icons/icon.svg',
+    'README.md',
+    'lib/car-logic.js',
 ]
 
 
-def run(cmd, cwd=ROOT):
-    print(f'> {" ".join(cmd)}')
-    result = subprocess.run(cmd, cwd=cwd)
+def run(cmd, cwd=ROOT, shell=False):
+    print(f'> {" ".join(cmd) if isinstance(cmd, list) else cmd}')
+    result = subprocess.run(cmd, cwd=cwd, shell=shell)
     if result.returncode != 0:
         sys.exit(result.returncode)
+
+
+def npm_cmd(*args):
+    """Resolve npm on Windows (npm.cmd) and other platforms."""
+    npm = shutil.which('npm') or shutil.which('npm.cmd')
+    if not npm:
+        print('ERROR: npm not found on PATH', file=sys.stderr)
+        sys.exit(1)
+    if os.name == 'nt':
+        # Windows: use shell so .cmd wrappers resolve correctly
+        quoted = ' '.join(f'"{a}"' if ' ' in a else a for a in [npm, *args])
+        run(quoted, shell=True)
+    else:
+        run([npm, *args])
 
 
 def main():
@@ -29,9 +49,10 @@ def main():
     message = sys.argv[1]
 
     run([sys.executable, 'tools/build_github_pages.py'])
-    run(['npm', 'test'])
+    npm_cmd('test')
 
-    run(['git', 'add', *TRACKED])
+    existing = [f for f in TRACKED if os.path.exists(os.path.join(ROOT, f))]
+    run(['git', 'add', *existing])
     run(['git', 'commit', '-m', message])
     run(['git', 'push', 'origin', 'main'])
 

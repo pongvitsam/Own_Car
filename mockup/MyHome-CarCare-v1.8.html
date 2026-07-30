@@ -29,7 +29,7 @@
             </div>
             <div class="min-w-0">
                 <div class="side-nav-title">MyHome CarCare</div>
-                <span class="version-badge text-[7px] font-mono">v3.1 Light Sarabun</span>
+                <span class="version-badge text-[7px] font-mono">v3.2 Complete</span>
             </div>
             <button type="button" class="side-nav-close" onclick="closeSidebarMenu()" title="ปิดเมนู">
                 <i class="fa-solid fa-xmark"></i>
@@ -77,9 +77,9 @@
                 <div class="w-9 h-9 rounded-xl border border-[var(--accent)]/30 flex items-center justify-center text-[var(--accent)] shrink-0">
                     <i class="fa-solid fa-car-side text-base"></i>
                 </div>
-                <div class="min-w-0 hidden xs:block">
+                <div class="min-w-0 hidden sm:block">
                     <h1 class="text-base font-semibold leading-none tracking-wide text-[var(--text-primary)] truncate">MyHome CarCare</h1>
-                    <span class="version-badge text-[7px] font-mono mt-0.5 inline-block">v3.1 Light Sarabun</span>
+                    <span class="version-badge text-[7px] font-mono mt-0.5 inline-block">v3.2 Complete</span>
                 </div>
             </div>
             <button type="button" id="header-fuel-btn" onclick="openFuelFromHeader()" class="header-fuel-btn flex-1 min-w-0 mx-1" title="บันทึกและคำนวณค่าน้ำมัน">
@@ -129,7 +129,8 @@
     </section>
 
     <!-- TAB 1: MAINTENANCE PAGE (หน้าบำรุงรักษาและการแจ้งเตือน) -->
-    <div id="tab-dashboard" class="tab-content flex-1 overflow-y-auto p-5 space-y-5">
+    <div id="tab-dashboard" class="tab-content flex-1 overflow-y-auto p-5">
+        <div class="dashboard-grid space-y-5">
         
         <!-- Selected Vehicle Live Status -->
         <section class="premium-card p-5 space-y-4 relative overflow-hidden">
@@ -269,6 +270,7 @@
             
             <div class="log-list" id="maintenance-history-logs"></div>
         </section>
+        </div><!-- /dashboard-grid -->
     </div>
 
     <!-- TAB 2: FUELIO FUEL PAGE (หน้าอัตราสิ้นเปลืองน้ำมันสไตล์ FUELIO) -->
@@ -326,6 +328,34 @@
                     <div class="font-extrabold text-indigo-950" id="fuel-total-spend">฿0.00</div>
                 </div>
             </div>
+
+            <div class="grid grid-cols-2 gap-2" id="fuel-type-split">
+                <div class="p-2.5 rounded-xl border border-emerald-100 bg-emerald-50/50 text-center">
+                    <div class="text-[9px] font-bold text-emerald-700">น้ำมัน</div>
+                    <div class="text-sm font-black text-slate-800" id="fuel-oil-avg">-.--</div>
+                    <div class="text-[8px] text-emerald-600 font-bold">กม./ล. · <span id="fuel-oil-count">0</span> รอบ</div>
+                </div>
+                <div class="p-2.5 rounded-xl border border-amber-100 bg-amber-50/50 text-center">
+                    <div class="text-[9px] font-bold text-amber-700">แก๊ส</div>
+                    <div class="text-sm font-black text-slate-800" id="fuel-gas-avg">-.--</div>
+                    <div class="text-[8px] text-amber-600 font-bold">กม./ล. · <span id="fuel-gas-count">0</span> รอบ</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fuelio trend chart -->
+        <section class="premium-card p-4 space-y-3 relative overflow-hidden">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">แนวโน้มอัตราสิ้นเปลือง</h3>
+                <span class="text-[9px] text-slate-400 font-bold">กม./ลิตร ล่าสุด</span>
+            </div>
+            <div id="fuel-trend-chart" class="fuel-trend-chart"></div>
+        </section>
+
+        <!-- Family compare -->
+        <section class="premium-card p-4 space-y-3 relative overflow-hidden">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">เปรียบเทียบรถในครอบครัว</h3>
+            <div id="fuel-family-compare" class="space-y-2"></div>
         </section>
 
         <!-- Fuel last fill summary (Fuelio-style segment) -->
@@ -437,6 +467,31 @@
                         </form>
                         <div class="space-y-1.5" id="admin-categories-list"></div>
                     </div>
+                </div>
+
+                <!-- Backup / restore -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <h3 class="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up text-indigo-600"></i> สำรองข้อมูล (Export / Import)
+                        </h3>
+                        <span id="backup-last-hint" class="text-[9px] text-slate-400 font-bold"></span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 font-medium leading-relaxed">
+                        ข้อมูลทั้งหมดอยู่บนเครื่องนี้เท่านั้น — สำรองเป็นไฟล์ JSON ก่อนเปลี่ยนเครื่อง/ล้างแคช และกู้คืนได้จากไฟล์เดิม
+                    </p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="exportAppBackup()" class="btn-primary text-[11px] font-bold py-2.5 px-3 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> Export JSON
+                        </button>
+                        <label class="btn-secondary text-[11px] font-bold py-2.5 px-3 flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-upload"></i> Import JSON
+                            <input type="file" id="backup-import-input" accept="application/json,.json" class="hidden" onchange="importAppBackup(event)">
+                        </label>
+                    </div>
+                    <button type="button" onclick="remindBackupNow()" class="w-full text-[10px] font-bold text-indigo-600 py-2 rounded-xl border border-indigo-100 bg-indigo-50/60 hover:bg-indigo-50">
+                        เตือนสำรองข้อมูลอีกครั้งใน 7 วัน
+                    </button>
                 </div>
 
             </div>
@@ -679,10 +734,73 @@
                     </div>
                 </div>
 
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">สถานี / ปั๊ม (ไม่บังคับ)</label>
+                    <input type="text" id="fuel-station" placeholder="เช่น ปตท. รามอินทรา" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" maxlength="80">
+                </div>
+
                 <div class="pt-2">
                     <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 text-xs">
                         บันทึกรายการลงในประวัติ
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Edit Fuel Log -->
+    <div id="edit-fuel-modal" class="modal-backdrop hidden fixed inset-0 z-[100] flex items-center justify-center p-3 overflow-y-auto">
+        <div class="modal-dialog-inner w-full max-w-md p-5 space-y-4 max-h-[90dvh] overflow-y-auto animate-slide-up">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-pen-to-square text-emerald-600"></i> แก้ไขบันทึกเติมเชื้อเพลิง
+                </h3>
+                <button onclick="closeModal('edit-fuel-modal')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="edit-fuel-form" onsubmit="saveEditedFuelLog(event)" class="space-y-3 text-xs text-slate-700">
+                <input type="hidden" id="edit-fuel-id">
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">เลขไมล์ (กม.)</label>
+                        <input type="number" id="edit-fuel-odo" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">วันที่ (ISO)</label>
+                        <input type="date" id="edit-fuel-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" required>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ลิตร</label>
+                        <input type="number" step="0.01" id="edit-fuel-liters" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">บาท/ลิตร</label>
+                        <input type="number" step="0.01" id="edit-fuel-price" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 mb-1">ยอดรวม</label>
+                        <input type="number" step="0.01" id="edit-fuel-total" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 mb-1">สถานี / ปั๊ม</label>
+                    <input type="text" id="edit-fuel-station" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold" maxlength="80">
+                </div>
+                <div class="flex gap-2">
+                    <label class="flex-1 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 font-bold cursor-pointer">
+                        <input type="checkbox" id="edit-fuel-full" class="accent-emerald-600"> เต็มถัง
+                    </label>
+                    <select id="edit-fuel-type" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold">
+                        <option value="oil">น้ำมัน</option>
+                        <option value="gas">แก๊ส</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 pt-1">
+                    <button type="button" onclick="confirmDeleteFuelFromEdit()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 rounded-xl">ลบ</button>
+                    <button type="submit" class="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">บันทึกการแก้ไข</button>
                 </div>
             </form>
         </div>
@@ -882,10 +1000,17 @@
             selectVehicle(state.selectedVehicleId);
             checkLineAlerts(false); 
             initCustomCalendar();
-            setDefaultDates(); // Pre-populate default date (6 Jun 2026) immediately
+            setDefaultDates();
+            registerServiceWorker();
+            maybeRemindBackup();
             
             // Default select page 1 on load
             switchTab('dashboard');
+        }
+
+        function registerServiceWorker() {
+            if (!('serviceWorker' in navigator)) return;
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
 
         function setDefaultDates() {
@@ -896,6 +1021,97 @@
 
         function saveToLocalStorage() {
             localStorage.setItem('myhome_carcare_state_v1.7', JSON.stringify(state));
+            localStorage.setItem('myhome_carcare_last_save_ts', String(Date.now()));
+        }
+
+        function exportAppBackup() {
+            const payload = {
+                app: 'MyHome CarCare',
+                version: '3.2.0',
+                exportedAt: new Date().toISOString(),
+                state: state
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const stamp = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `myhome-carcare-backup-${stamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            localStorage.setItem('myhome_carcare_last_backup_ts', String(Date.now()));
+            updateBackupHint();
+            showToast('ส่งออกไฟล์สำรอง JSON เรียบร้อย');
+        }
+
+        function importAppBackup(event) {
+            const file = event.target.files && event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const parsed = JSON.parse(reader.result);
+                    const incoming = parsed.state || parsed;
+                    if (!incoming || !Array.isArray(incoming.vehicles) || !Array.isArray(incoming.maintenanceLogs) || !Array.isArray(incoming.fuelLogs)) {
+                        showToast('ไฟล์สำรองไม่ถูกต้อง', 'error');
+                        return;
+                    }
+                    if (!confirm('นำเข้าข้อมูลจะแทนที่ข้อมูลปัจจุบันบนเครื่องนี้ทั้งหมด ยืนยันหรือไม่?')) return;
+                    state = incoming;
+                    if (!state.categories) state.categories = [];
+                    if (!state.alerts) state.alerts = [];
+                    if (!state.lineLogs) state.lineLogs = [];
+                    if (!state.selectedVehicleId && state.vehicles[0]) state.selectedVehicleId = state.vehicles[0].id;
+                    normalizeVehicleExpiryDates();
+                    saveToLocalStorage();
+                    localStorage.setItem('myhome_carcare_last_backup_ts', String(Date.now()));
+                    populateDropdowns();
+                    renderVehiclesCarousel();
+                    selectVehicle(state.selectedVehicleId);
+                    renderAdminPanelState();
+                    updateBackupHint();
+                    showToast('นำเข้าข้อมูลสำรองสำเร็จ');
+                } catch (err) {
+                    console.error(err);
+                    showToast('อ่านไฟล์ JSON ไม่สำเร็จ', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function updateBackupHint() {
+            const el = document.getElementById('backup-last-hint');
+            if (!el) return;
+            const ts = Number(localStorage.getItem('myhome_carcare_last_backup_ts') || 0);
+            if (!ts) {
+                el.textContent = 'ยังไม่เคย Export';
+                return;
+            }
+            el.textContent = 'สำรองล่าสุด: ' + new Date(ts).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+        }
+
+        function remindBackupNow() {
+            localStorage.setItem('myhome_carcare_backup_remind_at', String(Date.now() + 7 * 24 * 60 * 60 * 1000));
+            showToast('จะเตือนสำรองข้อมูลอีกครั้งใน 7 วัน');
+        }
+
+        function maybeRemindBackup() {
+            const remindAt = Number(localStorage.getItem('myhome_carcare_backup_remind_at') || 0);
+            const lastBackup = Number(localStorage.getItem('myhome_carcare_last_backup_ts') || 0);
+            const now = Date.now();
+            const sevenDays = 7 * 24 * 60 * 60 * 1000;
+            const due = (remindAt && now >= remindAt) || (!lastBackup && now - Number(localStorage.getItem('myhome_carcare_first_open_ts') || now) > sevenDays) || (lastBackup && now - lastBackup > sevenDays);
+            if (!localStorage.getItem('myhome_carcare_first_open_ts')) {
+                localStorage.setItem('myhome_carcare_first_open_ts', String(now));
+            }
+            if (due) {
+                setTimeout(() => {
+                    showToast('แนะนำให้ Export สำรองข้อมูล (แอดมิน → สำรองข้อมูล)', 'warning');
+                }, 1800);
+            }
         }
 
         // Dropdowns Populator
@@ -1514,23 +1730,34 @@
         }
 
         // FUELIO LOGIC RENDER (Rule: สถิติสิ้นเปลืองและค่าน้ำมันเฉลี่ยรายคัน)
+        function findPreviousSameTypeFullTank(enriched, index) {
+            const currentType = enriched[index].fuelType || 'oil';
+            for (let j = index - 1; j >= 0; j--) {
+                if ((enriched[j].fuelType || 'oil') === currentType && enriched[j].fullTank) {
+                    return enriched[j];
+                }
+            }
+            return null;
+        }
+
         function enrichFuelLogsWithMetrics(logs) {
-            const enriched = logs.map(l => ({ ...l }));
+            const enriched = logs.map(l => ({ ...l, fuelType: l.fuelType || 'oil' }));
             for (let i = 0; i < enriched.length; i++) {
                 const current = enriched[i];
-                if (i > 0 && current.fullTank && enriched[i - 1].fullTank) {
-                    const distance = current.odo - enriched[i - 1].odo;
-                    if (distance > 0) {
-                        current.segmentDistance = distance;
-                        current.calculatedEfficiency = distance / current.liters;
-                        current.costPerKm = current.totalCost / distance;
-                    }
+                if (!current.fullTank) continue;
+                const prev = findPreviousSameTypeFullTank(enriched, i);
+                if (!prev) continue;
+                const distance = current.odo - prev.odo;
+                if (distance > 0) {
+                    current.segmentDistance = distance;
+                    current.calculatedEfficiency = distance / current.liters;
+                    current.costPerKm = current.totalCost / distance;
                 }
             }
             return enriched;
         }
 
-        function getFuelSegmentStats(log, allEnrichedLogs) {
+        function getFuelSegmentStats(log) {
             if (!log || log.segmentDistance == null) return null;
             return {
                 distance: log.segmentDistance,
@@ -1539,6 +1766,77 @@
                 costPerKm: log.costPerKm,
                 totalCost: log.totalCost
             };
+        }
+
+        function renderFuelTrendChart(enriched) {
+            const el = document.getElementById('fuel-trend-chart');
+            if (!el) return;
+            const points = enriched.filter(l => l.calculatedEfficiency != null).slice(-8);
+            if (!points.length) {
+                el.innerHTML = `<div class="text-[10px] text-slate-400 font-bold text-center py-4">ยังไม่มีรอบเต็มถังพอสำหรับกราฟ — เติมเต็มถังประเภทเดียวกันอย่างน้อย 2 ครั้ง</div>`;
+                return;
+            }
+            const max = Math.max(...points.map(p => p.calculatedEfficiency), 1);
+            el.innerHTML = points.map(p => {
+                const pct = Math.max(8, (p.calculatedEfficiency / max) * 100);
+                const color = (p.fuelType || 'oil') === 'gas' ? 'bg-amber-400' : 'bg-emerald-500';
+                return `<div class="fuel-trend-col" title="${formatThaiDate(p.date)}: ${p.calculatedEfficiency.toFixed(2)} กม./ล.">
+                    <div class="fuel-trend-bar ${color}" style="height:${pct}%"></div>
+                    <div class="fuel-trend-label">${p.calculatedEfficiency.toFixed(1)}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderFamilyFuelCompare() {
+            const el = document.getElementById('fuel-family-compare');
+            if (!el) return;
+            const rows = state.vehicles.map(v => {
+                const logs = state.fuelLogs.filter(l => l.vehicleId === v.id).sort((a, b) => new Date(a.date) - new Date(b.date));
+                const enriched = enrichFuelLogsWithMetrics(logs);
+                const withEff = enriched.filter(l => l.calculatedEfficiency != null);
+                const avg = withEff.length ? withEff.reduce((s, l) => s + l.calculatedEfficiency, 0) / withEff.length : null;
+                const spend = enriched.reduce((s, l) => s + l.totalCost, 0);
+                return { v, avg, spend, fills: enriched.length, effCount: withEff.length };
+            }).sort((a, b) => (b.avg || -1) - (a.avg || -1));
+
+            if (!rows.length) {
+                el.innerHTML = `<div class="text-[10px] text-slate-400 font-bold">ยังไม่มีรถ</div>`;
+                return;
+            }
+
+            const best = rows.find(r => r.avg != null);
+            el.innerHTML = rows.map((r, idx) => {
+                const isBest = best && r.v.id === best.v.id && r.avg != null;
+                return `<div class="flex items-center justify-between gap-2 p-2 rounded-xl border ${isBest ? 'border-emerald-200 bg-emerald-50/70' : 'border-slate-100 bg-slate-50'}">
+                    <div class="min-w-0">
+                        <div class="text-[11px] font-bold text-slate-800 truncate">${idx + 1}. ${r.v.name} ${isBest ? '🏆' : ''}</div>
+                        <div class="text-[9px] text-slate-400 font-bold">${r.fills} ครั้งเติม · ใช้ไป ฿${r.spend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="text-sm font-black ${r.avg != null ? 'text-emerald-700' : 'text-slate-400'}">${r.avg != null ? r.avg.toFixed(2) : '-.--'}</div>
+                        <div class="text-[8px] font-bold text-slate-400">กม./ลิตร</div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderFuelTypeSplit(enriched) {
+            const summarize = (type) => {
+                const typed = enriched.filter(l => (l.fuelType || 'oil') === type);
+                const withEff = typed.filter(l => l.calculatedEfficiency != null);
+                const avg = withEff.length ? withEff.reduce((s, l) => s + l.calculatedEfficiency, 0) / withEff.length : null;
+                return { avg, count: withEff.length };
+            };
+            const oil = summarize('oil');
+            const gas = summarize('gas');
+            const oilAvg = document.getElementById('fuel-oil-avg');
+            const gasAvg = document.getElementById('fuel-gas-avg');
+            const oilCount = document.getElementById('fuel-oil-count');
+            const gasCount = document.getElementById('fuel-gas-count');
+            if (oilAvg) oilAvg.textContent = oil.avg != null ? oil.avg.toFixed(2) : '-.--';
+            if (gasAvg) gasAvg.textContent = gas.avg != null ? gas.avg.toFixed(2) : '-.--';
+            if (oilCount) oilCount.textContent = String(oil.count);
+            if (gasCount) gasCount.textContent = String(gas.count);
         }
 
         function renderFuelLastFillSummary(latestLog, segment) {
@@ -1643,10 +1941,9 @@
             if (efficiencyCount > 0) {
                 const avgEffVal = efficiencySum / efficiencyCount;
                 avgEfficiencyEl.textContent = avgEffVal.toFixed(2);
-                const totalCalculatedCost = enriched.slice(1).reduce((sum, l) => sum + (l.costPerKm ? l.totalCost : 0), 0);
-                const totalCalculatedDistance = enriched.slice(1).reduce((sum, l, idx) => {
-                    return sum + (l.costPerKm ? (l.odo - enriched[idx].odo) : 0);
-                }, 0);
+                const withEff = enriched.filter(l => l.costPerKm != null && l.segmentDistance);
+                const totalCalculatedCost = withEff.reduce((sum, l) => sum + l.totalCost, 0);
+                const totalCalculatedDistance = withEff.reduce((sum, l) => sum + l.segmentDistance, 0);
                 avgCostKmEl.textContent = totalCalculatedDistance > 0 ? (totalCalculatedCost / totalCalculatedDistance).toFixed(2) : '-.--';
             } else {
                 avgEfficiencyEl.textContent = '-.--';
@@ -1662,8 +1959,12 @@
             totalLitersEl.textContent = `${totalLitersSum.toLocaleString(undefined, { maximumFractionDigits: 1 })} ลิตร`;
             totalSpendEl.textContent = `฿${totalCostSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+            renderFuelTypeSplit(enriched);
+            renderFuelTrendChart(enriched);
+            renderFamilyFuelCompare();
+
             const latestLog = enriched.length ? enriched[enriched.length - 1] : null;
-            renderFuelLastFillSummary(latestLog, getFuelSegmentStats(latestLog, enriched));
+            renderFuelLastFillSummary(latestLog, getFuelSegmentStats(latestLog));
 
             const reversedLogs = [...enriched].reverse();
             if (reversedLogs.length === 0) {
@@ -1679,10 +1980,11 @@
             }
 
             reversedLogs.forEach(l => {
-                const segment = getFuelSegmentStats(l, enriched);
+                const segment = getFuelSegmentStats(l);
                 const fuelType = l.fuelType || 'oil';
                 const badgeClass = fuelType === 'gas' ? 'fuel-row-badge-gas' : 'fuel-row-badge-oil';
                 const badgeLabel = fuelType === 'gas' ? 'แก๊ส' : 'น้ำมัน';
+                const station = l.station ? `<span class="text-[9px] text-slate-400 font-bold truncate max-w-[7rem]" title="${l.station}">${l.station}</span>` : '';
 
                 container.innerHTML += `
                     <div class="fuel-row group">
@@ -1691,8 +1993,10 @@
                             <span class="log-row-date shrink-0">${formatThaiDate(l.date)}</span>
                             <span class="text-[10px] font-bold text-slate-700 shrink-0">${l.liters.toFixed(1)} ล.</span>
                             <span class="text-[10px] font-extrabold text-emerald-700 shrink-0">฿${l.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                            ${station}
                             <span class="text-[9px] font-bold text-slate-400 shrink-0 ml-auto">${l.odo.toLocaleString()} กม.</span>
                             ${l.fullTank ? '<span class="text-[8px] font-black text-indigo-600 shrink-0">เต็ม</span>' : ''}
+                            <button type="button" onclick="openEditFuelModal('${l.id}')" class="log-row-icon-btn log-row-icon-btn--edit shrink-0" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
                             <button type="button" onclick="deleteFuelLog('${l.id}')" class="log-row-icon-btn log-row-icon-btn--delete shrink-0" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                         ${renderFuelSegmentChips(segment)}
@@ -1707,7 +2011,59 @@
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
             const enriched = enrichFuelLogsWithMetrics(logs);
             const entry = enriched.find(l => l.id === entryId);
-            return getFuelSegmentStats(entry, enriched);
+            return getFuelSegmentStats(entry);
+        }
+
+        function openEditFuelModal(id) {
+            const log = state.fuelLogs.find(l => l.id === id);
+            if (!log) return;
+            document.getElementById('edit-fuel-id').value = log.id;
+            document.getElementById('edit-fuel-odo').value = log.odo;
+            document.getElementById('edit-fuel-date').value = normalizeIsoDate(log.date) || log.date;
+            document.getElementById('edit-fuel-liters').value = log.liters;
+            document.getElementById('edit-fuel-price').value = log.pricePerLiter;
+            document.getElementById('edit-fuel-total').value = log.totalCost;
+            document.getElementById('edit-fuel-station').value = log.station || '';
+            document.getElementById('edit-fuel-full').checked = !!log.fullTank;
+            document.getElementById('edit-fuel-type').value = log.fuelType || 'oil';
+            openModalPanel('edit-fuel-modal');
+        }
+
+        function saveEditedFuelLog(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-fuel-id').value;
+            const log = state.fuelLogs.find(l => l.id === id);
+            if (!log) return;
+            const newOdo = parseInt(document.getElementById('edit-fuel-odo').value);
+            const prevMax = Math.max(
+                ...state.maintenanceLogs.filter(l => l.vehicleId === log.vehicleId).map(l => l.odo),
+                ...state.fuelLogs.filter(l => l.vehicleId === log.vehicleId && l.id !== id).map(l => l.odo),
+                0
+            );
+            if (newOdo < prevMax) {
+                showToast('เลขไมล์ต่ำกว่าระยะสะสมล่าสุดของรถ!', 'error');
+                return;
+            }
+            log.odo = newOdo;
+            log.date = document.getElementById('edit-fuel-date').value;
+            log.liters = parseFloat(document.getElementById('edit-fuel-liters').value);
+            log.pricePerLiter = parseFloat(document.getElementById('edit-fuel-price').value);
+            log.totalCost = parseFloat(document.getElementById('edit-fuel-total').value);
+            log.station = (document.getElementById('edit-fuel-station').value || '').trim();
+            log.fullTank = document.getElementById('edit-fuel-full').checked;
+            log.fuelType = document.getElementById('edit-fuel-type').value === 'gas' ? 'gas' : 'oil';
+            if (newOdo > prevMax) syncAlertOdometerBaseline(log.vehicleId, newOdo, log.date);
+            saveToLocalStorage();
+            closeModal('edit-fuel-modal');
+            showToast('แก้ไขบันทึกเติมเชื้อเพลิงแล้ว');
+            renderFuelLogs();
+        }
+
+        function confirmDeleteFuelFromEdit() {
+            const id = document.getElementById('edit-fuel-id').value;
+            if (!confirm('ยืนยันลบบันทึกเติมเชื้อเพลิงนี้?')) return;
+            closeModal('edit-fuel-modal');
+            deleteFuelLog(id);
         }
 
         // View receipt photo
@@ -1804,6 +2160,8 @@
             document.getElementById('fuel-liters').value = '';
             document.getElementById('fuel-price-liter').value = '';
             document.getElementById('fuel-total-cost').value = '';
+            const stationEl = document.getElementById('fuel-station');
+            if (stationEl) stationEl.value = '';
 
             calendarTargetField = 'fuel';
             const now = new Date();
@@ -2230,6 +2588,8 @@
             const fullTank = document.getElementById('fuel-full-tank').checked;
             const fuelDate = document.getElementById('fuel-date').value || new Date().toISOString().split('T')[0];
             const fuelType = document.getElementById('fuel-type-input').value; // 'oil' or 'gas'
+            const stationEl = document.getElementById('fuel-station');
+            const station = stationEl ? stationEl.value.trim() : '';
 
             const lastOdo = getLatestOdometer(vId);
             if (odo < lastOdo) {
@@ -2246,7 +2606,8 @@
                 pricePerLiter: price,
                 totalCost: totalCost,
                 fullTank: fullTank,
-                fuelType: fuelType
+                fuelType: fuelType,
+                station: station
             };
 
             state.fuelLogs.push(newFuelEntry);
@@ -2471,6 +2832,7 @@
                 document.getElementById('admin-tab-controls').classList.remove('hidden');
                 renderAdminVehicles();
                 renderAdminCategories();
+                updateBackupHint();
             } else {
                 document.getElementById('admin-tab-auth-view').classList.remove('hidden');
                 document.getElementById('admin-tab-controls').classList.add('hidden');

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MyHome CarCare">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1D4ED8"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#F7F8FA"/>
+  <rect x="48" y="48" width="416" height="416" rx="96" fill="url(#g)"/>
+  <path fill="#FFFFFF" d="M128 300c12-48 40-88 88-104l24-56c6-14 20-24 36-24h-0c16 0 30 10 36 24l24 56c48 16 76 56 88 104v28c0 18-14 32-32 32h-16c0 26-22 48-48 48s-48-22-48-48H224c0 26-22 48-48 48s-48-22-48-48h-16c-18 0-32-14-32-32v-28zm80 52c14 0 24-10 24-24s-10-24-24-24-24 10-24 24 10 24 24 24zm144 0c14 0 24-10 24-24s-10-24-24-24-24 10-24 24 10 24 24 24zM214 176l-14 34h112l-14-34c-2-6-8-10-14-10h-56c-6 0-12 4-14 10z"/>
+</svg>

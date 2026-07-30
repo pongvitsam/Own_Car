@@ -24,14 +24,14 @@ inline_styles = PREMIUM_INLINE_STYLES.strip()
 # Version badge (GitHub Pages)
 body = re.sub(
     r'(<span class="version-badge[^"]*"[^>]*>)(?!.*fa-github)(.*?)(</span>)',
-    r'\1<i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.1 Light Sarabun\3',
+    r'\1<i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.2 Complete\3',
     body,
     count=1,
     flags=re.DOTALL
 )
 body = re.sub(
     r'<span class="version-badge">.*?</span>',
-    '<span class="version-badge text-[8px] font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.1 Light Sarabun</span>',
+    '<span class="version-badge text-[8px] font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.2 Complete</span>',
     body,
     count=1,
     flags=re.DOTALL
@@ -730,6 +730,14 @@ index_html = f'''<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#2563EB">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="CarCare">
+    <meta name="description" content="บำรุงรักษารถครอบครัวและบันทึกน้ำมันสไตล์ Fuelio">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="./icons/icon.svg">
     <title>MyHome CarCare - ระบบบำรุงรักษาและบันทึกน้ำมันสไตล์ Fuelio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>

@@ -1,162 +1,64 @@
 # MyHome CarCare
 
-Family vehicle maintenance and Fuelio-style fuel logging — **fast static app on GitHub Pages (v2.0.0)**.
+Family vehicle maintenance and Fuelio-style fuel logging — **static PWA on GitHub Pages (v3.2.0)**.
 
-## GitHub Pages (primary)
+## Live
 
 | Item | Value |
 |------|-------|
 | **Live URL** | https://pongvitsam.github.io/Own_Car/ |
 | **Repo** | https://github.com/pongvitsam/Own_Car |
-| **Backend** | `localStorage` key `myhome_carcare_state_v2.0` (browser-only, instant CRUD) |
-| **Admin passcode** | `1234` |
+| **Storage** | `localStorage` key `myhome_carcare_state_v2.2` (browser-only) |
+| **Admin** | `admin` / `1234` |
+| **PWA** | Installable (`manifest.webmanifest` + `sw.js`) |
 
-Single-file `index.html` with **all CSS inside `<style>` tags** (fixes GAS raw CSS leak). No GAS template includes.
+## Features (v3.2)
 
-**Enable Pages (one-time):** Repo → **Settings** → **Pages** → Source: **Deploy from a branch** → Branch **`main`** → Folder **`/ (root)`** → Save.
+- Maintenance dashboard, Fuelio fuel tab, Admin
+- Side navigation (drawer on mobile, persistent sidebar on tablet/desktop)
+- Fuelio summary: km driven, liters used, km/L (oil and gas as **separate** full-tank chains)
+- Trend chart + family vehicle efficiency compare
+- Edit / delete fuel logs; optional station name
+- Export / Import JSON backup (Admin)
+- Thai Buddhist Era dates, PDF yearly report
+- LINE alert **simulation** on GitHub Pages (real LINE Notify via legacy GAS)
 
-Rebuild after editing the mockup:
+> Data lives in the browser. Use **Admin → Export JSON** before clearing cache or changing devices.
+
+## Develop
 
 ```bash
+cd "C:\Users\User\OWN_CAR PM"
+npm test
 python tools/build_github_pages.py
+python tools/deploy_pages.py "Your commit message"
 ```
 
-## Google Apps Script (legacy — deprecated)
-
-Production web app backed by Google Sheets.
-
-| Item | Value |
-|------|-------|
-| **Script ID** | `1tsg7o2-CdwWbaOhGLfoiDhuQfVn0ZelhucQOtSX9K9do8CNfMEEt1U70` |
-| **Production URL** | https://script.google.com/macros/s/AKfycbzIZEXwdIsE0-uyh7VmejOEfPPWQSO2PxpyoJDuMmqWKkOcDN0swpzKBJjdcVSyinCwtw/exec |
-| **Deployment ID** | `AKfycbzIZEXwdIsE0-uyh7VmejOEfPPWQSO2PxpyoJDuMmqWKkOcDN0swpzKBJjdcVSyinCwtw` |
-| **Deploy version** | `@14` (spreadsheet permission fix + Thai errors + ownerBootstrapOnce) |
-| **Receipts folder** | `1R-dpki8-nS17XAma6tyiQMEH66kEcf7U` |
-| **Timezone** | Asia/Bangkok |
-
-## Features (both versions)
-
-- 3 tabs: Maintenance dashboard, Fuel (Fuelio), Admin
-- Google Spreadsheet backend (auto-created on first run) with **update-not-duplicate** CRUD
-- Receipt upload to Google Drive folder
-- LINE Notify (free) when token is set; simulation UI + logs when not
-- Daily auto-alert trigger (`dailyCheckAlerts` at 08:00)
-- PDF export of yearly maintenance report
-- Multi-user web app (no extra login gate when anonymous access is active)
-- First-load welcome toast with setup hints (admin trigger, LINE token)
+Expected: **113+ tests pass**.
 
 ## Project structure
 
 ```
-├── index.html            # GitHub Pages app (v2.0.0 — build via tools/build_github_pages.py)
-├── package.json          # npm test script
-├── lib/car-logic.js      # Shared formulas (npm test source of truth)
-├── tests/car-logic.test.js
-├── gas/                  # Legacy GAS backend (deprecated)
-│   ├── Code.gs           # doGet, getAppState API
-│   ├── Config.gs         # properties, constants
-│   ├── Sheets.gs         # spreadsheet CRUD
-│   ├── Vehicles.gs, Categories.gs, Maintenance.gs, Fuel.gs, Odometer.gs
-│   ├── Alerts.gs, LineNotify.gs, Drive.gs, Admin.gs, Export.gs
-│   ├── Index.html, Scripts.html, Styles.html
-│   └── appsscript.json   # ANYONE_ANONYMOUS webapp access
-├── tools/build_frontend.py       # Rebuild gas/ from mockup
-├── tools/build_github_pages.py   # Rebuild index.html for GitHub Pages
-├── mockup/MyHome-CarCare-v1.8.html
-└── README.md
+├── index.html                 # Built GitHub Pages app
+├── manifest.webmanifest       # PWA manifest
+├── sw.js                      # Service worker
+├── icons/icon.svg
+├── mockup/MyHome-CarCare-v1.8.html   # Source UI + JS
+├── tools/build_github_pages.py
+├── tools/premium_ui.py
+├── tools/deploy_pages.py
+├── lib/car-logic.js           # Shared formulas (npm test source of truth)
+├── tests/
+└── gas/                       # Legacy Google Apps Script (optional cloud/LINE)
 ```
 
-> **Note:** Keep only `.gs` files in `gas/` — do not commit `.js` duplicates from `clasp pull`.
+## Google Apps Script (legacy / optional)
 
-## Unit tests (local)
-
-Pure logic in `lib/car-logic.js` mirrors GAS formulas (odometer, health bar, Fuelio metrics, alerts):
-
-```bash
-cd "C:\Users\User\OWN_CAR PM"
-npm test
-```
-
-Expected: **29 tests pass** (6 suites).
-
-## Setup checklist (owner — do once)
-
-Use this after first deploy or when sharing with family:
-
-- [ ] **Push code:** `clasp push -f` from project root
-- [ ] **Redeploy Web App** (required after changing `appsscript.json` access settings):
-  ```bash
-  clasp deploy -i AKfycbzIZEXwdIsE0-uyh7VmejOEfPPWQSO2PxpyoJDuMmqWKkOcDN0swpzKBJjdcVSyinCwtw -d "MyHome CarCare production"
-  ```
-- [ ] **Anonymous access:** `gas/appsscript.json` must have `"access": "ANYONE_ANONYMOUS"`. Redeploy picks this up.
-- [ ] **First OAuth (required):** Open the [Apps Script editor](https://script.google.com/home/projects/1tsg7o2-CdwWbaOhGLfoiDhuQfVn0ZelhucQOtSX9K9do8CNfMEEt1U70/edit), select `ownerBootstrapOnce` (or `getAppState`), click **Run**, and approve permissions (Sheets, Drive, UrlFetch for LINE). **Until this step completes, anonymous visitors get HTTP 403 or "You do not have permission to access the requested document."**
-- [ ] **Open Web App URL once** (logged in as script owner) so the Spreadsheet and seed data are created.
-- [ ] **Daily trigger:** Run `setupTriggers()` in the Apps Script editor, **or** Admin tab (passcode 1234) → **สร้าง Daily Trigger (08:00)**.
-- [ ] **(Optional) LINE Notify token:** Apps Script → Project Settings → Script properties → add `LINE_NOTIFY_TOKEN` from [notify-bot.line.me](https://notify-bot.line.me/).
-- [ ] **(Optional) Custom admin passcode:** Script property `ADMIN_PASS` overrides default `1234`.
-- [ ] **Share production URL** with family — no Google login required after owner OAuth + anonymous deploy.
-
-## Deploy & verify
-
-```bash
-cd "C:\Users\User\OWN_CAR PM"
-npm test
-clasp push -f
-clasp deploy -i AKfycbzIZEXwdIsE0-uyh7VmejOEfPPWQSO2PxpyoJDuMmqWKkOcDN0swpzKBJjdcVSyinCwtw -d "MyHome CarCare production"
-```
-
-Verify the web app (after owner OAuth, should return **200** and HTML containing `MyHome CarCare`):
-
-```bash
-curl.exe -s -L -o test.html -w "HTTP:%{http_code}\n" "https://script.google.com/macros/s/AKfycbzIZEXwdIsE0-uyh7VmejOEfPPWQSO2PxpyoJDuMmqWKkOcDN0swpzKBJjdcVSyinCwtw/exec"
-findstr /C:"MyHome CarCare" test.html
-```
-
-**Current curl status (2026-06-06, @14):** Production returns **HTTP 403** until the script owner (`rb2.emd@gmail.com`) completes first OAuth (`ownerBootstrapOnce` in editor). This is expected — not a code bug.
-
-## API (google.script.run)
-
-| Function | Description |
-|----------|-------------|
-| `getAppState(selectedVehicleId?)` | Full app state JSON |
-| `saveOdometerOnly(data)` | Odometer-only update |
-| `saveMaintenanceLog(data)` | Maintenance + receipt upload |
-| `saveFuelLog(data)` | Fuel log |
-| `deleteFuelLog(id)` | Delete fuel entry |
-| `saveEditedLog(data)` | Edit maintenance log |
-| `deleteMaintenanceLog(id)` | Delete maintenance log |
-| `verifyAdmin(passcode)` | Admin auth |
-| `addVehicle` / `deleteVehicle` | Admin vehicles |
-| `addCategory` / `deleteCategory` | Admin categories |
-| `checkLineAlerts(manual)` | Manual/auto alert check |
-| `exportReportPdf(vehicleId, year)` | PDF base64 download |
-| `setupTriggers()` | Create daily trigger |
-| `dailyCheckAlerts()` | Trigger handler |
-
-## Sheet schema (Thai names)
-
-| Sheet | Columns |
-|-------|---------|
-| รถ | vehicleId, ชื่อ, ทะเบียน, สร้างเมื่อ |
-| หมวดซ่อม | categoryId, ชื่อ |
-| บันทึกซ่อม | logId, vehicleId, วันที่, categoryId, ร้าน, ราคา, ไมล์, type, alertKm, alertMonth, driveFileId, driveUrl, receiptName |
-| เติมเชื้อเพลิง | logId, vehicleId, วันที่, fuelType, ไมล์, ลิตร, ราคา/ลิตร, ราคารวม, เต็มถัง, สถานี |
-| แจ้งเตือน | alertId, vehicleId, targetKm, targetDate, status, lastUpdated |
-| ตั้งค่า | key, value |
-
-## Rebuild frontend from mockup
-
-```bash
-python tools/build_frontend.py
-clasp push -f
-```
+Use when you need shared Sheets storage, Drive receipts, daily trigger, or real LINE Notify. See `gas/README.md` and older deploy notes in git history. Primary product path is GitHub Pages + localStorage + Export/Import.
 
 ## Troubleshooting
 
-- **403 / “ต้องการสิทธิ์เข้าถึง” / “You do not have permission to access the requested document”:** Deploy must use **Execute as: Me** (`USER_DEPLOYING` in `appsscript.json`) and **Who has access: Anyone** (`ANYONE_ANONYMOUS`). Redeploy after changing manifest. Then run `ownerBootstrapOnce` once in the Apps Script editor as owner (`rb2.emd@gmail.com`) to grant OAuth and create the spreadsheet.
-- **CSS shows as plain text (GAS only):** GAS `include()` strips `<style>` tags from partial HTML files. Use GitHub Pages (`index.html`) where CSS is inlined in `<head>`, or ensure GAS `Index.html` inlines styles (never `include('Styles')`).
-- **Drive upload fails:** Ensure the script owner has write access to folder `1R-dpki8-nS17XAma6tyiQMEH66kEcf7U`.
-- **PDF export empty:** Grant script authorization when prompted on first export.
-- **LINE not sending:** Verify `LINE_NOTIFY_TOKEN` in Script Properties; check LINE log modal in app (simulation mode when token is empty).
-- **Trigger not firing:** Run `setupTriggers()` once as script owner; check Triggers page in Apps Script editor.
-- **Duplicate `.js` in `gas/`:** Delete them after `clasp pull`; keep only `.gs` sources.
+- **Data missing after browser clear:** Restore from Export JSON backup.
+- **Fuel efficiency blank:** Need two consecutive **full tank** fills of the **same** fuel type (oil or gas).
+- **PWA not installing:** Open over HTTPS (GitHub Pages), hard-refresh, check Application → Manifest.
+- **Deploy fails on Windows:** `tools/deploy_pages.py` resolves `npm.cmd` via shell — run `python tools/deploy_pages.py "msg"`.
