@@ -38,7 +38,6 @@
                 <i class="fa-solid fa-gas-pump text-sm shrink-0"></i>
                 <span class="truncate font-bold text-xs">บันทึกน้ำมัน</span>
             </button>
-            <span id="header-sync-pill" class="hidden shrink-0 text-[8px] font-black px-1.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700" title="โหมดซิงค์ Google Sheets">Sheet</span>
             <div class="flex items-center gap-1 shrink-0">
                 <button type="button" onclick="checkLineAlerts(true)" class="btn-emerald text-[10px] text-white font-bold p-2.5 rounded-xl flex items-center justify-center transition-all active:scale-95" title="ตรวจสภาพด่วน">
                     <i class="fa-brands fa-line text-sm"></i>
@@ -427,36 +426,6 @@
                     </div>
                 </div>
 
-                <!-- Google Sheets sync -->
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm space-y-3">
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                        <h3 class="text-xs font-black text-indigo-950 flex items-center gap-1.5">
-                            <i class="fa-brands fa-google-drive text-indigo-600"></i> ซิงค์ Google Sheets (GAS)
-                        </h3>
-                        <span id="gas-sync-status" class="text-[9px] font-bold text-slate-400">ปิดอยู่</span>
-                    </div>
-                    <p class="text-[10px] text-slate-500 font-medium leading-relaxed">
-                        เปิดโหมดนี้แล้วข้อมูลที่บันทึกจะเก็บลง Google Sheet ผ่าน Apps Script — ใช้ร่วมกันได้หลายเครื่อง
-                    </p>
-                    <label class="flex items-center gap-2 text-[11px] font-bold text-slate-700">
-                        <input type="checkbox" id="gas-sync-enabled" class="accent-indigo-600 w-4 h-4" onchange="onGasSyncToggle()">
-                        เปิดซิงค์ Google Sheets
-                    </label>
-                    <div>
-                        <label class="block text-[9px] font-bold text-slate-500 mb-1">Web App URL (/exec)</label>
-                        <input type="url" id="gas-webapp-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-[10px] font-mono">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="saveGasSyncSettings()" class="btn-primary text-[11px] font-bold py-2.5">บันทึกการตั้งค่า</button>
-                        <button type="button" onclick="testGasConnection()" class="btn-secondary text-[11px] font-bold py-2.5">ทดสอบเชื่อมต่อ</button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="pullFromGas()" class="text-[10px] font-bold py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800">ดึงจาก Sheet</button>
-                        <button type="button" onclick="pushHintGas()" class="text-[10px] font-bold py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600">วิธี Deploy GAS</button>
-                    </div>
-                    <p id="gas-sync-hint" class="text-[9px] text-slate-400 font-medium leading-relaxed"></p>
-                </div>
-
                 <!-- Backup / restore -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm space-y-3">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -466,7 +435,7 @@
                         <span id="backup-last-hint" class="text-[9px] text-slate-400 font-bold"></span>
                     </div>
                     <p class="text-[10px] text-slate-500 font-medium leading-relaxed">
-                        สำรองไฟล์ JSON สำรองเพิ่ม — ถ้าเปิดซิงค์ Sheet แล้ว ข้อมูลหลักอยู่บน Google Sheet
+                        ข้อมูลหลักซิงค์อัตโนมัติระหว่างอุปกรณ์ และสามารถ Export JSON เพื่อสำรองเพิ่มได้
                     </p>
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" onclick="exportAppBackup()" class="btn-primary text-[11px] font-bold py-2.5 px-3 flex items-center justify-center gap-1.5">
@@ -985,8 +954,6 @@
                 saveToLocalStorage();
             }
 
-            const urlInputBoot = document.getElementById('gas-webapp-url');
-            if (urlInputBoot) urlInputBoot.value = getGasWebAppUrl();
             updateGasSyncUi();
 
             populateDropdowns();
@@ -1019,8 +986,6 @@
         }
 
         // ——— Google Apps Script sync (iframe bridge) ———
-        const GAS_CONFIG_URL_KEY = 'myhome_carcare_gas_url';
-        const GAS_CONFIG_ENABLED_KEY = 'myhome_carcare_gas_enabled';
         const GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzn1_ZmKOk4gCjAEuhC_ZKG9Iuejlyt3U3o8qPg7qv2AqdHtXUjVadawjZ_zrldlI2Wrw/exec';
 
         const GasBridge = {
@@ -1032,32 +997,21 @@
         };
 
         function getGasWebAppUrl() {
-            return (localStorage.getItem(GAS_CONFIG_URL_KEY) || GAS_DEFAULT_URL || '').trim();
+            return GAS_DEFAULT_URL;
         }
 
         function isGasSyncEnabled() {
-            return localStorage.getItem(GAS_CONFIG_ENABLED_KEY) === '1' && !!getGasWebAppUrl();
+            return true;
         }
 
         function updateGasSyncUi() {
-            const enabled = isGasSyncEnabled();
             const status = document.getElementById('gas-sync-status');
             const pill = document.getElementById('header-sync-pill');
-            const chk = document.getElementById('gas-sync-enabled');
-            const urlInput = document.getElementById('gas-webapp-url');
-            const hint = document.getElementById('gas-sync-hint');
-            if (chk) chk.checked = localStorage.getItem(GAS_CONFIG_ENABLED_KEY) === '1';
-            if (urlInput && !urlInput.value) urlInput.value = getGasWebAppUrl();
             if (status) {
-                status.textContent = enabled ? (GasBridge.ready ? 'เชื่อมต่อแล้ว' : 'กำลังเชื่อม...') : 'ปิดอยู่';
-                status.className = 'text-[9px] font-bold ' + (enabled ? 'text-emerald-600' : 'text-slate-400');
+                status.textContent = GasBridge.ready ? 'เชื่อมต่อแล้ว' : 'กำลังเชื่อม...';
+                status.className = 'text-[9px] font-bold text-emerald-600';
             }
-            if (pill) pill.classList.toggle('hidden', !enabled);
-            if (hint) {
-                hint.textContent = enabled
-                    ? 'บันทึกทุกอย่างจะส่งเข้า Google Sheet — ดึงจาก Sheet เพื่อรีเฟรชข้ามเครื่อง'
-                    : 'โหมดเครื่องเปล่า (localStorage) — เปิดซิงค์เมื่อ Deploy GAS แล้ว';
-            }
+            if (pill) pill.classList.add('hidden');
         }
 
         function waitGasReady(timeoutMs) {
@@ -1306,80 +1260,6 @@
                 saveToLocalStorage();
             }
             return result;
-        }
-
-        function saveGasSyncSettings() {
-            const urlInput = document.getElementById('gas-webapp-url');
-            const chk = document.getElementById('gas-sync-enabled');
-            const url = (urlInput && urlInput.value || '').trim();
-            if (chk && chk.checked && !url) {
-                showToast('กรุณาวาง Web App URL ก่อนเปิดซิงค์', 'error');
-                chk.checked = false;
-                return;
-            }
-            localStorage.setItem(GAS_CONFIG_URL_KEY, url);
-            localStorage.setItem(GAS_CONFIG_ENABLED_KEY, (chk && chk.checked) ? '1' : '0');
-            GasBridge.ready = false;
-            if (GasBridge.iframe) {
-                GasBridge.iframe.remove();
-                GasBridge.iframe = null;
-            }
-            updateGasSyncUi();
-            if (isGasSyncEnabled()) {
-                showToast('บันทึกการตั้งค่าแล้ว — กำลังเชื่อมต่อ Sheet...');
-                hydrateFromGas()
-                    .then(() => showToast('ซิงค์จาก Google Sheet สำเร็จ'))
-                    .catch((e) => showToast(String(e.message || e), 'warning'));
-            } else {
-                showToast('ปิดซิงค์ Sheet แล้ว — ใช้ข้อมูลในเครื่อง');
-            }
-        }
-
-        function onGasSyncToggle() {
-            updateGasSyncUi();
-        }
-
-        async function testGasConnection() {
-            const urlInput = document.getElementById('gas-webapp-url');
-            const url = (urlInput && urlInput.value || '').trim();
-            if (!url) {
-                showToast('ยังไม่มี Web App URL', 'error');
-                return;
-            }
-            localStorage.setItem(GAS_CONFIG_URL_KEY, url);
-            localStorage.setItem(GAS_CONFIG_ENABLED_KEY, '1');
-            const chk = document.getElementById('gas-sync-enabled');
-            if (chk) chk.checked = true;
-            GasBridge.ready = false;
-            if (GasBridge.iframe) {
-                GasBridge.iframe.remove();
-                GasBridge.iframe = null;
-            }
-            updateGasSyncUi();
-            try {
-                const ping = await gasCall('ping', {});
-                showToast((ping && ping.message) || 'เชื่อมต่อ GAS สำเร็จ');
-                updateGasSyncUi();
-            } catch (e) {
-                showToast(String(e.message || e), 'error');
-            }
-        }
-
-        async function pullFromGas() {
-            if (!isGasSyncEnabled()) {
-                showToast('เปิดซิงค์และบันทึกการตั้งค่าก่อน', 'warning');
-                return;
-            }
-            try {
-                await hydrateFromGas();
-                showToast('ดึงข้อมูลจาก Google Sheet แล้ว');
-            } catch (e) {
-                showToast(String(e.message || e), 'error');
-            }
-        }
-
-        function pushHintGas() {
-            showToast('Deploy: Apps Script → Deploy → Web app → Execute as Me, Anyone → คัดลอก URL /exec');
         }
 
         function setDefaultDates() {
@@ -3439,8 +3319,6 @@
                 document.getElementById('admin-tab-auth-view').classList.remove('hidden');
                 document.getElementById('admin-tab-controls').classList.add('hidden');
             }
-            const urlInput = document.getElementById('gas-webapp-url');
-            if (urlInput && !urlInput.value) urlInput.value = getGasWebAppUrl();
             updateGasSyncUi();
         }
 
