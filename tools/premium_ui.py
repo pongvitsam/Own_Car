@@ -300,6 +300,30 @@ PREMIUM_INLINE_STYLES = """
             box-shadow: 0 8px 28px rgba(37, 99, 235, 0.45);
         }
         .fab-primary.hidden { display: none !important; }
+        #tab-fuelio {
+            padding: 0 !important;
+        }
+        .fuel-top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 25;
+            background: linear-gradient(180deg, var(--bg-base) 0%, rgba(247, 248, 250, 0.97) 85%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-subtle);
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+        }
+        .fuel-top-cta {
+            min-height: 3.25rem;
+            text-align: left;
+        }
+        .fuel-quick-chip {
+            min-height: 2.75rem;
+            transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+        }
+        .fuel-quick-chip:active {
+            transform: scale(0.98);
+        }
         .carousel-dots {
             display: flex;
             justify-content: center;

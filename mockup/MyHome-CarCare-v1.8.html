@@ -216,8 +216,32 @@
     </div>
 
     <!-- TAB 2: FUELIO FUEL PAGE (หน้าอัตราสิ้นเปลืองน้ำมันสไตล์ FUELIO) -->
-    <div id="tab-fuelio" class="tab-content flex-1 overflow-y-auto p-5 space-y-5 hidden">
-        
+    <div id="tab-fuelio" class="tab-content flex-1 flex flex-col overflow-hidden hidden">
+
+        <!-- Sticky top — primary mobile action -->
+        <div class="fuel-top-bar shrink-0 px-4 pt-3 pb-3">
+            <button type="button" onclick="openFuelModal()" class="fuel-top-cta btn-emerald w-full font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-2.5 active:scale-[0.98] shadow-md">
+                <span class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <i class="fa-solid fa-gas-pump text-lg"></i>
+                </span>
+                <span class="text-left flex-1">
+                    <span class="block text-sm font-bold leading-tight">บันทึกเติมน้ำมัน</span>
+                    <span class="block text-[10px] font-medium opacity-90 mt-0.5">แตะเพื่อบันทึกรายการใหม่</span>
+                </span>
+                <i class="fa-solid fa-chevron-right text-sm opacity-80"></i>
+            </button>
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <button type="button" onclick="openFuelModalWithType('oil')" class="fuel-quick-chip py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-emerald-200 bg-emerald-50 text-emerald-800 active:scale-[0.98]">
+                    <i class="fa-solid fa-droplet"></i> น้ำมัน
+                </button>
+                <button type="button" onclick="openFuelModalWithType('gas')" class="fuel-quick-chip py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-200 bg-white text-slate-700 active:scale-[0.98]">
+                    <i class="fa-solid fa-fire-flame-simple"></i> แก๊ส
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 pb-5 space-y-4">
+
         <!-- Fuel Analytics & Fuelio Cards -->
         <section class="premium-card p-5 space-y-4 relative overflow-hidden">
             <div class="absolute top-0 left-0 right-0 card-accent-bar card-accent-bar--emerald"></div>
@@ -256,11 +280,6 @@
                     <div class="font-extrabold text-indigo-950" id="fuel-total-spend">฿0.00</div>
                 </div>
             </div>
-
-            <!-- Quick fuel logging button -->
-            <button onclick="openFuelModal()" class="btn-emerald w-full text-white text-[11px] font-bold py-3 px-4 transition-all flex items-center justify-center gap-1.5 active:scale-95">
-                <i class="fa-solid fa-gas-pump text-sm"></i> บันทึกรายการเติมน้ำมันด่วน
-            </button>
         </section>
 
         <!-- Fuel logs list -->
@@ -270,6 +289,8 @@
                 <!-- Loaded dynamically -->
             </div>
         </section>
+
+        </div>
     </div>
 
     <!-- TAB 3: ADMIN PAGE (หน้าแผงควบคุมแอดมินบ้าน) -->
@@ -1632,25 +1653,28 @@
         }
 
         function openFuelModal() {
+            openFuelModalWithType('oil');
+        }
+
+        function openFuelModalWithType(type) {
             const fuelSelect = document.getElementById('fuel-vehicle-select');
             fuelSelect.value = state.selectedVehicleId;
-            
+
             const lastOdo = getLatestOdometer(state.selectedVehicleId);
             document.getElementById('fuel-odo').value = lastOdo || '';
             document.getElementById('fuel-liters').value = '';
             document.getElementById('fuel-price-liter').value = '';
             document.getElementById('fuel-total-cost').value = '';
 
-            // Auto-fill active calendar with current date (June 6, 2026)
             calendarTargetField = 'fuel';
-            calendarSelectedDate = new Date(2026, 5, 6);
-            calendarViewMonth = 5; 
-            calendarViewYear = 2026;
+            const now = new Date();
+            calendarSelectedDate = now;
+            calendarViewMonth = now.getMonth();
+            calendarViewYear = now.getFullYear();
             syncCalendarDropdownSelectors();
-            selectCalendarDate(6); // Force populate & sync the display field
+            selectCalendarDate(now.getDate());
 
-            // Reset fuel type selection UI state to default (oil)
-            updateFuelTypeSelection('oil');
+            updateFuelTypeSelection(type === 'gas' ? 'gas' : 'oil');
 
             document.getElementById('fuel-modal').classList.remove('hidden');
         }
@@ -2670,18 +2694,13 @@
             const fab = document.getElementById('fab-primary');
             const icon = document.getElementById('fab-primary-icon');
             if (!fab || !icon) return;
-            if (tabId === 'admin') {
+            if (tabId === 'admin' || tabId === 'fuelio') {
                 fab.classList.add('hidden');
                 return;
             }
             fab.classList.remove('hidden');
-            if (tabId === 'fuelio') {
-                icon.className = 'fa-solid fa-gas-pump';
-                fab.title = 'บันทึกเติมน้ำมัน';
-            } else {
-                icon.className = 'fa-solid fa-wrench';
-                fab.title = 'บันทึกการซ่อมบำรุง';
-            }
+            icon.className = 'fa-solid fa-wrench';
+            fab.title = 'บันทึกการซ่อมบำรุง';
         }
 
         function handleFabAction() {
