@@ -49,16 +49,30 @@ Expected: **113+ tests pass**.
 ├── tools/deploy_pages.py
 ├── lib/car-logic.js           # Shared formulas (npm test source of truth)
 ├── tests/
-└── gas/                       # Legacy Google Apps Script (optional cloud/LINE)
+└── gas/                       # Google Apps Script backend (Sheets sync + LINE)
 ```
 
-## Google Apps Script (legacy / optional)
+## Google Apps Script (Sheets sync)
 
-Use when you need shared Sheets storage, Drive receipts, daily trigger, or real LINE Notify. See `gas/README.md` and older deploy notes in git history. Primary product path is GitHub Pages + localStorage + Export/Import.
+GitHub Pages connects to GAS via an **iframe Bridge** (`?bridge=1`) — the browser cannot call `google.script.run` cross-origin directly.
+
+1. Open [Apps Script](https://script.google.com/) project linked in `.clasp.json`, then `clasp push` from this repo (`rootDir: gas`).
+2. **Deploy → New deployment → Web app**
+   - Execute as: **Me**
+   - Who has access: **Anyone**
+3. Copy the `/exec` URL.
+4. On the live app → **Admin** → section **Google Sheets sync**
+   - Paste URL → **ทดสอบการเชื่อมต่อ** → enable sync → **บันทึกการตั้งค่า**
+5. Saves (fuel / maintenance / odo / vehicles) write to the Sheet; use **ดึงจาก Sheet** to refresh across devices.
+
+Default Web App URL is baked into the UI; override anytime in Admin. Without sync enabled, the app stays on localStorage + Export/Import.
+
+See also `gas/Bridge.html` and `gas/Api.gs` (`apiCall` / `getFullSyncState`).
 
 ## Troubleshooting
 
-- **Data missing after browser clear:** Restore from Export JSON backup.
+- **Data missing after browser clear:** Restore from Export JSON backup, or enable Sheets sync and pull.
 - **Fuel efficiency blank:** Need two consecutive **full tank** fills of the **same** fuel type (oil or gas).
 - **PWA not installing:** Open over HTTPS (GitHub Pages), hard-refresh, check Application → Manifest.
 - **Deploy fails on Windows:** `tools/deploy_pages.py` resolves `npm.cmd` via shell — run `python tools/deploy_pages.py "msg"`.
+- **Sheet sync fails / Bridge timeout:** Redeploy the Web App after `clasp push`, confirm “Anyone” access, and that the URL ends with `/exec`.

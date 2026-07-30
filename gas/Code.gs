@@ -7,17 +7,27 @@
 
 
 function doGet(e) {
+  e = e || {};
+  var p = e.parameter || {};
+
+  // GitHub Pages ↔ GAS iframe bridge (postMessage + google.script.run)
+  if (String(p.bridge || '') === '1') {
+    return HtmlService.createHtmlOutputFromFile('Bridge')
+      .setTitle('MyHome CarCare Bridge')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
+
+  // JSON / JSONP API (?action=ping|getFullSyncState|...)
+  if (p.action) {
+    return handleHttpApi_(e);
+  }
 
   return HtmlService.createTemplateFromFile('Index')
-
     .evaluate()
-
     .setTitle('MyHome CarCare')
-
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
-
 }
 
 

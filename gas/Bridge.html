@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MyHome CarCare GAS Bridge</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 12px; color: #1e293b; background: #f8fafc; }
+    .ok { color: #047857; font-weight: 700; font-size: 12px; }
+    .hint { color: #64748b; font-size: 11px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="ok">✓ GAS Bridge พร้อมซิงค์ Google Sheets</div>
+  <div class="hint">หน้าต่างนี้ใช้เชื่อม GitHub Pages กับ Apps Script — ไม่ต้องปิดถ้าเปิดจากแอปหลัก</div>
+  <script>
+    (function () {
+      var ALLOWED = [
+        'https://pongvitsam.github.io',
+        'http://localhost',
+        'http://127.0.0.1',
+        'null'
+      ];
+
+      function originAllowed(origin) {
+        if (!origin) return false;
+        for (var i = 0; i < ALLOWED.length; i++) {
+          if (origin === ALLOWED[i] || origin.indexOf(ALLOWED[i]) === 0) return true;
+        }
+        return false;
+      }
+
+      function reply(source, origin, msg) {
+        try {
+          source.postMessage(msg, origin || '*');
+        } catch (e) {
+          try { source.postMessage(msg, '*'); } catch (e2) {}
+        }
+      }
+
+      window.addEventListener('message', function (ev) {
+        var data = ev.data;
+        if (!data || data.type !== 'gas-call') return;
+        if (!originAllowed(ev.origin) && ev.origin !== '' && ev.origin !== 'null') {
+          reply(ev.source, ev.origin, {
+            type: 'gas-result',
+            id: data.id,
+            ok: false,
+            error: 'Origin not allowed: ' + ev.origin
+          });
+          return;
+        }
+
+        var action = data.action;
+        var args = data.args || [];
+        if (!action || typeof google === 'undefined' || !google.script || !google.script.run) {
+          reply(ev.source, ev.origin, {
+            type: 'gas-result',
+            id: data.id,
+            ok: false,
+            error: 'google.script.run unavailable'
+          });
+          return;
+        }
+
+        var runner = google.script.run
+          .withSuccessHandler(function (result) {
+            reply(ev.source, ev.origin, {
+              type: 'gas-result',
+              id: data.id,
+              ok: true,
+              result: result
+            });
+          })
+          .withFailureHandler(function (err) {
+            reply(ev.source, ev.origin, {
+              type: 'gas-result',
+              id: data.id,
+              ok: false,
+              error: String((err && err.message) || err || 'GAS error')
+            });
+          });
+
+        if (typeof runner[action] !== 'function') {
+          reply(ev.source, ev.origin, {
+            type: 'gas-result',
+            id: data.id,
+            ok: false,
+            error: 'Unknown GAS function: ' + action
+          });
+          return;
+        }
+
+        runner[action].apply(runner, args);
+      });
+
+      function announce() {
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'gas-bridge-ready' }, '*');
+          }
+        } catch (e) {}
+      }
+
+      announce();
+      setTimeout(announce, 300);
+      setTimeout(announce, 1000);
+    })();
+  </script>
+</body>
+</html>
