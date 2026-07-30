@@ -2147,7 +2147,6 @@
             switchTab('dashboard');
 
             if (isGasSyncEnabled()) {
-                ensureGasBridge();
                 try {
                     await hydrateFromGas();
                     showToast('โหลดข้อมูลจาก Google Sheet แล้ว');
@@ -2159,6 +2158,7 @@
             } else {
                 checkLineAlerts(false);
             }
+            setupGasAutoPull();
         }
 
         function registerServiceWorker() {
@@ -2266,7 +2266,7 @@
             });
         }
 
-        function gasCall(action, payload) {
+        function gasBridgeCall(action, payload) {
             if (!isGasSyncEnabled()) {
                 return Promise.reject(new Error('GAS sync ยังไม่เปิด'));
             }
@@ -2294,6 +2294,73 @@
                     }, GasBridge.targetOrigin || '*');
                 });
             });
+        }
+
+        // JSONP works reliably across mobile/desktop without third-party iframe
+        // restrictions. Large receipt uploads still use the iframe bridge.
+        window.__myhomeGasJsonp = window.__myhomeGasJsonp || {};
+
+        function gasJsonpCall(action, payload) {
+            if (!isGasSyncEnabled()) {
+                return Promise.reject(new Error('GAS sync ยังไม่เปิด'));
+            }
+            const baseUrl = getGasWebAppUrl();
+            const callbackName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+            const callbackPath = '__myhomeGasJsonp.' + callbackName;
+            const params = new URLSearchParams({
+                action: action,
+                payload: JSON.stringify(payload || {}),
+                callback: callbackPath,
+                _: String(Date.now())
+            });
+            const src = baseUrl + (baseUrl.includes('?') ? '&' : '?') + params.toString();
+
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                let settled = false;
+                const cleanup = () => {
+                    if (script.parentNode) script.remove();
+                    delete window.__myhomeGasJsonp[callbackName];
+                };
+                const timer = setTimeout(() => {
+                    if (settled) return;
+                    settled = true;
+                    cleanup();
+                    reject(new Error('หมดเวลารอ Google Sheet (' + action + ')'));
+                }, 120000);
+
+                window.__myhomeGasJsonp[callbackName] = (result) => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    cleanup();
+                    GasBridge.ready = true;
+                    updateGasSyncUi();
+                    resolve(result);
+                };
+                script.async = true;
+                script.src = src;
+                script.onerror = () => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    cleanup();
+                    reject(new Error('เชื่อมต่อ Google Sheet ไม่สำเร็จ'));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        function gasCall(action, payload) {
+            const data = payload || {};
+            const payloadJson = JSON.stringify(data);
+            const hasLargeReceipt = !!data.receiptBase64 && data.receiptBase64.length > 1000;
+            const canUseJsonp = !hasLargeReceipt && payloadJson.length < 6000;
+
+            if (canUseJsonp) {
+                return gasJsonpCall(action, data);
+            }
+            return gasBridgeCall(action, data);
         }
 
         function applyRemoteState(remote, opts) {
@@ -2328,7 +2395,6 @@
 
         async function hydrateFromGas() {
             if (!isGasSyncEnabled()) return false;
-            ensureGasBridge();
             updateGasSyncUi();
             const result = await gasCall('getFullSyncState', {
                 selectedVehicleId: state.selectedVehicleId || null
@@ -2339,6 +2405,34 @@
             applyRemoteState(result.state, { keepSelected: true });
             refreshUiAfterSync();
             return true;
+        }
+
+        let gasAutoPullInFlight = false;
+        let gasLastPullAt = 0;
+
+        async function autoPullFromGas() {
+            if (!isGasSyncEnabled() || gasAutoPullInFlight || document.hidden) return;
+            if (Date.now() - gasLastPullAt < 30000) return;
+            gasAutoPullInFlight = true;
+            try {
+                await hydrateFromGas();
+                gasLastPullAt = Date.now();
+            } catch (e) {
+                console.warn('Background Sheet sync failed:', e);
+            } finally {
+                gasAutoPullInFlight = false;
+            }
+        }
+
+        function setupGasAutoPull() {
+            if (window.__gasAutoPullBound) return;
+            window.__gasAutoPullBound = true;
+            gasLastPullAt = Date.now();
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) autoPullFromGas();
+            });
+            window.addEventListener('focus', autoPullFromGas);
+            setInterval(autoPullFromGas, 120000);
         }
 
         async function gasMutate(action, payload, localFn) {
@@ -2380,7 +2474,6 @@
             }
             updateGasSyncUi();
             if (isGasSyncEnabled()) {
-                ensureGasBridge();
                 showToast('บันทึกการตั้งค่าแล้ว — กำลังเชื่อมต่อ Sheet...');
                 hydrateFromGas()
                     .then(() => showToast('ซิงค์จาก Google Sheet สำเร็จ'))
@@ -2411,7 +2504,6 @@
                 GasBridge.iframe = null;
             }
             updateGasSyncUi();
-            ensureGasBridge();
             try {
                 const ping = await gasCall('ping', {});
                 showToast((ping && ping.message) || 'เชื่อมต่อ GAS สำเร็จ');
