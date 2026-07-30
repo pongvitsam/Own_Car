@@ -247,66 +247,36 @@ PREMIUM_INLINE_STYLES = """
         @media (min-width: 640px) {
             .app-shell {
                 max-width: 36rem;
+                margin-left: auto;
+                margin-right: auto;
                 box-shadow: var(--shadow-lift), 0 0 0 1px var(--border-subtle);
                 min-height: calc(100dvh - 1rem);
             }
         }
         @media (min-width: 768px) {
             .app-shell {
-                flex-direction: row;
-                align-items: stretch;
-                max-width: 100%;
-                width: 100%;
-                min-height: 100dvh;
-                max-height: none;
-                margin: 0;
-                border-radius: 0;
-                box-shadow: none;
+                max-width: 42rem;
+                margin-left: auto;
+                margin-right: auto;
             }
             .app-main-column {
-                max-height: 100dvh;
-                overflow: hidden;
-            }
-            .side-nav {
-                position: sticky;
-                top: 0;
-                flex-shrink: 0;
-                transform: translateX(0);
-                height: 100dvh;
-                box-shadow: none;
-            }
-            .side-nav--open {
-                transform: translateX(0);
-            }
-            .side-nav-close,
-            .sidebar-toggle,
-            .sidebar-backdrop {
-                display: none !important;
+                position: relative;
             }
             .fab-primary {
+                position: absolute !important;
                 bottom: 5.5rem !important;
-            }
-        }
-        @media (min-width: 768px) and (max-width: 1023px) {
-            .app-shell {
-                max-width: 42rem;
-                margin: 0 auto;
+                right: 1rem !important;
             }
         }
         @media (min-width: 1024px) {
             .app-shell {
                 max-width: 72rem;
-                margin-top: 1rem;
-                margin-bottom: 1rem;
+                margin: 1rem auto;
                 border-radius: var(--radius-3xl);
                 overflow: hidden;
                 min-height: calc(100dvh - 2rem);
                 max-height: calc(100dvh - 2rem);
                 box-shadow: var(--shadow-lift), 0 0 0 1px var(--border-subtle);
-            }
-            .side-nav {
-                height: 100%;
-                min-height: calc(100dvh - 2rem);
             }
             .app-main-column {
                 max-height: calc(100dvh - 2rem);
@@ -918,11 +888,14 @@ PREMIUM_INLINE_STYLES = """
             #vehicles-carousel { grid-template-columns: repeat(3, 1fr); }
             .dashboard-grid {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 2rem;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+                gap: 1.5rem 2rem;
                 align-items: start;
             }
             .dashboard-grid > section { margin-bottom: 0 !important; }
+            .dashboard-span-full {
+                grid-column: 1 / -1;
+            }
         }
         @media (min-width: 1280px) {
             #vehicles-carousel { grid-template-columns: repeat(4, 1fr); }
