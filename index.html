@@ -107,6 +107,187 @@
             padding-left: env(safe-area-inset-left, 0);
             padding-right: env(safe-area-inset-right, 0);
             padding-bottom: env(safe-area-inset-bottom, 0);
+            position: relative;
+        }
+        .app-main-column {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            min-height: 100dvh;
+        }
+        .sidebar-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-medium);
+            background: #FFFFFF;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            flex-shrink: 0;
+        }
+        .sidebar-toggle:hover {
+            background: var(--accent-dim);
+            color: var(--accent);
+            border-color: rgba(37, 99, 235, 0.25);
+        }
+        .sidebar-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            background: rgba(26, 29, 36, 0.45);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-smooth);
+        }
+        .sidebar-backdrop--visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        body.sidebar-open {
+            overflow: hidden;
+        }
+        .side-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 90;
+            width: 16.5rem;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-elevated);
+            border-right: 1px solid var(--border-medium);
+            box-shadow: var(--shadow-lift);
+            transform: translateX(-105%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-top: env(safe-area-inset-top, 0);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        .side-nav--open {
+            transform: translateX(0);
+        }
+        .side-nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 1rem 1rem 0.875rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .side-nav-logo {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: var(--radius-xl);
+            border: 1px solid rgba(37, 99, 235, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+        .side-nav-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        .side-nav-close {
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            border: none;
+            border-radius: var(--radius-lg);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .side-nav-close:hover {
+            background: #F1F5F9;
+            color: var(--text-primary);
+        }
+        .side-nav-menu {
+            flex: 1;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            overflow-y: auto;
+        }
+        .side-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.75rem 0.875rem;
+            border: none;
+            border-radius: var(--radius-xl);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            text-align: left;
+        }
+        .side-nav-item i {
+            width: 1.125rem;
+            text-align: center;
+            font-size: 1rem;
+        }
+        .side-nav-item:hover {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+        .side-nav-item--active {
+            background: linear-gradient(90deg, var(--accent-dim) 0%, rgba(37, 99, 235, 0.04) 100%);
+            color: var(--accent);
+            box-shadow: inset 3px 0 0 var(--accent);
+        }
+        .side-nav-actions {
+            padding: 0.75rem;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+        .side-nav-action {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-subtle);
+            background: #F8FAFC;
+            color: var(--text-secondary);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            text-align: left;
+        }
+        .side-nav-action:hover {
+            border-color: rgba(37, 99, 235, 0.2);
+            background: #FFFFFF;
+            color: var(--accent);
+        }
+        .side-nav-action--fuel {
+            background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+            border-color: rgba(16, 185, 129, 0.25);
+            color: #047857;
+        }
+        .side-nav-action--fuel:hover {
+            background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+            color: #065F46;
         }
         @media (min-width: 640px) {
             .app-shell {
@@ -116,17 +297,66 @@
             }
         }
         @media (min-width: 768px) {
-            .app-shell { max-width: 42rem; }
+            .app-shell {
+                flex-direction: row;
+                align-items: stretch;
+                max-width: 100%;
+                width: 100%;
+                min-height: 100dvh;
+                max-height: none;
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            .app-main-column {
+                max-height: 100dvh;
+                overflow: hidden;
+            }
+            .side-nav {
+                position: sticky;
+                top: 0;
+                flex-shrink: 0;
+                transform: translateX(0);
+                height: 100dvh;
+                box-shadow: none;
+            }
+            .side-nav--open {
+                transform: translateX(0);
+            }
+            .side-nav-close,
+            .sidebar-toggle,
+            .sidebar-backdrop {
+                display: none !important;
+            }
+            .bottom-nav-wrap {
+                display: none !important;
+            }
+            .fab-primary {
+                bottom: 1.5rem !important;
+            }
+        }
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .app-shell {
+                max-width: 42rem;
+                margin: 0 auto;
+            }
         }
         @media (min-width: 1024px) {
             .app-shell {
-                max-width: 56rem;
+                max-width: 72rem;
                 margin-top: 1rem;
                 margin-bottom: 1rem;
                 border-radius: var(--radius-3xl);
-                overflow-x: hidden;
-                overflow-y: auto;
+                overflow: hidden;
                 min-height: calc(100dvh - 2rem);
+                max-height: calc(100dvh - 2rem);
+                box-shadow: var(--shadow-lift), 0 0 0 1px var(--border-subtle);
+            }
+            .side-nav {
+                height: 100%;
+                min-height: calc(100dvh - 2rem);
+            }
+            .app-main-column {
                 max-height: calc(100dvh - 2rem);
             }
         }
@@ -729,18 +959,68 @@
     </style>
 </head>
 <body class="min-h-dvh bg-[var(--bg-base)]">
-<div id="app-main" class="app-shell relative flex flex-col min-h-dvh w-full">
+<div id="app-main" class="app-shell">
+
+    <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeSidebarMenu()"></div>
+
+    <aside id="side-nav" class="side-nav">
+        <div class="side-nav-brand">
+            <div class="side-nav-logo">
+                <i class="fa-solid fa-car-side"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="side-nav-title">MyHome CarCare</div>
+                <span class="version-badge text-[7px] font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.1 Light Sarabun</span>
+            </div>
+            <button type="button" class="side-nav-close" onclick="closeSidebarMenu()" title="ปิดเมนู">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <nav class="side-nav-menu">
+            <button type="button" id="side-nav-dashboard" onclick="switchTab('dashboard')" class="side-nav-item side-nav-item--active">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+                <span>บำรุงรักษา</span>
+            </button>
+            <button type="button" id="side-nav-fuelio" onclick="switchTab('fuelio')" class="side-nav-item">
+                <i class="fa-solid fa-gas-pump"></i>
+                <span>บันทึกน้ำมัน</span>
+            </button>
+            <button type="button" id="side-nav-admin" onclick="switchTab('admin')" class="side-nav-item">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>แอดมินบ้าน</span>
+            </button>
+        </nav>
+        <div class="side-nav-actions">
+            <button type="button" onclick="openFuelFromHeader(); closeSidebarMenu();" class="side-nav-action side-nav-action--fuel">
+                <i class="fa-solid fa-gas-pump"></i>
+                <span>บันทึกน้ำมันด่วน</span>
+            </button>
+            <button type="button" onclick="checkLineAlerts(true); closeSidebarMenu();" class="side-nav-action">
+                <i class="fa-brands fa-line"></i>
+                <span>ตรวจสภาพด่วน LINE</span>
+            </button>
+            <button type="button" onclick="showLineLogs(); closeSidebarMenu();" class="side-nav-action">
+                <i class="fa-solid fa-terminal"></i>
+                <span>ดู LINE Log</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="app-main-column flex flex-col flex-1 min-w-0 min-h-dvh">
 
     <!-- Top Navigation Header -->
     <header class="glass-header text-[var(--text-primary)] px-3 py-2.5 sticky top-0 z-50">
         <div class="flex items-center gap-2">
+            <button type="button" id="sidebar-toggle" class="sidebar-toggle" onclick="toggleSidebarMenu()" title="เปิดเมนู">
+                <i class="fa-solid fa-bars text-base"></i>
+            </button>
             <div class="flex items-center gap-2 shrink-0 min-w-0">
                 <div class="w-9 h-9 rounded-xl border border-[var(--accent)]/30 flex items-center justify-center text-[var(--accent)] shrink-0">
                     <i class="fa-solid fa-car-side text-base"></i>
                 </div>
                 <div class="min-w-0 hidden xs:block">
                     <h1 class="text-base font-semibold leading-none tracking-wide text-[var(--text-primary)] truncate">MyHome CarCare</h1>
-                    <span class="version-badge text-[7px] font-mono mt-0.5 inline-block"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.1 Light Sarabun</span>
+                    <span class="version-badge text-[7px] font-mono mt-0.5 inline-block">v3.1 Light Sarabun</span>
                 </div>
             </div>
             <button type="button" id="header-fuel-btn" onclick="openFuelFromHeader()" class="header-fuel-btn flex-1 min-w-0 mx-1" title="บันทึกและคำนวณค่าน้ำมัน">
@@ -1127,6 +1407,8 @@
         </button>
         </div>
     </footer>
+
+    </div><!-- /app-main-column -->
 
 </div><!-- /app-main -->
 
@@ -3679,19 +3961,46 @@
         }
 
         // Tab routing helper
+        function setNavActive(tabId) {
+            const tabs = ['dashboard', 'fuelio', 'admin'];
+            tabs.forEach(t => {
+                const isActive = t === tabId;
+                const bottomBtn = document.getElementById(`nav-${t}`);
+                const sideBtn = document.getElementById(`side-nav-${t}`);
+                if (bottomBtn) {
+                    bottomBtn.className = isActive
+                        ? 'nav-tab nav-tab-active flex flex-col items-center justify-center w-16 transition-all'
+                        : 'nav-tab flex flex-col items-center justify-center w-16 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all';
+                }
+                if (sideBtn) {
+                    sideBtn.classList.toggle('side-nav-item--active', isActive);
+                }
+            });
+        }
+
+        function toggleSidebarMenu() {
+            const nav = document.getElementById('side-nav');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (!nav || !backdrop) return;
+            const open = nav.classList.toggle('side-nav--open');
+            backdrop.classList.toggle('sidebar-backdrop--visible', open);
+            document.body.classList.toggle('sidebar-open', open);
+        }
+
+        function closeSidebarMenu() {
+            const nav = document.getElementById('side-nav');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (nav) nav.classList.remove('side-nav--open');
+            if (backdrop) backdrop.classList.remove('sidebar-backdrop--visible');
+            document.body.classList.remove('sidebar-open');
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
 
-            const tabs = ['dashboard', 'fuelio', 'admin'];
-            tabs.forEach(t => {
-                const navBtn = document.getElementById(`nav-${t}`);
-                if (t === tabId) {
-                    navBtn.className = 'nav-tab nav-tab-active flex flex-col items-center justify-center w-16 transition-all';
-                } else {
-                    navBtn.className = 'nav-tab flex flex-col items-center justify-center w-16 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all';
-                }
-            });
+            setNavActive(tabId);
+            closeSidebarMenu();
 
             updateFabAction(tabId);
             updateHeaderFuelBtn(tabId);
