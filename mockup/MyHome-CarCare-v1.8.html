@@ -153,7 +153,7 @@
             <!-- Quick update actions -->
             <div class="flex gap-2 pt-1">
                 <button onclick="openOdometerModal()" class="btn-secondary flex-1 text-slate-700 text-[11px] font-bold py-2.5 px-3 border border-slate-200/80 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
-                    <i class="fa-solid fa-gauge-high text-indigo-500"></i> อัปเดตเลขไมล์เปล่า
+                    <i class="fa-solid fa-gauge-high text-indigo-500"></i> อัพเดทเลขไมล์ปัจจุบัน
                 </button>
                 <button onclick="openRepairModal()" class="btn-primary flex-1 text-white text-[11px] font-bold py-2.5 px-3 transition-all flex items-center justify-center gap-1.5 active:scale-95">
                     <i class="fa-solid fa-wrench"></i> บันทึกการซ่อมบำรุง
@@ -414,7 +414,7 @@
         <div class="modal-dialog-inner w-full max-w-md p-5 space-y-4 animate-slide-up max-h-[90dvh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                    <i class="fa-solid fa-gauge-high text-indigo-500"></i> อัปเดตเลขไมล์ด่วน (กม. เท่านั้น)
+                    <i class="fa-solid fa-gauge-high text-indigo-500"></i> อัพเดทเลขไมล์ปัจจุบัน
                 </h3>
                 <button onclick="closeModal('odometer-modal')" class="text-slate-400 hover:text-slate-600 p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -429,7 +429,7 @@
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 mb-1">เลขไมล์ปัจจุบัน (กิโลเมตรเท่านั้น)</label>
                     <input type="number" id="odo-mileage-input" placeholder="ตัวอย่าง: 125600" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none" required>
-                    <p class="text-[10px] text-indigo-600 mt-1.5 font-bold"><i class="fa-solid fa-circle-info mr-1"></i>อัปเดตไมล์เฉลี่ยอย่างเดียวโดยไม่มีการซ่อมแซมบำรุงรักษา</p>
+                    <p class="text-[10px] text-indigo-600 mt-1.5 font-bold"><i class="fa-solid fa-circle-info mr-1"></i>ใช้เมื่อต้องการอัพเดทเลขไมล์อย่างเดียว โดยไม่มีงานซ่อมบำรุง</p>
                 </div>
                 <div class="pt-2">
                     <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md active:scale-95 text-xs">
@@ -964,6 +964,37 @@
             return Math.max(...allOdos);
         }
 
+        function getMaxOdometerExcluding(vehicleId, excludeLogId) {
+            const mainLogs = state.maintenanceLogs
+                .filter(l => l.vehicleId === vehicleId && l.id !== excludeLogId)
+                .map(l => l.odo);
+            const fuelLogs = state.fuelLogs.filter(l => l.vehicleId === vehicleId).map(l => l.odo);
+            return Math.max(...mainLogs, ...fuelLogs, 0);
+        }
+
+        function getLatestOdometerRecord(vehicleId) {
+            const latestOdo = getLatestOdometer(vehicleId);
+            if (!latestOdo) return null;
+            const candidates = [
+                ...state.maintenanceLogs.filter(l => l.vehicleId === vehicleId && l.odo === latestOdo),
+                ...state.fuelLogs.filter(l => l.vehicleId === vehicleId && l.odo === latestOdo)
+            ];
+            if (!candidates.length) return null;
+            return candidates.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        }
+
+        function syncAlertOdometerBaseline(vehicleId, newOdo, eventDate) {
+            const activeAlert = state.alerts.find(a => a.vehicleId === vehicleId && a.status === 'Active');
+            if (!activeAlert) return;
+            const baselineOdo = activeAlert.lastUpdated
+                ? getLatestOdometerAtDate(vehicleId, activeAlert.lastUpdated)
+                : 0;
+            const normalizedDate = normalizeIsoDate(eventDate) || eventDate;
+            if (newOdo > baselineOdo && (!activeAlert.lastUpdated || normalizedDate >= activeAlert.lastUpdated)) {
+                activeAlert.lastUpdated = normalizedDate;
+            }
+        }
+
         function isValidIsoDateParts(year, month, day) {
             if (month < 1 || month > 12 || day < 1) return false;
             return day <= new Date(year, month, 0).getDate();
@@ -1251,12 +1282,9 @@
                 const latestOdo = getLatestOdometer(id);
                 document.getElementById('current-odometer-val').textContent = latestOdo.toLocaleString();
 
-                const latestLog = state.maintenanceLogs
-                    .filter(l => l.vehicleId === id)
-                    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-                
-                document.getElementById('odometer-updated-date').textContent = latestLog 
-                    ? `อัปเดตล่าสุดเมื่อ: ${formatThaiDate(latestLog.date)}` 
+                const latestOdoRecord = getLatestOdometerRecord(id);
+                document.getElementById('odometer-updated-date').textContent = latestOdoRecord
+                    ? `อัปเดตล่าสุดเมื่อ: ${formatThaiDate(latestOdoRecord.date)}`
                     : 'อัปเดตล่าสุด: ยังไม่เคยอัปเดต';
 
                 const alertObj = state.alerts.find(a => a.vehicleId === id && a.status === 'Active');
@@ -1360,7 +1388,7 @@
                 const isMaintenance = l.type === 'Maintenance';
                 const catObj = isMaintenance ? state.categories.find(c => c.id === l.category) : null;
                 const catName = catObj ? catObj.name : 'ไม่ได้จัดหมวดหมู่';
-                const title = isMaintenance ? l.shop : 'อัปเดตเลขไมล์';
+                const title = isMaintenance ? l.shop : 'อัพเดทเลขไมล์ปัจจุบัน';
                 const costText = isMaintenance
                     ? '฿' + l.cost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
                     : '-';
@@ -1956,7 +1984,7 @@
             state.maintenanceLogs.push(newLog);
             saveToLocalStorage();
             closeModal('odometer-modal');
-            showToast("อัปเดตระยะกิโลเมตรเรียบร้อยแล้ว");
+            showToast("อัพเดทเลขไมล์ปัจจุบันเรียบร้อยแล้ว");
             
             selectVehicle(vId);
             renderReports();
@@ -2031,6 +2059,10 @@
 
             state.maintenanceLogs.push(newLog);
 
+            if (odoVal > lastOdo) {
+                syncAlertOdometerBaseline(vId, odoVal, repairDate);
+            }
+
             if (alertKmEnabled || alertMonthEnabled) {
                 const targetKm = alertKmEnabled ? (odoVal + alertKm) : 99999999;
                 let targetDateStr = "2099-12-31";
@@ -2059,7 +2091,9 @@
 
             saveToLocalStorage();
             closeModal('repair-modal');
-            showToast("บันทึกการซ่อมบำรุงเรียบร้อย");
+            showToast(odoVal > lastOdo
+                ? `บันทึกการซ่อมบำรุงเรียบร้อย — อัพเดทเลขไมล์เป็น ${odoVal.toLocaleString()} กม.`
+                : "บันทึกการซ่อมบำรุงเรียบร้อย");
             
             document.getElementById('repair-form').reset();
             currentUploadedReceiptBase64 = "";
@@ -2105,6 +2139,9 @@
             };
 
             state.fuelLogs.push(newFuelEntry);
+            if (odo > lastOdo) {
+                syncAlertOdometerBaseline(vId, odo, fuelDate);
+            }
             saveToLocalStorage();
             closeModal('fuel-modal');
             
@@ -2622,7 +2659,7 @@
         function confirmDeleteLog(logId) {
             const log = state.maintenanceLogs.find(l => l.id === logId);
             if (!log) return;
-            const label = log.type === 'Odometer_Update' ? 'รายการอัปเดตเลขไมล์' : 'รายการซ่อมบำรุง';
+            const label = log.type === 'Odometer_Update' ? 'รายการอัพเดทเลขไมล์ปัจจุบัน' : 'รายการซ่อมบำรุง';
             if (!confirm(`ยืนยันลบ${label}นี้จากประวัติ?`)) return;
             state.maintenanceLogs = state.maintenanceLogs.filter(l => l.id !== logId);
             saveToLocalStorage();
@@ -2638,10 +2675,21 @@
             const log = state.maintenanceLogs.find(l => l.id === logId);
             if (!log) return;
 
-            log.odo = parseInt(document.getElementById('edit-log-odo').value);
+            const prevMax = getMaxOdometerExcluding(log.vehicleId, logId);
+            const newOdo = parseInt(document.getElementById('edit-log-odo').value);
+            if (newOdo < prevMax) {
+                showToast("เลขไมล์ต่ำกว่าระยะสะสมล่าสุดของรถ!", "error");
+                return;
+            }
+
+            log.odo = newOdo;
             if (log.type !== 'Odometer_Update') {
                 log.shop = document.getElementById('edit-log-shop').value || '-';
                 log.cost = parseFloat(document.getElementById('edit-log-cost').value);
+            }
+
+            if (newOdo > prevMax) {
+                syncAlertOdometerBaseline(log.vehicleId, newOdo, log.date);
             }
 
             saveToLocalStorage();
