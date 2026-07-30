@@ -217,7 +217,7 @@
                 </div>
             </div>
             
-            <div class="space-y-3" id="maintenance-history-logs"></div>
+            <div class="log-list" id="maintenance-history-logs"></div>
         </section>
     </div>
 
@@ -1360,57 +1360,44 @@
                 const isMaintenance = l.type === 'Maintenance';
                 const catObj = isMaintenance ? state.categories.find(c => c.id === l.category) : null;
                 const catName = catObj ? catObj.name : 'ไม่ได้จัดหมวดหมู่';
+                const title = isMaintenance ? l.shop : 'อัปเดตเลขไมล์';
+                const costText = isMaintenance
+                    ? '฿' + l.cost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                    : '-';
+                const alertBits = [];
+                if (isMaintenance && l.alertKm > 0) {
+                    alertBits.push(`<span><i class="fa-solid fa-road text-[var(--accent)]"></i> +${l.alertKm.toLocaleString()} กม.</span>`);
+                }
+                if (isMaintenance && l.alertMonth > 0) {
+                    alertBits.push(`<span><i class="fa-solid fa-calendar-check text-[var(--accent)]"></i> +${l.alertMonth} เดือน</span>`);
+                }
+                const receiptBtn = l.receipt
+                    ? (l.receiptBase64
+                        ? `<button type="button" onclick="viewFullReceipt('${l.receiptBase64}', '${l.receipt}')" class="log-row-icon-btn" title="ดูใบเสร็จ"><img src="${l.receiptBase64}" class="w-5 h-5 object-cover rounded border border-[var(--border-subtle)]" alt=""></button>`
+                        : `<a href="${l.fileLink}" target="_blank" class="log-row-icon-btn" title="เปิดใบเสร็จ"><i class="fa-solid fa-receipt"></i></a>`)
+                    : '';
 
                 container.innerHTML += `
-                    <div class="log-card p-4 relative overflow-hidden min-h-[88px]">
-                        <div class="flex justify-between items-start">
-                            <div class="space-y-1">
-                                <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
-                                    <span class="px-2 py-0.5 rounded text-[8px] font-extrabold tracking-wide ${
-                                        isMaintenance ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'bg-white/5 text-[var(--text-muted)]'
-                                    }">
-                                        ${isMaintenance ? catName : 'อัปเดตระยะสะสม'}
-                                    </span>
-                                    <span class="text-[9px] font-bold text-[var(--text-muted)] font-mono">${formatThaiDate(l.date)}</span>
+                    <div class="log-row group">
+                        <div class="log-row-main">
+                            <div class="log-row-info min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="log-row-badge ${isMaintenance ? 'log-row-badge--accent' : 'log-row-badge--muted'}">${isMaintenance ? catName : 'ไมล์'}</span>
+                                    <span class="log-row-date">${formatThaiDate(l.date)}</span>
                                 </div>
-                                <h4 class="text-xs font-bold text-[var(--text-primary)] pt-0.5">${isMaintenance ? l.shop : 'อัปเดตเลขไมล์เปล่า (ไม่มีงานซ่อม)'}</h4>
+                                <p class="log-row-title truncate" title="${title}">${title}</p>
                             </div>
-                            <div class="text-right">
-                                <span class="text-sm font-extrabold ${isMaintenance ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'} font-mono">
-                                    ${isMaintenance ? '฿' + l.cost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}
-                                </span>
-                                <div class="text-[9px] text-[var(--text-muted)] font-bold font-mono">เลขไมล์: ${l.odo.toLocaleString()} กม.</div>
+                            <div class="log-row-meta shrink-0">
+                                <div class="log-row-cost ${isMaintenance ? '' : 'log-row-cost--muted'}">${costText}</div>
+                                <div class="log-row-odo">${l.odo.toLocaleString()} กม.</div>
+                            </div>
+                            <div class="log-row-actions shrink-0">
+                                ${receiptBtn}
+                                <button type="button" onclick="openEditLogModal('${l.id}')" class="log-row-icon-btn log-row-icon-btn--edit" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                                <button type="button" onclick="confirmDeleteLog('${l.id}')" class="log-row-icon-btn log-row-icon-btn--delete" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
-
-                        ${isMaintenance && (l.alertKm > 0 || l.alertMonth > 0) ? `
-                        <div class="mt-2.5 pt-2 border-t border-[var(--border-subtle)] flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-[var(--text-secondary)] font-bold">
-                            ${l.alertKm > 0 ? `<span><i class="fa-solid fa-road text-[var(--accent)]"></i> เตือนถัดไป: +${l.alertKm.toLocaleString()} กม.</span>` : ''}
-                            ${l.alertMonth > 0 ? `<span><i class="fa-solid fa-calendar-check text-[var(--accent)]"></i> เตือนถัดไป: +${l.alertMonth} เดือน</span>` : ''}
-                        </div>
-                        ` : ''}
-
-                        ${l.receipt ? `
-                        <div class="mt-2 pt-2 border-t border-[var(--border-subtle)] flex justify-between items-center">
-                            <div class="flex items-center gap-1">
-                                ${l.receiptBase64 ? 
-                                    `<img src="${l.receiptBase64}" class="w-6 h-6 object-cover rounded border border-[var(--border-subtle)] cursor-pointer" onclick="viewFullReceipt('${l.receiptBase64}', '${l.receipt}')">` : 
-                                    `<i class="fa-solid fa-receipt text-[var(--accent)]"></i>`
-                                }
-                                <span class="text-[9px] text-emerald-400 font-bold">ใบเสร็จแนบแล้ว</span>
-                            </div>
-                            <a href="${l.fileLink}" target="_blank" class="text-[9px] font-bold text-[var(--accent)] hover:underline"><i class="fa-solid fa-external-link"></i> ตรวจ Folder</a>
-                        </div>
-                        ` : ''}
-
-                        <div class="mt-2.5 pt-2 border-t border-[var(--border-subtle)] flex justify-end gap-2">
-                            <button type="button" onclick="openEditLogModal('${l.id}')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold text-[var(--accent)] bg-[var(--accent-dim)] hover:bg-[rgba(201,169,98,0.25)] border border-[rgba(201,169,98,0.3)] active:scale-95">
-                                <i class="fa-solid fa-pen text-[10px]"></i> แก้ไข
-                            </button>
-                            <button type="button" onclick="confirmDeleteLog('${l.id}')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold text-rose-400 bg-rose-950/40 hover:bg-rose-950/60 border border-rose-900/50 active:scale-95">
-                                <i class="fa-solid fa-trash-can text-[10px]"></i> ลบ
-                            </button>
-                        </div>
+                        ${alertBits.length ? `<div class="log-row-extra">${alertBits.join('')}</div>` : ''}
                     </div>
                 `;
             });
