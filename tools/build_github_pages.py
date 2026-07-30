@@ -8,41 +8,30 @@ sys.path.insert(0, os.path.join(ROOT, 'tools'))
 from seed_data import SEED_DATA, render_state_js  # noqa: E402
 from premium_ui import PREMIUM_INLINE_STYLES, apply_premium_html, apply_premium_script  # noqa: E402
 MOCKUP = os.path.join(ROOT, 'mockup', 'MyHome-CarCare-v1.8.html')
-GAS_INDEX = os.path.join(ROOT, 'gas', 'Index.html')
 OUT = os.path.join(ROOT, 'index.html')
 
 with open(MOCKUP, 'r', encoding='utf-8') as f:
     mockup = f.read()
 
-with open(GAS_INDEX, 'r', encoding='utf-8') as f:
-    gas_index = f.read()
-
 script_match = re.search(r'<script>(.*?)</script>', mockup, re.DOTALL)
 script = script_match.group(1) if script_match else ''
 
-body_match = re.search(
-    r'<body[^>]*>(.*?)<\?!= include\(\'Scripts\'\); \?>',
-    gas_index,
-    re.DOTALL
-)
-if not body_match:
-    body_match = re.search(r'<body[^>]*>(.*?)</body>', gas_index, re.DOTALL)
+body_match = re.search(r'<body[^>]*>(.*?)(?=\s*<script>)', mockup, re.DOTALL)
 body = body_match.group(1).strip() if body_match else ''
 
-style_match = re.search(r'<style>(.*?)</style>', gas_index, re.DOTALL)
 inline_styles = PREMIUM_INLINE_STYLES.strip()
 
-# Version badge (GitHub Pages) — inject GitHub icon if shell already has version-badge
+# Version badge (GitHub Pages)
 body = re.sub(
     r'(<span class="version-badge[^"]*"[^>]*>)(?!.*fa-github)(.*?)(</span>)',
-    r'\1<i class="fa-brands fa-github text-[8px] opacity-80"></i> v2.1.0 Premium\3',
+    r'\1<i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.0 Dark Luxury\3',
     body,
     count=1,
     flags=re.DOTALL
 )
 body = re.sub(
     r'<span class="version-badge">.*?</span>',
-    '<span class="version-badge text-[9px] text-indigo-100 font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v2.1.0 Premium</span>',
+    '<span class="version-badge text-[8px] font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.0 Dark Luxury</span>',
     body,
     count=1,
     flags=re.DOTALL
@@ -605,7 +594,7 @@ script = re.sub(
     count=1
 )
 
-# Footer nav active indicator
+# Footer nav active indicator (dark luxury nav-tab classes)
 script = script.replace(
     """            tabs.forEach(t => {
                 const navBtn = document.getElementById(`nav-${t}`);
@@ -618,9 +607,9 @@ script = script.replace(
     """            tabs.forEach(t => {
                 const navBtn = document.getElementById(`nav-${t}`);
                 if (t === tabId) {
-                    navBtn.className = "nav-tab nav-tab-active flex flex-col items-center justify-center w-16 text-indigo-600 transition-all";
+                    navBtn.className = "nav-tab nav-tab-active flex flex-col items-center justify-center w-16 transition-all";
                 } else {
-                    navBtn.className = "nav-tab flex flex-col items-center justify-center w-16 text-slate-400 hover:text-indigo-400 transition-all";
+                    navBtn.className = "nav-tab flex flex-col items-center justify-center w-16 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all";
                 }
             });"""
 )
@@ -737,7 +726,7 @@ script = re.sub(
 )
 
 index_html = f'''<!DOCTYPE html>
-<html lang="th" class="h-full min-h-full bg-slate-100 sm:bg-slate-200/80">
+<html lang="th" class="h-full min-h-full bg-[#0B0D10]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -749,19 +738,24 @@ index_html = f'''<!DOCTYPE html>
                 extend: {{
                     colors: {{
                         premium: {{
-                            gold: '#c9a227',
-                            champagne: '#f5ead6',
-                            navy: '#0c0a1d',
+                            gold: '#C9A962',
+                            graphite: '#0B0D10',
+                            ivory: '#F5F3EE',
+                            elevated: '#141820',
                         }},
+                    }},
+                    fontFamily: {{
+                        display: ['Cormorant Garamond', 'Georgia', 'serif'],
+                        sans: ['Manrope', 'system-ui', 'sans-serif'],
                     }},
                     borderRadius: {{
                         '4xl': '2rem',
                         '5xl': '2.5rem',
                     }},
                     boxShadow: {{
-                        premium: '0 4px 24px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(99, 102, 241, 0.05)',
-                        'premium-lg': '0 20px 60px rgba(15, 23, 42, 0.12), 0 4px 16px rgba(201, 162, 39, 0.08)',
-                        'premium-glow': '0 0 0 1px rgba(255,255,255,0.08), 0 8px 32px rgba(79, 70, 229, 0.18)',
+                        premium: '0 4px 24px rgba(0, 0, 0, 0.35)',
+                        'premium-lg': '0 20px 60px rgba(0, 0, 0, 0.45), 0 4px 16px rgba(201, 169, 98, 0.08)',
+                        'premium-glow': '0 0 0 2px rgba(201, 169, 98, 0.35), 0 8px 32px rgba(201, 169, 98, 0.2)',
                     }},
                 }},
                 screens: {{
@@ -777,7 +771,7 @@ index_html = f'''<!DOCTYPE html>
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Itim&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
 {inline_styles}

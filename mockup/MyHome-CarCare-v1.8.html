@@ -1,113 +1,42 @@
 ﻿<!DOCTYPE html>
-<html lang="th" class="h-full bg-slate-100">
+<html lang="th" class="h-full bg-[#0B0D10]">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>MyHome CarCare - ระบบบำรุงรักษาและบันทึกน้ำมันสไตล์ Fuelio</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Itim&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --radius-xl: 1.5rem;
-            --radius-2xl: 1.75rem;
-            --radius-3xl: 2rem;
-            --radius-pill: 9999px;
-            --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.04), 0 6px 16px rgba(15, 23, 42, 0.06);
-            --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.08);
-            --shadow-lift: 0 8px 20px rgba(15, 23, 42, 0.08), 0 24px 48px rgba(15, 23, 42, 0.12);
-            --shadow-glow: 0 0 0 3px rgba(129, 140, 248, 0.35), 0 12px 40px rgba(79, 70, 229, 0.4);
-            --color-gold: #f59e0b;
-            --glass-bg: rgba(255, 255, 255, 0.78);
-            --transition-smooth: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        body { font-family: 'Itim', 'Inter', sans-serif; letter-spacing: 0.01em; }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: var(--radius-pill); }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #cbd5e1, #94a3b8); border-radius: var(--radius-pill); }
-        .glass-header {
-            background: linear-gradient(135deg, rgba(30, 27, 75, 0.97) 0%, rgba(15, 23, 42, 0.95) 50%, rgba(30, 27, 75, 0.97) 100%) !important;
-            backdrop-filter: blur(14px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.22);
-        }
-        .vehicle-strip {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.92) 100%);
-            border-bottom: 1px solid rgba(226, 232, 240, 0.65);
-        }
-        .premium-card {
-            border-radius: var(--radius-2xl);
-            border: 1px solid rgba(226, 232, 240, 0.85);
-            background: linear-gradient(145deg, #ffffff 0%, #fafbfc 100%);
-            box-shadow: var(--shadow-card);
-            transition: box-shadow var(--transition-smooth), transform var(--transition-smooth);
-        }
-        .card-accent-bar { height: 3px; border-radius: var(--radius-pill); background: linear-gradient(90deg, #6366f1, #818cf8, #a5b4fc); }
-        .card-accent-bar--emerald { background: linear-gradient(90deg, #10b981, #34d399, #6ee7b7); }
-        .stat-box { border-radius: var(--radius-xl); background: linear-gradient(145deg, #f8fafc, #f1f5f9); border: 1px solid rgba(226, 232, 240, 0.7); box-shadow: inset 0 1px 0 rgba(255,255,255,0.85); }
-        .stats-hero-card {
-            border-radius: var(--radius-xl);
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 42%, #312e81 100%);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 16px 40px rgba(30, 27, 75, 0.45);
-            border: 1px solid rgba(129, 140, 248, 0.22);
-        }
-        .stats-hero-card::before {
-            content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--color-gold), #fbbf24, transparent); opacity: 0.75;
-        }
-        .vehicle-card { border-radius: var(--radius-2xl); transition: all var(--transition-smooth); box-shadow: var(--shadow-soft); }
-        .vehicle-card:not(.vehicle-card--active):hover { transform: translateY(-3px); box-shadow: var(--shadow-card); }
-        .vehicle-card--active { box-shadow: var(--shadow-glow) !important; transform: scale(1.02); }
-        .bottom-nav-wrap { padding: 0.5rem 1rem 0.75rem; }
-        .bottom-nav-bar {
-            background: var(--glass-bg); backdrop-filter: blur(18px);
-            border: 1px solid rgba(226, 232, 240, 0.92); border-radius: var(--radius-2xl);
-            box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
-        }
-        .btn-primary { background: linear-gradient(135deg, #4f46e5, #6366f1, #818cf8) !important; box-shadow: 0 4px 14px rgba(79,70,229,0.35); border-radius: var(--radius-xl); transition: all var(--transition-smooth); }
-        .btn-secondary { border-radius: var(--radius-xl); background: linear-gradient(145deg, #fff, #f8fafc); transition: all var(--transition-smooth); }
-        .btn-emerald { background: linear-gradient(135deg, #059669, #10b981, #34d399) !important; box-shadow: 0 4px 14px rgba(16,185,129,0.35); border-radius: var(--radius-xl); }
-        .health-track { background: linear-gradient(90deg, #e2e8f0, #f1f5f9); border-radius: var(--radius-pill); height: 0.5rem; box-shadow: inset 0 1px 2px rgba(15,23,42,0.08); }
-        .health-fill { background: linear-gradient(90deg, #34d399, #10b981 30%, #6366f1 75%, #818cf8); border-radius: var(--radius-pill); box-shadow: 0 0 12px rgba(52,211,153,0.35); transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
-        .empty-state { animation: fade-in 0.35s ease; text-align: center; padding: 2rem 1.5rem; border: 2px dashed rgba(203,213,225,0.85); border-radius: var(--radius-2xl); background: linear-gradient(145deg, #fafbfc, #f8fafc); }
-        .log-card { border-radius: var(--radius-xl); border: 1px solid rgba(226,232,240,0.8); background: linear-gradient(145deg, #fff, #fafbfc); box-shadow: var(--shadow-soft); transition: all var(--transition-smooth); }
-        .log-card:hover { box-shadow: var(--shadow-card); transform: translateY(-1px); }
-        .toast-item { border-radius: var(--radius-xl) !important; box-shadow: var(--shadow-lift) !important; backdrop-filter: blur(10px); }
-        .modal-backdrop { background: rgba(15,23,42,0.68) !important; backdrop-filter: blur(10px); }
-        .modal-sheet-inner { border-radius: var(--radius-3xl) var(--radius-3xl) 0 0 !important; box-shadow: 0 -8px 40px rgba(15,23,42,0.15); }
-        .modal-dialog-inner { border-radius: var(--radius-2xl) !important; box-shadow: var(--shadow-lift); }
-        .nav-tab { position: relative; min-height: 3rem; }
-        .nav-tab-active::after { content: ''; position: absolute; bottom: 4px; width: 1.5rem; height: 3px; background: linear-gradient(90deg, #6366f1, #818cf8, #f59e0b); border-radius: var(--radius-pill); }
-        @keyframes custom-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.9; } }
-        .urgent-alert { animation: custom-pulse 2s infinite; }
-        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .animate-slide-up { animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        button:active { transform: scale(0.97); }
+        /* Mockup preview tokens — full design system injected by tools/premium_ui.py at build */
+        :root { --bg-base: #0B0D10; --bg-elevated: #141820; --text-primary: #F5F3EE; --accent: #C9A962; }
+        body { font-family: 'Manrope', sans-serif; background: var(--bg-base); color: var(--text-primary); }
+        .font-display { font-family: 'Cormorant Garamond', Georgia, serif; }
     </style>
 </head>
-<body class="h-full flex flex-col max-w-md mx-auto bg-slate-50 shadow-2xl relative overflow-hidden">
+<body class="app-shell relative">
 
     <!-- Top Navigation Header -->
-    <header class="glass-header text-white px-4 py-4 sticky top-0 z-50">
+    <header class="glass-header text-[var(--text-primary)] px-4 py-3.5 sticky top-0 z-50">
         <div class="flex justify-between items-center">
-            <div class="flex items-center space-x-2.5">
-                <div class="bg-gradient-to-tr from-indigo-500 to-indigo-700 p-2.5 rounded-xl text-white shadow-md">
-                    <i class="fa-solid fa-car-wrench text-lg"></i>
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl border border-[var(--accent)]/30 flex items-center justify-center text-[var(--accent)]">
+                    <i class="fa-solid fa-car-side text-base"></i>
                 </div>
                 <div>
-                    <h1 class="text-sm font-bold leading-tight tracking-wide">MyHome CarCare</h1>
-                    <span class="text-[9px] bg-indigo-500/30 text-indigo-200 px-1.5 py-0.2 rounded-md font-mono">v1.8.0 (Gas & Fuel Support)</span>
+                    <h1 class="font-display text-lg font-semibold leading-none tracking-wide text-[var(--text-primary)]">MyHome CarCare</h1>
+                    <span class="version-badge text-[8px] font-mono mt-0.5 inline-block">v3.0 Dark Luxury</span>
                 </div>
             </div>
-            <div class="flex items-center space-x-1.5">
-                <!-- Check status indicator -->
-                <button onclick="checkLineAlerts(true)" class="btn-emerald text-[10px] text-white font-bold px-3 py-2 rounded-xl flex items-center space-x-1 transition-all active:scale-95">
-                    <i class="fa-brands fa-line text-xs"></i>
-                    <span>ตรวจสภาพด่วน</span>
+            <div class="flex items-center gap-1.5">
+                <button onclick="checkLineAlerts(true)" class="btn-emerald text-[10px] text-white font-bold p-2.5 rounded-xl flex items-center justify-center transition-all active:scale-95" title="ตรวจสภาพด่วน">
+                    <i class="fa-brands fa-line text-sm"></i>
+                    <span class="sr-only">ตรวจสภาพด่วน</span>
                 </button>
-                <button onclick="showLineLogs()" class="bg-white/10 hover:bg-white/15 p-2.5 rounded-xl text-slate-200 transition-all active:scale-95 border border-white/10 backdrop-blur-sm" title="ดู LINE Log">
-                    <i class="fa-solid fa-code text-xs"></i>
+                <button onclick="showLineLogs()" class="bg-white/5 hover:bg-white/10 p-2.5 rounded-xl text-[var(--text-secondary)] transition-all active:scale-95 border border-white/10" title="ดู LINE Log">
+                    <i class="fa-solid fa-terminal text-xs"></i>
                 </button>
             </div>
         </div>
@@ -137,9 +66,10 @@
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ยานพาหนะใช้งานในครอบครัว</span>
             <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold" id="total-cars-count">...</span>
         </div>
-        <div class="flex gap-2.5 overflow-x-auto pb-1.5 snap-x" id="vehicles-carousel">
+        <div class="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory" id="vehicles-carousel">
             <!-- Loaded dynamically by JavaScript -->
         </div>
+        <div id="carousel-dots" class="carousel-dots"></div>
     </section>
 
     <!-- TAB 1: MAINTENANCE PAGE (หน้าบำรุงรักษาและการแจ้งเตือน) -->
@@ -225,45 +155,47 @@
             </div>
         </section>
 
-        <!-- Annual Expense Stats -->
-        <section class="premium-card p-5 space-y-4">
-            <div class="space-y-2.5">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-1.5">
-                        <div class="bg-indigo-50 p-1.5 rounded-lg text-indigo-600">
-                            <i class="fa-solid fa-chart-pie"></i>
-                        </div>
-                        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">สถิติค่าบริการรายคัน</h3>
+        <!-- Annual Expense Stats (collapsible) -->
+        <section class="premium-card report-collapsible p-0 overflow-hidden" id="report-section">
+            <button id="report-section-toggle" type="button" onclick="toggleReportSection()" class="w-full flex justify-between items-center p-5 text-left transition-colors hover:bg-white/[0.02]">
+                <div class="flex items-center gap-2">
+                    <div class="bg-[var(--accent-dim)] p-1.5 rounded-lg text-[var(--accent)]">
+                        <i class="fa-solid fa-chart-pie text-sm"></i>
                     </div>
-                    <select id="report-year-filter" onchange="renderReportStats()" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"></select>
+                    <h3 class="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wide">สถิติค่าบริการรายคัน</h3>
                 </div>
-            </div>
-
+                <div class="flex items-center gap-2">
+                    <select id="report-year-filter" onchange="event.stopPropagation(); renderReportStats()" onclick="event.stopPropagation()" class="text-[11px] font-bold text-[var(--accent)] bg-[var(--accent-dim)] border border-[rgba(201,169,98,0.25)] rounded-lg px-2 py-1 outline-none"></select>
+                    <i class="fa-solid fa-chevron-down report-toggle-icon text-[var(--text-muted)] text-xs"></i>
+                </div>
+            </button>
+            <div id="report-section-body" class="report-section-body px-5 pb-5 space-y-4">
             <!-- Large Total Count display -->
-            <div class="stats-hero-card text-white p-5 flex justify-between items-center relative overflow-hidden">
-                <div class="absolute -right-6 -bottom-6 text-indigo-900/40 text-7xl font-bold pointer-events-none">
+            <div class="stats-hero-card text-[var(--text-primary)] p-5 flex justify-between items-center relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 text-[var(--accent)]/10 text-7xl font-bold pointer-events-none">
                     <i class="fa-solid fa-coins"></i>
                 </div>
                 <div class="relative z-10">
-                    <span class="text-[9px] text-indigo-300 block uppercase tracking-wider font-bold">สรุปเงินค่าแจ้งซ่อมบำรุง</span>
-                    <span class="text-2xl font-black tracking-tight" id="yearly-total-spend">฿0.00</span>
+                    <span class="text-[9px] text-[var(--text-muted)] block uppercase tracking-wider font-bold">สรุปเงินค่าแจ้งซ่อมบำรุง</span>
+                    <span class="font-display text-3xl font-semibold tracking-tight text-[var(--accent)]" id="yearly-total-spend">฿0.00</span>
                 </div>
                 <div class="text-right z-10">
-                    <span class="text-[9px] text-indigo-300 block font-bold">รวมเสร็จ</span>
-                    <span class="text-[10px] font-extrabold bg-indigo-800/80 text-white px-2.5 py-0.8 rounded-md inline-block mt-1 border border-indigo-700" id="yearly-repairs-count">0 รายการ</span>
+                    <span class="text-[9px] text-[var(--text-muted)] block font-bold">รวมเสร็จ</span>
+                    <span class="status-pill bg-[var(--accent-dim)] text-[var(--accent)] border border-[rgba(201,169,98,0.3)] mt-1 inline-block" id="yearly-repairs-count">0 รายการ</span>
                 </div>
             </div>
 
             <!-- Spending Category visual progress list -->
             <div class="space-y-3">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">สัดส่วนตามหมวดหมู่ชิ้นส่วน</span>
+                <span class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">สัดส่วนตามหมวดหมู่ชิ้นส่วน</span>
                 <div id="chart-bar-container" class="space-y-2.5"></div>
             </div>
 
             <div class="pt-2">
-                <button onclick="exportReportPdf()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
-                    <i class="fa-solid fa-file-pdf text-rose-300"></i> ส่งออกรายงาน PDF รายปี
+                <button onclick="exportReportPdf()" class="w-full bg-[var(--bg-surface)] hover:bg-white/5 text-[var(--text-primary)] text-[11px] font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border border-[var(--border-subtle)] active:scale-95">
+                    <i class="fa-solid fa-file-pdf text-[var(--accent)]"></i> ส่งออกรายงาน PDF รายปี
                 </button>
+            </div>
             </div>
         </section>
 
@@ -435,18 +367,23 @@
         </div>
     </div>
 
+    <!-- Context FAB (repair on dashboard, fuel on fuelio tab) -->
+    <button id="fab-primary" onclick="handleFabAction()" class="fab-primary fixed bottom-[5.5rem] right-4 z-30" title="การดำเนินการด่วน">
+        <i id="fab-primary-icon" class="fa-solid fa-wrench"></i>
+    </button>
+
     <!-- PERSISTENT BOTTOM NAVIGATION BAR (True Multi-Tab Controller) -->
     <footer class="bottom-nav-wrap sticky bottom-0 z-40 shrink-0">
         <div class="bottom-nav-bar flex items-center justify-around h-16 px-2">
-        <button onclick="switchTab('dashboard')" class="nav-tab nav-tab-active flex flex-col items-center justify-center w-16 text-indigo-600 transition-all" id="nav-dashboard">
+        <button onclick="switchTab('dashboard')" class="nav-tab nav-tab-active flex flex-col items-center justify-center w-16 transition-all" id="nav-dashboard">
             <i class="fa-solid fa-screwdriver-wrench text-lg"></i>
             <span class="text-[9px] mt-1 font-bold">บำรุงรักษา</span>
         </button>
-        <button onclick="switchTab('fuelio')" class="nav-tab flex flex-col items-center justify-center w-16 text-slate-400 hover:text-indigo-400 transition-all" id="nav-fuelio">
+        <button onclick="switchTab('fuelio')" class="nav-tab flex flex-col items-center justify-center w-16 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all" id="nav-fuelio">
             <i class="fa-solid fa-gas-pump text-lg"></i>
             <span class="text-[9px] mt-1 font-bold">บันทึกน้ำมัน</span>
         </button>
-        <button onclick="switchTab('admin')" class="nav-tab flex flex-col items-center justify-center w-16 text-slate-400 hover:text-indigo-400 transition-all" id="nav-admin">
+        <button onclick="switchTab('admin')" class="nav-tab flex flex-col items-center justify-center w-16 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all" id="nav-admin">
             <i class="fa-solid fa-users-gear text-lg"></i>
             <span class="text-[9px] mt-1 font-bold">แอดมินบ้าน</span>
         </button>
@@ -970,23 +907,34 @@
             state.vehicles.forEach(v => {
                 const isActive = v.id === state.selectedVehicleId;
                 const activeClasses = isActive 
-                    ? 'vehicle-card--active border-indigo-400/50 bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 text-white ring-2 ring-indigo-400/40' 
-                    : 'border-slate-200/80 bg-white hover:border-indigo-200 text-slate-800';
+                    ? 'vehicle-card--active border-[var(--accent)]/40 bg-gradient-to-br from-[#1A1F2A] via-[#141820] to-[#0B0D10] text-[var(--text-primary)] ring-2 ring-[var(--accent)]/30' 
+                    : 'border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--accent)]/30 text-[var(--text-primary)]';
 
                 const latestOdo = getLatestOdometer(v.id);
 
                 carousel.innerHTML += `
-                    <div onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[150px] md:w-auto p-3.5 rounded-2xl border cursor-pointer transition-all duration-300 ${activeClasses}">
-                        <div class="vehicle-card-license text-[9px] ${isActive ? 'text-indigo-300' : 'text-indigo-600'} font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
-                        <div class="vehicle-card-name font-extrabold text-xs truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
-                        <div class="mt-4 pt-1.5 border-t ${isActive ? 'border-indigo-800/60' : 'border-slate-100'} text-[10px] flex justify-between items-center font-mono">
-                            <span class="${isActive ? 'text-indigo-200' : 'text-slate-400'}">ไมล์ล่าสุด:</span>
-                            <span class="font-bold text-right">${latestOdo.toLocaleString()} กม.</span>
+                    <div onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[85vw] max-w-[320px] md:w-auto p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${activeClasses}">
+                        <div class="vehicle-card-license text-[9px] ${isActive ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'} font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
+                        <div class="vehicle-card-name font-display font-semibold text-sm truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
+                        <div class="mt-4 pt-1.5 border-t ${isActive ? 'border-[var(--accent)]/20' : 'border-[var(--border-subtle)]'} text-[10px] flex justify-between items-center font-mono">
+                            <span class="${isActive ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)]'}">ไมล์ล่าสุด:</span>
+                            <span class="font-bold text-right text-[var(--accent)]">${latestOdo.toLocaleString()} กม.</span>
                         </div>
                     </div>
                 `;
             });
             document.getElementById('total-cars-count').textContent = `${state.vehicles.length} คันในบ้าน`;
+            updateCarouselDots();
+        }
+
+        function updateCarouselDots() {
+            const dotsContainer = document.getElementById('carousel-dots');
+            if (!dotsContainer) return;
+            dotsContainer.innerHTML = '';
+            state.vehicles.forEach(v => {
+                const isActive = v.id === state.selectedVehicleId;
+                dotsContainer.innerHTML += `<span class="carousel-dot${isActive ? ' carousel-dot--active' : ''}" data-vehicle-id="${v.id}"></span>`;
+            });
         }
 
         function getLatestOdometer(vehicleId) {
@@ -1381,9 +1329,9 @@
                     : 'ยังไม่มีประวัติการซ่อมบำรุงของรถคันนี้';
                 container.innerHTML = `
                     <div class="empty-state space-y-2">
-                        <i class="fa-solid fa-wrench text-3xl text-indigo-200 block"></i>
-                        <p class="font-bold text-slate-500">${emptyMsg}</p>
-                        <p class="text-[10px] text-slate-400">กด "บันทึกการซ่อมบำรุง" เพื่อเพิ่มรายการแรก</p>
+                        <i class="fa-solid fa-wrench text-4xl text-[var(--accent)]/40 block"></i>
+                        <p class="font-bold text-[var(--text-secondary)]">${emptyMsg}</p>
+                        <p class="text-[10px] text-[var(--text-muted)]">กด "บันทึกการซ่อมบำรุง" หรือปุ่ม + ด้านล่างขวา</p>
                     </div>
                 `;
                 return;
@@ -1395,53 +1343,53 @@
                 const catName = catObj ? catObj.name : 'ไม่ได้จัดหมวดหมู่';
 
                 container.innerHTML += `
-                    <div class="log-card p-4 relative overflow-hidden">
+                    <div class="log-card p-4 relative overflow-hidden min-h-[88px]">
                         <div class="flex justify-between items-start">
                             <div class="space-y-1">
                                 <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
                                     <span class="px-2 py-0.5 rounded text-[8px] font-extrabold tracking-wide ${
-                                        isMaintenance ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700'
+                                        isMaintenance ? 'bg-[var(--accent-dim)] text-[var(--accent)]' : 'bg-white/5 text-[var(--text-muted)]'
                                     }">
                                         ${isMaintenance ? catName : 'อัปเดตระยะสะสม'}
                                     </span>
-                                    <span class="text-[9px] font-bold text-slate-400 font-mono">${formatThaiDate(l.date)}</span>
+                                    <span class="text-[9px] font-bold text-[var(--text-muted)] font-mono">${formatThaiDate(l.date)}</span>
                                 </div>
-                                <h4 class="text-xs font-bold text-slate-800 pt-0.5">${isMaintenance ? l.shop : 'อัปเดตเลขไมล์เปล่า (ไม่มีงานซ่อม)'}</h4>
+                                <h4 class="text-xs font-bold text-[var(--text-primary)] pt-0.5">${isMaintenance ? l.shop : 'อัปเดตเลขไมล์เปล่า (ไม่มีงานซ่อม)'}</h4>
                             </div>
                             <div class="text-right">
-                                <span class="text-sm font-extrabold ${isMaintenance ? 'text-indigo-600' : 'text-slate-400'} font-mono">
+                                <span class="text-sm font-extrabold ${isMaintenance ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'} font-mono">
                                     ${isMaintenance ? '฿' + l.cost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}
                                 </span>
-                                <div class="text-[9px] text-slate-400 font-bold font-mono">เลขไมล์: ${l.odo.toLocaleString()} กม.</div>
+                                <div class="text-[9px] text-[var(--text-muted)] font-bold font-mono">เลขไมล์: ${l.odo.toLocaleString()} กม.</div>
                             </div>
                         </div>
 
                         ${isMaintenance && (l.alertKm > 0 || l.alertMonth > 0) ? `
-                        <div class="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-indigo-950 font-bold">
-                            ${l.alertKm > 0 ? `<span><i class="fa-solid fa-road text-indigo-400"></i> เตือนถัดไป: +${l.alertKm.toLocaleString()} กม.</span>` : ''}
-                            ${l.alertMonth > 0 ? `<span><i class="fa-solid fa-calendar-check text-indigo-400"></i> เตือนถัดไป: +${l.alertMonth} เดือน</span>` : ''}
+                        <div class="mt-2.5 pt-2 border-t border-[var(--border-subtle)] flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-[var(--text-secondary)] font-bold">
+                            ${l.alertKm > 0 ? `<span><i class="fa-solid fa-road text-[var(--accent)]"></i> เตือนถัดไป: +${l.alertKm.toLocaleString()} กม.</span>` : ''}
+                            ${l.alertMonth > 0 ? `<span><i class="fa-solid fa-calendar-check text-[var(--accent)]"></i> เตือนถัดไป: +${l.alertMonth} เดือน</span>` : ''}
                         </div>
                         ` : ''}
 
                         ${l.receipt ? `
-                        <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
+                        <div class="mt-2 pt-2 border-t border-[var(--border-subtle)] flex justify-between items-center">
                             <div class="flex items-center gap-1">
                                 ${l.receiptBase64 ? 
-                                    `<img src="${l.receiptBase64}" class="w-6 h-6 object-cover rounded border border-slate-200 cursor-pointer" onclick="viewFullReceipt('${l.receiptBase64}', '${l.receipt}')">` : 
-                                    `<i class="fa-solid fa-receipt text-indigo-500"></i>`
+                                    `<img src="${l.receiptBase64}" class="w-6 h-6 object-cover rounded border border-[var(--border-subtle)] cursor-pointer" onclick="viewFullReceipt('${l.receiptBase64}', '${l.receipt}')">` : 
+                                    `<i class="fa-solid fa-receipt text-[var(--accent)]"></i>`
                                 }
-                                <span class="text-[9px] text-emerald-700 font-bold">ใบเสร็จแนบแล้ว</span>
+                                <span class="text-[9px] text-emerald-400 font-bold">ใบเสร็จแนบแล้ว</span>
                             </div>
-                            <a href="${l.fileLink}" target="_blank" class="text-[9px] font-bold text-indigo-600 hover:underline"><i class="fa-solid fa-external-link"></i> ตรวจ Folder</a>
+                            <a href="${l.fileLink}" target="_blank" class="text-[9px] font-bold text-[var(--accent)] hover:underline"><i class="fa-solid fa-external-link"></i> ตรวจ Folder</a>
                         </div>
                         ` : ''}
 
-                        <div class="mt-2.5 pt-2 border-t border-slate-100 flex justify-end gap-2">
-                            <button type="button" onclick="openEditLogModal('${l.id}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 active:scale-95">
-                                <i class="fa-solid fa-pen text-[9px]"></i> แก้ไข
+                        <div class="mt-2.5 pt-2 border-t border-[var(--border-subtle)] flex justify-end gap-2">
+                            <button type="button" onclick="openEditLogModal('${l.id}')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold text-[var(--accent)] bg-[var(--accent-dim)] hover:bg-[rgba(201,169,98,0.25)] border border-[rgba(201,169,98,0.3)] active:scale-95">
+                                <i class="fa-solid fa-pen text-[10px]"></i> แก้ไข
                             </button>
-                            <button type="button" onclick="confirmDeleteLog('${l.id}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-100 active:scale-95">
-                                <i class="fa-solid fa-trash-can text-[9px]"></i> ลบ
+                            <button type="button" onclick="confirmDeleteLog('${l.id}')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold text-rose-400 bg-rose-950/40 hover:bg-rose-950/60 border border-rose-900/50 active:scale-95">
+                                <i class="fa-solid fa-trash-can text-[10px]"></i> ลบ
                             </button>
                         </div>
                     </div>
@@ -1546,9 +1494,9 @@
             if (reversedLogs.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state space-y-2">
-                        <i class="fa-solid fa-gas-pump text-3xl text-emerald-200 block"></i>
-                        <p class="font-bold text-slate-500">ยังไม่มีบันทึกการเติมเชื้อเพลิง</p>
-                        <p class="text-[10px] text-slate-400">กดปุ่ม "บันทึกรายการเติมน้ำมันด่วน" เพื่อเริ่มติดตามอัตราสิ้นเปลือง</p>
+                        <i class="fa-solid fa-gas-pump text-4xl text-[var(--accent)]/40 block"></i>
+                        <p class="font-bold text-[var(--text-secondary)]">ยังไม่มีบันทึกการเติมเชื้อเพลิง</p>
+                        <p class="text-[10px] text-[var(--text-muted)]">กดปุ่ม + ด้านล่างขวาเพื่อเริ่มติดตามอัตราสิ้นเปลือง</p>
                     </div>
                 `;
                 return;
@@ -2300,12 +2248,12 @@
 
                 barContainer.innerHTML += `
                     <div class="space-y-1 text-[11px]">
-                        <div class="flex justify-between text-slate-700 font-bold">
+                        <div class="flex justify-between text-[var(--text-secondary)] font-bold">
                             <span>${cat.name}</span>
                             <span>${pct}% (฿${cat.sum.toLocaleString()})</span>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full" style="width: ${pct}%"></div>
+                        <div class="w-full bg-white/5 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-[#A8893E] via-[var(--accent)] to-[#E8D5A3] h-2 rounded-full" style="width: ${pct}%"></div>
                         </div>
                     </div>
                 `;
@@ -2313,7 +2261,7 @@
 
             if (total === 0) {
                 barContainer.innerHTML = `
-                    <div class="text-center py-6 text-slate-400 text-[10px] font-bold bg-slate-50 border border-slate-200 border-dashed rounded-xl">
+                    <div class="empty-state text-center py-6 text-[10px] font-bold">
                         ไม่พบประวัติการใช้จ่ายในปี พ.ศ. ${parseInt(targetYear) + 543} ของรถคันนี้
                     </div>
                 `;
@@ -2700,13 +2648,14 @@
             const tabs = ['dashboard', 'fuelio', 'admin'];
             tabs.forEach(t => {
                 const navBtn = document.getElementById(`nav-${t}`);
-                const isActive = t === tabId;
-                const isFuel = t === 'fuelio';
-                const base = 'nav-tab-btn flex flex-col items-center justify-center transition-all';
-                const active = isFuel ? ' nav-tab-btn--fuel nav-tab-btn--active text-emerald-700' : ' nav-tab-btn--active text-indigo-600';
-                const inactive = isFuel ? ' nav-tab-btn--fuel text-slate-400 hover:text-emerald-600' : ' text-slate-400 hover:text-indigo-600';
-                navBtn.className = base + (isActive ? active : inactive);
+                if (t === tabId) {
+                    navBtn.className = 'nav-tab nav-tab-active flex flex-col items-center justify-center w-16 transition-all';
+                } else {
+                    navBtn.className = 'nav-tab flex flex-col items-center justify-center w-16 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all';
+                }
             });
+
+            updateFabAction(tabId);
 
             if (tabId === 'dashboard') {
                 selectVehicle(state.selectedVehicleId);
@@ -2715,6 +2664,39 @@
             } else if (tabId === 'admin') {
                 renderAdminPanelState();
             }
+        }
+
+        function updateFabAction(tabId) {
+            const fab = document.getElementById('fab-primary');
+            const icon = document.getElementById('fab-primary-icon');
+            if (!fab || !icon) return;
+            if (tabId === 'admin') {
+                fab.classList.add('hidden');
+                return;
+            }
+            fab.classList.remove('hidden');
+            if (tabId === 'fuelio') {
+                icon.className = 'fa-solid fa-gas-pump';
+                fab.title = 'บันทึกเติมน้ำมัน';
+            } else {
+                icon.className = 'fa-solid fa-wrench';
+                fab.title = 'บันทึกการซ่อมบำรุง';
+            }
+        }
+
+        function handleFabAction() {
+            const activeTabEl = document.querySelector('.tab-content:not(.hidden)');
+            const activeTab = activeTabEl ? activeTabEl.id : 'tab-dashboard';
+            if (activeTab === 'tab-fuelio') {
+                openFuelModal();
+            } else {
+                openRepairModal();
+            }
+        }
+
+        function toggleReportSection() {
+            const section = document.getElementById('report-section');
+            if (section) section.classList.toggle('report-collapsed');
         }
 
         function formatPdfNextCycleFromLog(log) {
