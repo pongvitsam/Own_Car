@@ -278,10 +278,20 @@
             </div>
         </section>
 
+        <!-- Fuel last fill summary (Fuelio-style segment) -->
+        <section id="fuel-last-fill-summary" class="fuel-last-fill-card premium-card p-4 space-y-3 relative overflow-hidden hidden">
+            <div class="absolute top-0 left-0 right-0 card-accent-bar card-accent-bar--emerald"></div>
+            <div class="flex justify-between items-center gap-2">
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">สรุปการเติมล่าสุด</h3>
+                <span id="fuel-last-fill-meta" class="text-[9px] font-bold text-slate-400"></span>
+            </div>
+            <div id="fuel-last-fill-body"></div>
+        </section>
+
         <!-- Fuel logs list -->
-        <section class="space-y-3">
+        <section class="space-y-2">
             <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">ประวัติการเติมน้ำมัน & อัตราสิ้นเปลือง</h3>
-            <div class="space-y-3" id="fuel-logs-container">
+            <div class="fuel-list" id="fuel-logs-container">
                 <!-- Loaded dynamically -->
             </div>
         </section>
@@ -1452,6 +1462,100 @@
         }
 
         // FUELIO LOGIC RENDER (Rule: สถิติสิ้นเปลืองและค่าน้ำมันเฉลี่ยรายคัน)
+        function enrichFuelLogsWithMetrics(logs) {
+            const enriched = logs.map(l => ({ ...l }));
+            for (let i = 0; i < enriched.length; i++) {
+                const current = enriched[i];
+                if (i > 0 && current.fullTank && enriched[i - 1].fullTank) {
+                    const distance = current.odo - enriched[i - 1].odo;
+                    if (distance > 0) {
+                        current.segmentDistance = distance;
+                        current.calculatedEfficiency = distance / current.liters;
+                        current.costPerKm = current.totalCost / distance;
+                    }
+                }
+            }
+            return enriched;
+        }
+
+        function getFuelSegmentStats(log, allEnrichedLogs) {
+            if (!log || log.segmentDistance == null) return null;
+            return {
+                distance: log.segmentDistance,
+                liters: log.liters,
+                kmPerLiter: log.calculatedEfficiency,
+                costPerKm: log.costPerKm,
+                totalCost: log.totalCost
+            };
+        }
+
+        function renderFuelLastFillSummary(latestLog, segment) {
+            const wrap = document.getElementById('fuel-last-fill-summary');
+            const meta = document.getElementById('fuel-last-fill-meta');
+            const body = document.getElementById('fuel-last-fill-body');
+            if (!wrap || !meta || !body) return;
+
+            if (!latestLog) {
+                wrap.classList.add('hidden');
+                return;
+            }
+
+            wrap.classList.remove('hidden');
+            const fuelType = latestLog.fuelType || 'oil';
+            const typeLabel = fuelType === 'gas' ? 'แก๊ส' : 'น้ำมัน';
+            meta.textContent = `${formatThaiDate(latestLog.date)} · ${typeLabel}${latestLog.fullTank ? ' · เต็มถัง' : ''}`;
+
+            if (segment) {
+                body.innerHTML = `
+                    <div class="fuel-summary-grid">
+                        <div class="fuel-summary-stat">
+                            <div class="fuel-summary-stat-value">${segment.distance.toLocaleString()}</div>
+                            <div class="fuel-summary-stat-label">กม. วิ่งได้</div>
+                        </div>
+                        <div class="fuel-summary-stat">
+                            <div class="fuel-summary-stat-value">${segment.liters.toFixed(1)}</div>
+                            <div class="fuel-summary-stat-label">ลิตร ใช้ไป</div>
+                        </div>
+                        <div class="fuel-summary-stat">
+                            <div class="fuel-summary-stat-value">${segment.kmPerLiter.toFixed(2)}</div>
+                            <div class="fuel-summary-stat-label">กม./ลิตร</div>
+                        </div>
+                    </div>
+                    <div class="text-[10px] font-bold text-slate-600 flex flex-wrap gap-x-3 gap-y-1 justify-center pt-1">
+                        <span><i class="fa-solid fa-receipt text-emerald-600"></i> ยอดเติม ฿${segment.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span><i class="fa-solid fa-coins text-emerald-600"></i> ${segment.costPerKm.toFixed(2)} บาท/กม.</span>
+                        <span><i class="fa-solid fa-gauge-high text-emerald-600"></i> ไมล์ ${latestLog.odo.toLocaleString()} กม.</span>
+                    </div>
+                `;
+            } else {
+                body.innerHTML = `
+                    <div class="text-xs font-bold text-slate-700 text-center">
+                        เติม ${latestLog.liters.toFixed(1)} ลิตร · ฿${latestLog.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · ไมล์ ${latestLog.odo.toLocaleString()} กม.
+                    </div>
+                    <p class="text-[10px] text-slate-400 font-bold text-center">
+                        <i class="fa-solid fa-circle-info text-indigo-500"></i>
+                        เติมเต็มถัง 2 ครั้งติดต่อกันเพื่อคำนวณระยะทางและอัตราสิ้นเปลือง (Fuelio)
+                    </p>
+                `;
+            }
+        }
+
+        function renderFuelSegmentChips(segment) {
+            if (!segment) {
+                return `<div class="fuel-row-segment"><span class="fuel-segment-chip fuel-segment-chip--muted"><i class="fa-solid fa-circle-info"></i> รอเติมเต็มถังครั้งถัดไปเพื่อคำนวณ</span></div>`;
+            }
+            let effClass = 'fuel-segment-chip';
+            if (segment.kmPerLiter <= 11) effClass += ' fuel-segment-chip--warn';
+            return `
+                <div class="fuel-row-segment">
+                    <span class="${effClass}"><i class="fa-solid fa-road"></i> ${segment.distance.toLocaleString()} กม.</span>
+                    <span class="${effClass}"><i class="fa-solid fa-droplet"></i> ${segment.liters.toFixed(1)} ล.</span>
+                    <span class="${effClass}"><i class="fa-solid fa-seedling"></i> ${segment.kmPerLiter.toFixed(2)} กม./ล.</span>
+                    <span class="fuel-segment-chip"><i class="fa-solid fa-coins"></i> ${segment.costPerKm.toFixed(2)} บ./กม.</span>
+                </div>
+            `;
+        }
+
         function renderFuelLogs() {
             const container = document.getElementById('fuel-logs-container');
             if (!container) return;
@@ -1460,39 +1564,24 @@
             const vehicleId = state.selectedVehicleId;
             const logs = state.fuelLogs
                 .filter(l => l.vehicleId === vehicleId)
-                .sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort chronologically to compute consumption
+                .sort((a, l) => new Date(a.date) - new Date(l.date));
+
+            const enriched = enrichFuelLogsWithMetrics(logs);
 
             let totalCostSum = 0;
             let totalLitersSum = 0;
             let efficiencySum = 0;
             let efficiencyCount = 0;
 
-            // Compute consumption step-by-step
-            for (let i = 0; i < logs.length; i++) {
-                const current = logs[i];
-                totalCostSum += current.totalCost;
-                totalLitersSum += current.liters;
-
-                let calculatedEfficiency = null; // Km / Liter
-                let costPerKm = null; // Baht / Km
-
-                // We can calculate consumption only if previous full-tank log exists (Standard Fuelio logic)
-                if (i > 0 && current.fullTank && logs[i-1].fullTank) {
-                    const distance = current.odo - logs[i-1].odo;
-                    if (distance > 0) {
-                        calculatedEfficiency = distance / current.liters;
-                        costPerKm = current.totalCost / distance;
-
-                        efficiencySum += calculatedEfficiency;
-                        efficiencyCount++;
-
-                        current.calculatedEfficiency = calculatedEfficiency;
-                        current.costPerKm = costPerKm;
-                    }
+            enriched.forEach(l => {
+                totalCostSum += l.totalCost;
+                totalLitersSum += l.liters;
+                if (l.calculatedEfficiency != null) {
+                    efficiencySum += l.calculatedEfficiency;
+                    efficiencyCount++;
                 }
-            }
+            });
 
-            // Update UI Summary Header Cards
             const avgEfficiencyEl = document.getElementById('fuel-avg-efficiency');
             const avgCostKmEl = document.getElementById('fuel-avg-cost-km');
             const lastPriceLiterEl = document.getElementById('fuel-last-price-liter');
@@ -1502,11 +1591,9 @@
             if (efficiencyCount > 0) {
                 const avgEffVal = efficiencySum / efficiencyCount;
                 avgEfficiencyEl.textContent = avgEffVal.toFixed(2);
-                
-                // Average cost per kilometer
-                const totalCalculatedCost = logs.slice(1).reduce((sum, l) => sum + (l.costPerKm ? l.totalCost : 0), 0);
-                const totalCalculatedDistance = logs.slice(1).reduce((sum, l, idx) => {
-                    return sum + (l.costPerKm ? (l.odo - logs[idx].odo) : 0);
+                const totalCalculatedCost = enriched.slice(1).reduce((sum, l) => sum + (l.costPerKm ? l.totalCost : 0), 0);
+                const totalCalculatedDistance = enriched.slice(1).reduce((sum, l, idx) => {
+                    return sum + (l.costPerKm ? (l.odo - enriched[idx].odo) : 0);
                 }, 0);
                 avgCostKmEl.textContent = totalCalculatedDistance > 0 ? (totalCalculatedCost / totalCalculatedDistance).toFixed(2) : '-.--';
             } else {
@@ -1514,89 +1601,61 @@
                 avgCostKmEl.textContent = '-.--';
             }
 
-            if (logs.length > 0) {
-                lastPriceLiterEl.textContent = logs[logs.length-1].pricePerLiter.toFixed(2);
+            if (enriched.length > 0) {
+                lastPriceLiterEl.textContent = enriched[enriched.length - 1].pricePerLiter.toFixed(2);
             } else {
                 lastPriceLiterEl.textContent = '-.--';
             }
 
-            totalLitersEl.textContent = `${totalLitersSum.toLocaleString(undefined, {maximumFractionDigits: 1})} ลิตร`;
-            totalSpendEl.textContent = `฿${totalCostSum.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            totalLitersEl.textContent = `${totalLitersSum.toLocaleString(undefined, { maximumFractionDigits: 1 })} ลิตร`;
+            totalSpendEl.textContent = `฿${totalCostSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-            // Render fuel logs items (Newest on top)
-            const reversedLogs = [...logs].reverse();
+            const latestLog = enriched.length ? enriched[enriched.length - 1] : null;
+            renderFuelLastFillSummary(latestLog, getFuelSegmentStats(latestLog, enriched));
+
+            const reversedLogs = [...enriched].reverse();
             if (reversedLogs.length === 0) {
+                renderFuelLastFillSummary(null, null);
                 container.innerHTML = `
                     <div class="empty-state space-y-2">
                         <i class="fa-solid fa-gas-pump text-4xl text-[var(--accent)]/40 block"></i>
                         <p class="font-bold text-[var(--text-secondary)]">ยังไม่มีบันทึกการเติมเชื้อเพลิง</p>
-                        <p class="text-[10px] text-[var(--text-muted)]">กดปุ่ม + ด้านล่างขวาเพื่อเริ่มติดตามอัตราสิ้นเปลือง</p>
+                        <p class="text-[10px] text-[var(--text-muted)]">กดปุ่ม <strong>บันทึกน้ำมัน</strong> ด้านบนเพื่อเริ่มติดตามอัตราสิ้นเปลือง</p>
                     </div>
                 `;
                 return;
             }
 
             reversedLogs.forEach(l => {
-                const hasEfficiency = l.calculatedEfficiency !== undefined && l.calculatedEfficiency !== null;
-                const fuelType = l.fuelType || 'oil'; // default is oil
-                
-                let efficiencyClass = "bg-slate-100 text-slate-600";
-                if (hasEfficiency) {
-                    if (l.calculatedEfficiency > 15) {
-                        efficiencyClass = "bg-emerald-50 text-emerald-800 border border-emerald-100";
-                    } else if (l.calculatedEfficiency > 11) {
-                        efficiencyClass = "bg-amber-50 text-amber-800 border border-amber-100";
-                    } else {
-                        efficiencyClass = "bg-rose-50 text-rose-800 border border-rose-100";
-                    }
-                }
-
-                // Render specific badges for fuel types
-                const fuelTypeBadge = fuelType === 'gas'
-                    ? `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[8px] font-black flex items-center gap-1"><i class="fa-solid fa-fire-flame-simple"></i> แก๊ส GAS</span>`
-                    : `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[8px] font-black flex items-center gap-1"><i class="fa-solid fa-gas-pump"></i> น้ำมัน OIL</span>`;
+                const segment = getFuelSegmentStats(l, enriched);
+                const fuelType = l.fuelType || 'oil';
+                const badgeClass = fuelType === 'gas' ? 'fuel-row-badge-gas' : 'fuel-row-badge-oil';
+                const badgeLabel = fuelType === 'gas' ? 'แก๊ส' : 'น้ำมัน';
 
                 container.innerHTML += `
-                    <div class="log-card p-4 relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <div class="space-y-1">
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    ${fuelTypeBadge}
-                                    <span class="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded text-[8px] font-bold">${l.liters.toFixed(1)} ลิตร</span>
-                                    <span class="text-[9px] font-bold text-slate-400 font-mono">${formatThaiDate(l.date)}</span>
-                                    ${l.fullTank ? `<span class="bg-indigo-50 text-indigo-700 px-1.5 py-0.2 rounded text-[8px] font-black">เต็มถัง</span>` : ''}
-                                </div>
-                                <div class="text-xs font-bold text-slate-700 pt-0.5">ค่ายอดเติม: ฿${l.totalCost.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
-                            </div>
-                            <div class="text-right text-xs">
-                                <span class="font-extrabold text-slate-800 block">${l.pricePerLiter.toFixed(2)} บาท/ลิตร</span>
-                                <span class="text-[9px] text-slate-400 font-bold font-mono">ไมล์สะสม: ${l.odo.toLocaleString()} กม.</span>
-                            </div>
+                    <div class="fuel-row group">
+                        <div class="fuel-row-main">
+                            <span class="log-row-badge ${badgeClass}">${badgeLabel}</span>
+                            <span class="log-row-date shrink-0">${formatThaiDate(l.date)}</span>
+                            <span class="text-[10px] font-bold text-slate-700 shrink-0">${l.liters.toFixed(1)} ล.</span>
+                            <span class="text-[10px] font-extrabold text-emerald-700 shrink-0">฿${l.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                            <span class="text-[9px] font-bold text-slate-400 shrink-0 ml-auto">${l.odo.toLocaleString()} กม.</span>
+                            ${l.fullTank ? '<span class="text-[8px] font-black text-indigo-600 shrink-0">เต็ม</span>' : ''}
+                            <button type="button" onclick="deleteFuelLog('${l.id}')" class="log-row-icon-btn log-row-icon-btn--delete shrink-0" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
-
-                        <!-- Efficiency stats badge -->
-                        ${hasEfficiency ? `
-                        <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[9px] font-bold">
-                            <span class="px-2 py-1 rounded-lg ${efficiencyClass}">
-                                <i class="fa-solid fa-seedling mr-1"></i> อัตราประหยัด: ${l.calculatedEfficiency.toFixed(2)} กม./ลิตร
-                            </span>
-                            <span class="text-slate-500">
-                                <i class="fa-solid fa-coins mr-1"></i> เฉลี่ย: ${l.costPerKm.toFixed(2)} บาท/กม.
-                            </span>
-                        </div>
-                        ` : `
-                        <div class="mt-2.5 pt-2 border-t border-slate-100 text-[9px] text-slate-400 font-bold">
-                            💡 เติมเต็มถังประเภทเดียวกันครั้งหน้าเพื่อเริ่มคำนวณความประหยัดสะสม
-                        </div>
-                        `}
-
-                        <!-- Quick delete action inside Fuelio logs -->
-                        <button onclick="deleteFuelLog('${l.id}')" class="absolute top-2 right-2 text-slate-300 hover:text-rose-600 transition-all">
-                            <i class="fa-solid fa-trash-can text-[10px]"></i>
-                        </button>
+                        ${renderFuelSegmentChips(segment)}
                     </div>
                 `;
             });
+        }
+
+        function computeFuelSegmentAfterSave(vehicleId, entryId) {
+            const logs = state.fuelLogs
+                .filter(l => l.vehicleId === vehicleId)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            const enriched = enrichFuelLogsWithMetrics(logs);
+            const entry = enriched.find(l => l.id === entryId);
+            return getFuelSegmentStats(entry, enriched);
         }
 
         // View receipt photo
@@ -2144,12 +2203,17 @@
             }
             saveToLocalStorage();
             closeModal('fuel-modal');
-            
-            const typeLabelText = fuelType === 'gas' ? 'แก๊ส (GAS)' : 'น้ำมัน';
-            showToast(`บันทึกประวัติการเติม${typeLabelText} เรียบร้อยแล้ว`);
+
+            const segment = computeFuelSegmentAfterSave(vId, newFuelEntry.id);
+            const typeLabelText = fuelType === 'gas' ? 'แก๊ส' : 'น้ำมัน';
+            if (segment) {
+                showToast(`บันทึก${typeLabelText}แล้ว — วิ่ง ${segment.distance.toLocaleString()} กม. ใช้ ${segment.liters.toFixed(1)} ล. ได้ ${segment.kmPerLiter.toFixed(2)} กม./ล.`);
+            } else {
+                showToast(`บันทึก${typeLabelText} ${liters.toFixed(1)} ล. เรียบร้อย — ดูสรุปที่แท็บน้ำมัน`);
+            }
 
             selectVehicle(vId);
-            renderFuelLogs();
+            switchTab('fuelio');
         }
 
         // Action: Delete fuel log item
