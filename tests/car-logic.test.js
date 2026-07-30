@@ -14,6 +14,8 @@ const {
   calculateHealthPercentFromRange,
   getHealthBarTier,
   computeFuelLogMetrics,
+  computeFuelTrendBars,
+  compareFamilyFuelEfficiency,
   calculateFuelEfficiency,
   calculateCostPerKm,
   getEfficiencyTier,
@@ -182,34 +184,68 @@ describe('Fuelio metrics', () => {
   it('computeFuelLogMetrics calculates efficiency between consecutive full tanks', () => {
     const metrics = computeFuelLogMetrics(V1, fuelLogs);
     const withEfficiency = metrics.logs.filter((l) => l.calculatedEfficiency != null);
-    assert.equal(withEfficiency.length, 1);
-    assert.equal(withEfficiency[0].id, 'F4');
-    // F3 (full) -> F4 (full): distance 13000 - 12000 = 1000, liters 40 => 25 km/L
-    assert.equal(withEfficiency[0].calculatedEfficiency, 25);
-    assert.equal(withEfficiency[0].costPerKm, 1680 / 1000);
+    assert.equal(withEfficiency.length, 2);
+    const f3 = withEfficiency.find((l) => l.id === 'F3');
+    const f4 = withEfficiency.find((l) => l.id === 'F4');
+    // F1 (full) -> F3 (full), skipping partial F2: 12000-11000=1000 / 35
+    assert.equal(f3.calculatedEfficiency, 1000 / 35);
+    // F3 (full) -> F4 (full): 13000-12000=1000 / 40 = 25
+    assert.equal(f4.calculatedEfficiency, 25);
+    assert.equal(f4.costPerKm, 1680 / 1000);
   });
 
   it('computeFuelLogMetrics skips non-full-tank pairs', () => {
     const metrics = computeFuelLogMetrics(V1, fuelLogs);
     const f2 = metrics.logs.find((l) => l.id === 'F2');
-    const f3 = metrics.logs.find((l) => l.id === 'F3');
     assert.equal(f2.calculatedEfficiency, undefined);
-    assert.equal(f3.calculatedEfficiency, undefined);
   });
 
   it('computeFuelLogMetrics aggregates summary totals', () => {
     const metrics = computeFuelLogMetrics(V1, fuelLogs);
     assert.equal(metrics.totalCostSum, 1600 + 800 + 1400 + 1680);
     assert.equal(metrics.totalLitersSum, 40 + 20 + 35 + 40);
-    assert.equal(metrics.avgEfficiency, 25);
+    assert.equal(metrics.avgEfficiency, ((1000 / 35) + 25) / 2);
     assert.equal(metrics.lastPricePerLiter, 42);
-    assert.equal(metrics.efficiencyCount, 1);
+    assert.equal(metrics.efficiencyCount, 2);
   });
 
   it('getEfficiencyTier classifies consumption bands', () => {
     assert.equal(getEfficiencyTier(16), 'good');
     assert.equal(getEfficiencyTier(12), 'medium');
     assert.equal(getEfficiencyTier(10), 'poor');
+  });
+
+  it('computeFuelLogMetrics keeps oil and gas as separate full-tank chains', () => {
+    const mixed = [
+      { id: 'O1', vehicleId: V1, odo: 10000, date: '2024-01-01', liters: 40, totalCost: 1600, pricePerLiter: 40, fullTank: true, fuelType: 'oil' },
+      { id: 'G1', vehicleId: V1, odo: 10500, date: '2024-01-10', liters: 30, totalCost: 600, pricePerLiter: 20, fullTank: true, fuelType: 'gas' },
+      { id: 'O2', vehicleId: V1, odo: 11200, date: '2024-01-20', liters: 40, totalCost: 1680, pricePerLiter: 42, fullTank: true, fuelType: 'oil' },
+      { id: 'G2', vehicleId: V1, odo: 11800, date: '2024-01-28', liters: 30, totalCost: 630, pricePerLiter: 21, fullTank: true, fuelType: 'gas' },
+    ];
+    const metrics = computeFuelLogMetrics(V1, mixed);
+    const o2 = metrics.logs.find((l) => l.id === 'O2');
+    const g2 = metrics.logs.find((l) => l.id === 'G2');
+    assert.equal(o2.calculatedEfficiency, 30);
+    assert.equal(o2.segmentDistance, 1200);
+    assert.equal(g2.calculatedEfficiency, 1300 / 30);
+    assert.equal(metrics.byType.oil.efficiencyCount, 1);
+    assert.equal(metrics.byType.gas.efficiencyCount, 1);
+  });
+
+  it('computeFuelTrendBars returns recent efficiency points', () => {
+    const bars = computeFuelTrendBars(V1, fuelLogs, 5);
+    assert.equal(bars.length, 2);
+    assert.equal(bars[1].kmPerLiter, 25);
+  });
+
+  it('compareFamilyFuelEfficiency ranks vehicles with averages', () => {
+    const ranked = compareFamilyFuelEfficiency(
+      [{ id: V1, name: 'Camry', license: '1กก' }, { id: 'NONE', name: 'Empty', license: '-' }],
+      fuelLogs
+    );
+    assert.equal(ranked[0].vehicleId, V1);
+    assert.equal(ranked[0].avgEfficiency, ((1000 / 35) + 25) / 2);
+    assert.equal(ranked[1].avgEfficiency, null);
   });
 });
 
