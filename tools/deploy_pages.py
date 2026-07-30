@@ -21,6 +21,7 @@ TRACKED = [
     'gas/Api.gs',
     'gas/Bridge.html',
     'gas/Code.gs',
+    'gas/Vehicles.gs',
     'gas/README.md',
 ]
 

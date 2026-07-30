@@ -77,8 +77,11 @@ function updateVehicle(data) {
         ? String(data.insuranceExpiryDate || '')
         : formatDateCell_(existing.insuranceExpiryDate)
     });
-    var selectedId = data.selectedVehicleId || id;
-    return { success: true, state: getAppState(selectedId, { skipCache: true }) };
+    return {
+      success: true,
+      vehicleId: id,
+      message: 'บันทึกข้อมูลรถลง Google Sheet สำเร็จ'
+    };
   } catch (e) {
     return { success: false, error: e.message };
   }
