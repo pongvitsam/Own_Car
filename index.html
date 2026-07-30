@@ -124,7 +124,8 @@
                 margin-top: 1rem;
                 margin-bottom: 1rem;
                 border-radius: var(--radius-3xl);
-                overflow: hidden;
+                overflow-x: hidden;
+                overflow-y: auto;
                 min-height: calc(100dvh - 2rem);
                 max-height: calc(100dvh - 2rem);
             }
@@ -299,9 +300,18 @@
             -webkit-backdrop-filter: blur(12px);
         }
         .modal-backdrop {
-            background: rgba(26, 29, 36, 0.4) !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 100 !important;
+            background: rgba(26, 29, 36, 0.45) !important;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+        }
+        body.modal-open {
+            overflow: hidden;
+        }
+        body.modal-open #app-main {
+            overflow: hidden;
         }
         .modal-sheet-inner {
             width: 100%;
@@ -317,6 +327,10 @@
             border-radius: var(--radius-2xl) !important;
             box-shadow: var(--shadow-lift);
             border: 1px solid var(--border-medium);
+            max-height: min(90dvh, 100%);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
         }
         .input-premium {
             border-radius: var(--radius-xl);
@@ -502,8 +516,10 @@
         #loading-overlay.hidden { display: none !important; }
     </style>
 </head>
-<body class="app-shell relative">
-<!-- Top Navigation Header -->
+<body class="min-h-dvh bg-[var(--bg-base)]">
+<div id="app-main" class="app-shell relative flex flex-col min-h-dvh w-full">
+
+    <!-- Top Navigation Header -->
     <header class="glass-header text-[var(--text-primary)] px-3 py-2.5 sticky top-0 z-50">
         <div class="flex items-center gap-2">
             <div class="flex items-center gap-2 shrink-0 min-w-0">
@@ -890,9 +906,11 @@
         </div>
     </footer>
 
+</div><!-- /app-main -->
+
     <!-- MODAL 1: Odometer Only Update Form -->
-    <div id="odometer-modal" class="modal-backdrop hidden fixed inset-0 z-50 flex items-end justify-center">
-        <div class="modal-sheet-inner w-full max-w-md p-5 space-y-4 animate-slide-up">
+    <div id="odometer-modal" class="modal-backdrop hidden fixed inset-0 z-[100] flex items-center justify-center p-3 overflow-y-auto">
+        <div class="modal-dialog-inner w-full max-w-md p-5 space-y-4 animate-slide-up max-h-[90dvh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                     <i class="fa-solid fa-gauge-high text-indigo-500"></i> อัปเดตเลขไมล์ด่วน (กม. เท่านั้น)
@@ -922,8 +940,8 @@
     </div>
 
     <!-- MODAL 2: Repair / Maintenance Form with alerts & receipt simulation -->
-    <div id="repair-modal" class="modal-backdrop hidden fixed inset-0 z-50 flex items-end justify-center overflow-y-auto">
-        <div class="modal-sheet-inner w-full max-w-md p-5 space-y-4 max-h-[92vh] overflow-y-auto">
+    <div id="repair-modal" class="modal-backdrop hidden fixed inset-0 z-[100] flex items-center justify-center p-3 overflow-y-auto">
+        <div class="modal-dialog-inner w-full max-w-md p-5 space-y-4 max-h-[90dvh] overflow-y-auto animate-slide-up">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                     <i class="fa-solid fa-wrench text-indigo-600"></i> บันทึกงานซ่อมแซม & ตั้งระบบเตือน
@@ -1027,8 +1045,8 @@
     </div>
 
     <!-- MODAL 5: Fuelio Style - Add Fuel Fill Log Modal -->
-    <div id="fuel-modal" class="modal-backdrop hidden fixed inset-0 z-50 flex items-end justify-center overflow-y-auto">
-        <div class="modal-sheet-inner w-full max-w-md p-5 space-y-4 max-h-[92vh] overflow-y-auto">
+    <div id="fuel-modal" class="modal-backdrop hidden fixed inset-0 z-[100] flex items-center justify-center p-3 overflow-y-auto">
+        <div class="modal-dialog-inner w-full max-w-md p-5 space-y-4 max-h-[90dvh] overflow-y-auto animate-slide-up">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                     <i class="fa-solid fa-gas-pump text-emerald-600"></i> บันทึกเติมเชื้อเพลิง (Fuelio Module)
@@ -1128,7 +1146,7 @@
     </div>
 
     <!-- MODAL 3: Console Line API Simulation logs -->
-    <div id="line-logs-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div id="line-logs-modal" class="modal-backdrop hidden fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white w-full max-w-sm rounded-2xl p-4 space-y-3.5 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
@@ -1146,7 +1164,7 @@
     </div>
 
     <!-- Expiry Edit Modal -->
-    <div id="expiry-edit-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div id="expiry-edit-modal" class="modal-backdrop hidden fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl modal-dialog-inner">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1">
@@ -1183,7 +1201,7 @@
     </div>
 
     <!-- Edit Log Modal -->
-    <div id="edit-log-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div id="edit-log-modal" class="modal-backdrop hidden fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1">
@@ -1870,7 +1888,7 @@
             }
             setThaiDatePicker('expiry-edit-prb', 'expiry-edit-prb-text', v.prbExpiryDate);
             setThaiDatePicker('expiry-edit-insurance', 'expiry-edit-insurance-text', v.insuranceExpiryDate);
-            document.getElementById('expiry-edit-modal').classList.remove('hidden');
+            openModalPanel('expiry-edit-modal');
         }
 
         function saveVehicleExpiryDates(e) {
@@ -2290,7 +2308,7 @@
         function openOdometerModal() {
             document.getElementById('odo-vehicle-select').value = state.selectedVehicleId;
             document.getElementById('odo-mileage-input').value = getLatestOdometer(state.selectedVehicleId) || '';
-            document.getElementById('odometer-modal').classList.remove('hidden');
+            openModalPanel('odometer-modal');
         }
 
         function openRepairModal() {
@@ -2308,7 +2326,7 @@
             document.getElementById('rep-category-other-container').classList.add('hidden');
             document.getElementById('rep-category-other').value = '';
             document.getElementById('rep-category-other').required = false;
-            document.getElementById('repair-modal').classList.remove('hidden');
+            openModalPanel('repair-modal');
         }
 
         function openFuelModal() {
@@ -2316,10 +2334,6 @@
         }
 
         function openFuelFromHeader() {
-            const fuelTab = document.getElementById('tab-fuelio');
-            if (fuelTab && fuelTab.classList.contains('hidden')) {
-                switchTab('fuelio');
-            }
             openFuelModal();
         }
 
@@ -2354,7 +2368,7 @@
 
             updateFuelTypeSelection(type === 'gas' ? 'gas' : 'oil');
 
-            document.getElementById('fuel-modal').classList.remove('hidden');
+            openModalPanel('fuel-modal');
         }
 
         // Custom Fuel type switcher helper function
@@ -2379,9 +2393,20 @@
         }
 
         // Modal closer helper
+        function setModalOpenState() {
+            const anyOpen = document.querySelector('.modal-backdrop:not(.hidden)');
+            document.body.classList.toggle('modal-open', !!anyOpen);
+        }
+
+        function openModalPanel(id) {
+            document.getElementById(id).classList.remove('hidden');
+            setModalOpenState();
+        }
+
         function closeModal(id) {
             document.getElementById(id).classList.add('hidden');
             document.getElementById('custom-calendar-dropdown').classList.add('hidden');
+            setModalOpenState();
         }
 
         function toggleAlertInputs() {
@@ -2491,7 +2516,7 @@
                     logConsole.innerHTML += `<div class="border-b border-slate-900 pb-1 font-mono">${log}</div>`;
                 });
             }
-            document.getElementById('line-logs-modal').classList.remove('hidden');
+            openModalPanel('line-logs-modal');
         }
 
         function populateCalendarDropdownSelectors() {
@@ -3283,7 +3308,7 @@
                     : '<i class="fa-solid fa-pen-to-square text-indigo-600"></i> แก้ไขรายการบันทึก';
             }
 
-            document.getElementById('edit-log-modal').classList.remove('hidden');
+            openModalPanel('edit-log-modal');
         }
 
         function confirmDeleteLog(logId) {

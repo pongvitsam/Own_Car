@@ -776,7 +776,7 @@ index_html = f'''<!DOCTYPE html>
 {inline_styles}
     </style>
 </head>
-<body class="app-shell relative">
+<body class="min-h-dvh bg-[var(--bg-base)]">
 {body}
     <script>
 {script}

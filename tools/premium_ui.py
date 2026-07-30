@@ -79,7 +79,8 @@ PREMIUM_INLINE_STYLES = """
                 margin-top: 1rem;
                 margin-bottom: 1rem;
                 border-radius: var(--radius-3xl);
-                overflow: hidden;
+                overflow-x: hidden;
+                overflow-y: auto;
                 min-height: calc(100dvh - 2rem);
                 max-height: calc(100dvh - 2rem);
             }
@@ -254,9 +255,18 @@ PREMIUM_INLINE_STYLES = """
             -webkit-backdrop-filter: blur(12px);
         }
         .modal-backdrop {
-            background: rgba(26, 29, 36, 0.4) !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 100 !important;
+            background: rgba(26, 29, 36, 0.45) !important;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+        }
+        body.modal-open {
+            overflow: hidden;
+        }
+        body.modal-open #app-main {
+            overflow: hidden;
         }
         .modal-sheet-inner {
             width: 100%;
@@ -272,6 +282,10 @@ PREMIUM_INLINE_STYLES = """
             border-radius: var(--radius-2xl) !important;
             box-shadow: var(--shadow-lift);
             border: 1px solid var(--border-medium);
+            max-height: min(90dvh, 100%);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
         }
         .input-premium {
             border-radius: var(--radius-xl);
