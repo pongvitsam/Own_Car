@@ -1081,6 +1081,7 @@
                     <div class="text-[10px] text-slate-400 font-bold">แผนการเปลี่ยนระยะถัดไป</div>
                     <div class="text-[10px] text-indigo-700 font-bold mt-1" id="target-service-val">-</div>
                     <div class="text-xs font-bold text-slate-700 mt-1" id="target-odometer-val">-</div>
+                    <div class="text-[10px] font-extrabold mt-1.5 hidden" id="target-km-countdown-val">-</div>
                     <div class="text-[9px] text-rose-600 mt-1 font-bold flex items-center gap-1" id="target-time-val">-</div>
                 </div>
             </div>
@@ -1118,13 +1119,17 @@
                     </div>
                     <span class="text-[9px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded font-bold" id="car-total-distance-label">วิ่งไปแล้ว: - กม.</span>
                 </div>
-                <div class="space-y-1 pt-1.5">
+                <div class="space-y-1 pt-1.5" id="car-distance-health-block">
                     <div class="flex justify-between text-[9px] font-bold text-slate-400">
-                        <span>เปอร์เซ็นต์ความปลอดภัยของชิ้นส่วน</span>
+                        <span id="car-health-label">% คงเหลือก่อนถึงกำหนดระยะ</span>
                         <span id="car-health-percent" class="text-indigo-600">100%</span>
                     </div>
                     <div class="health-track w-full">
                         <div id="car-health-bar" class="health-fill h-2" style="width: 100%"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[9px] font-bold pt-0.5">
+                        <span id="car-km-countdown-label" class="text-slate-500">ระยะทางถอยหลัง</span>
+                        <span id="car-km-countdown-val" class="text-indigo-700">-</span>
                     </div>
                 </div>
             </div>
@@ -2816,6 +2821,71 @@
         }
 
         // Calculate Cost/KM of maintenance and health percentage bar
+        const DISTANCE_ALERT_SENTINEL_KM = 90000000;
+
+        function isDistanceBasedAlert(alertOrTargetKm) {
+            const target = alertOrTargetKm && typeof alertOrTargetKm === 'object'
+                ? Number(alertOrTargetKm.targetKm)
+                : Number(alertOrTargetKm);
+            return Number.isFinite(target) && target > 0 && target < DISTANCE_ALERT_SENTINEL_KM;
+        }
+
+        function getDistanceAlertCountdown({ latestOdo, baseKm, targetKm, alertKm }) {
+            const target = Number(targetKm);
+            if (!isDistanceBasedAlert(target)) return null;
+            const odo = Number(latestOdo) || 0;
+            let base = Number(baseKm);
+            if (!Number.isFinite(base)) {
+                const offset = Number(alertKm);
+                base = Number.isFinite(offset) && offset > 0 ? target - offset : odo;
+            }
+            const remainingKm = target - odo;
+            const range = target - base;
+            let percentRemaining = 100;
+            if (range > 0) {
+                percentRemaining = Math.max(0, Math.min(100, 100 - ((odo - base) / range) * 100));
+            }
+            return {
+                remainingKm,
+                absoluteRemainingKm: Math.max(0, remainingKm),
+                overdueKm: remainingKm < 0 ? Math.abs(remainingKm) : 0,
+                overdue: remainingKm <= 0,
+                percentRemaining,
+                targetKm: target,
+                baseKm: base
+            };
+        }
+
+        function formatKmCountdown(countdown) {
+            if (!countdown) return '';
+            if (countdown.overdue) {
+                return `เกินกำหนดแล้ว ${countdown.overdueKm.toLocaleString()} กม.`;
+            }
+            return `เหลืออีก ${countdown.absoluteRemainingKm.toLocaleString()} กม.`;
+        }
+
+        function applyHealthBarStyles(healthBar, healthPercent, safetyPct, active) {
+            if (!active) {
+                healthPercent.textContent = '—';
+                healthBar.style.width = '100%';
+                healthBar.className = 'health-fill h-2 bg-slate-200';
+                healthPercent.className = 'text-slate-400 font-bold';
+                return;
+            }
+            healthPercent.textContent = `${safetyPct.toFixed(0)}%`;
+            healthBar.style.width = `${safetyPct}%`;
+            if (safetyPct < 20) {
+                healthBar.className = 'health-fill h-2 bg-gradient-to-r from-rose-500 to-rose-600';
+                healthPercent.className = 'text-rose-600 font-extrabold';
+            } else if (safetyPct < 50) {
+                healthBar.className = 'health-fill h-2 bg-gradient-to-r from-amber-400 to-amber-500';
+                healthPercent.className = 'text-amber-500 font-extrabold';
+            } else {
+                healthBar.className = 'health-fill h-2';
+                healthPercent.className = 'text-indigo-600 font-extrabold';
+            }
+        }
+
         function calculateVehicleMetrics(vehicleId) {
             const logs = state.maintenanceLogs
                 .filter(l => l.vehicleId === vehicleId)
@@ -2849,37 +2919,50 @@
             const alertObj = state.alerts.find(a => a.vehicleId === vehicleId && a.status === 'Active');
             const healthBar = document.getElementById('car-health-bar');
             const healthPercent = document.getElementById('car-health-percent');
+            const healthLabel = document.getElementById('car-health-label');
+            const kmCountdownLabel = document.getElementById('car-km-countdown-label');
+            const kmCountdownVal = document.getElementById('car-km-countdown-val');
+            const healthBlock = document.getElementById('car-distance-health-block');
 
-            if (alertObj) {
-                const totalTargetKm = alertObj.targetKm;
-                const baseKm = alertObj.lastUpdated ? getLatestOdometerAtDate(vehicleId, alertObj.lastUpdated) : firstOdo;
-                
-                const range = totalTargetKm - baseKm;
-                const runSinceLastAlertSet = latestOdo - baseKm;
-
-                let safetyPct = 100;
-                if (range > 0) {
-                    safetyPct = Math.max(0, Math.min(100, 100 - ((runSinceLastAlertSet / range) * 100)));
+            if (alertObj && isDistanceBasedAlert(alertObj)) {
+                const baseKm = alertObj.lastUpdated
+                    ? getLatestOdometerAtDate(vehicleId, alertObj.lastUpdated)
+                    : firstOdo;
+                const countdown = getDistanceAlertCountdown({
+                    latestOdo,
+                    baseKm,
+                    targetKm: alertObj.targetKm
+                });
+                if (healthBlock) healthBlock.classList.remove('hidden');
+                if (healthLabel) healthLabel.textContent = '% คงเหลือก่อนถึงกำหนดระยะ';
+                applyHealthBarStyles(healthBar, healthPercent, countdown.percentRemaining, true);
+                if (kmCountdownLabel) kmCountdownLabel.textContent = 'ระยะทางถอยหลัง (เตรียมพร้อม)';
+                if (kmCountdownVal) {
+                    kmCountdownVal.textContent = `${formatKmCountdown(countdown)} · ${countdown.percentRemaining.toFixed(0)}% คงเหลือ`;
+                    kmCountdownVal.className = countdown.overdue || countdown.percentRemaining < 20
+                        ? 'text-rose-600'
+                        : countdown.percentRemaining < 50
+                            ? 'text-amber-600'
+                            : 'text-indigo-700';
                 }
-
-                healthPercent.textContent = `${safetyPct.toFixed(0)}%`;
-                healthBar.style.width = `${safetyPct}%`;
-                
-                if (safetyPct < 20) {
-                    healthBar.className = "bg-gradient-to-r from-rose-500 to-rose-600 h-1.5 rounded-full transition-all duration-500";
-                    healthPercent.className = "text-rose-600 font-extrabold";
-                } else if (safetyPct < 50) {
-                    healthBar.className = "bg-gradient-to-r from-amber-400 to-amber-500 h-1.5 rounded-full transition-all duration-500";
-                    healthPercent.className = "text-amber-500 font-extrabold";
-                } else {
-                    healthBar.className = "bg-gradient-to-r from-emerald-400 to-indigo-600 h-1.5 rounded-full transition-all duration-500";
-                    healthPercent.className = "text-indigo-600 font-extrabold";
+            } else if (alertObj) {
+                // Time-only alert — hide distance countdown semantics
+                if (healthLabel) healthLabel.textContent = 'เตือนตามเวลา (ไม่มีเป้ากม.)';
+                applyHealthBarStyles(healthBar, healthPercent, 100, false);
+                if (kmCountdownLabel) kmCountdownLabel.textContent = 'ระยะทางถอยหลัง';
+                if (kmCountdownVal) {
+                    kmCountdownVal.textContent = 'ใช้เตือนตามวันที่เท่านั้น';
+                    kmCountdownVal.className = 'text-slate-400';
                 }
             } else {
-                healthPercent.textContent = "100%";
-                healthBar.style.width = "100%";
-                healthBar.className = "bg-slate-200 h-1.5 rounded-full";
-                healthPercent.className = "text-slate-400 font-bold";
+                if (healthLabel) healthLabel.textContent = '% คงเหลือก่อนถึงกำหนดระยะ';
+                applyHealthBarStyles(healthBar, healthPercent, 100, false);
+                healthPercent.textContent = '100%';
+                if (kmCountdownLabel) kmCountdownLabel.textContent = 'ระยะทางถอยหลัง';
+                if (kmCountdownVal) {
+                    kmCountdownVal.textContent = 'ยังไม่มีแผนตามระยะทาง';
+                    kmCountdownVal.className = 'text-slate-400';
+                }
             }
         }
 
@@ -3010,6 +3093,7 @@
                 const alertObj = state.alerts.find(a => a.vehicleId === id && a.status === 'Active');
                 const targetServiceSpan = document.getElementById('target-service-val');
                 const targetKmSpan = document.getElementById('target-odometer-val');
+                const targetCountdownSpan = document.getElementById('target-km-countdown-val');
                 const targetTimeSpan = document.getElementById('target-time-val');
                 const statusBadge = document.getElementById('vehicle-status-badge');
 
@@ -3023,15 +3107,54 @@
                     if (targetServiceSpan) {
                         targetServiceSpan.innerHTML = `รายการถัดไป: <span class="font-extrabold">${serviceLabel}</span>`;
                     }
-                    targetKmSpan.innerHTML = `ตรวจระยะรอบต่อไป: <span class="text-indigo-700 font-extrabold">${alertObj.targetKm.toLocaleString()} กม.</span>`;
-                    targetTimeSpan.innerHTML = `<i class="fa-solid fa-clock"></i> เตือนล่วงหน้า: ${formatThaiDate(alertObj.targetDate)}`;
-                    
-                    const kmDifference = alertObj.targetKm - latestOdo;
-                    const daysRemaining = Math.ceil((new Date(alertObj.targetDate) - new Date()) / (1000 * 60 * 60 * 24));
-                    maintenanceUrgent = kmDifference <= 1000 || daysRemaining <= 15;
+                    if (isDistanceBasedAlert(alertObj)) {
+                        const firstOdoLogs = state.maintenanceLogs
+                            .filter(l => l.vehicleId === id && l.odo > 0)
+                            .sort((a, b) => a.odo - b.odo);
+                        const firstOdo = firstOdoLogs.length ? firstOdoLogs[0].odo : 0;
+                        const baseKm = alertObj.lastUpdated
+                            ? getLatestOdometerAtDate(id, alertObj.lastUpdated)
+                            : firstOdo;
+                        const countdown = getDistanceAlertCountdown({
+                            latestOdo,
+                            baseKm,
+                            targetKm: alertObj.targetKm
+                        });
+                        targetKmSpan.innerHTML = `เป้ากม.: <span class="text-indigo-700 font-extrabold">${alertObj.targetKm.toLocaleString()} กม.</span>`;
+                        if (targetCountdownSpan && countdown) {
+                            targetCountdownSpan.classList.remove('hidden');
+                            targetCountdownSpan.innerHTML = countdown.overdue
+                                ? `<span class="text-rose-600"><i class="fa-solid fa-triangle-exclamation"></i> ${formatKmCountdown(countdown)} · ${countdown.percentRemaining.toFixed(0)}% คงเหลือ</span>`
+                                : `<span class="${countdown.percentRemaining < 20 ? 'text-rose-600' : countdown.percentRemaining < 50 ? 'text-amber-600' : 'text-emerald-700'}"><i class="fa-solid fa-road"></i> ${formatKmCountdown(countdown)} · ${countdown.percentRemaining.toFixed(0)}% คงเหลือ</span>`;
+                        }
+                        maintenanceUrgent = countdown.remainingKm <= 1000;
+                    } else {
+                        targetKmSpan.innerHTML = `<span class="text-slate-400">ไม่ตั้งเป้าตามระยะทาง</span>`;
+                        if (targetCountdownSpan) {
+                            targetCountdownSpan.classList.add('hidden');
+                            targetCountdownSpan.textContent = '';
+                        }
+                    }
+
+                    const farFuture = !alertObj.targetDate || String(alertObj.targetDate).startsWith('2099');
+                    if (farFuture) {
+                        targetTimeSpan.innerHTML = `<i class="fa-solid fa-clock"></i> เตือนตามระยะทางเป็นหลัก`;
+                    } else {
+                        targetTimeSpan.innerHTML = `<i class="fa-solid fa-clock"></i> เตือนล่วงหน้า: ${formatThaiDate(alertObj.targetDate)}`;
+                        const daysRemaining = Math.ceil((new Date(alertObj.targetDate) - new Date()) / (1000 * 60 * 60 * 24));
+                        if (daysRemaining <= 15) maintenanceUrgent = true;
+                    }
+                    if (!isDistanceBasedAlert(alertObj)) {
+                        const daysRemaining = Math.ceil((new Date(alertObj.targetDate) - new Date()) / (1000 * 60 * 60 * 24));
+                        maintenanceUrgent = daysRemaining <= 15;
+                    }
                 } else {
                     if (targetServiceSpan) targetServiceSpan.innerHTML = '';
                     targetKmSpan.innerHTML = `<span class="text-slate-400">ยังไม่ได้รับการตั้งการเตือน</span>`;
+                    if (targetCountdownSpan) {
+                        targetCountdownSpan.classList.add('hidden');
+                        targetCountdownSpan.textContent = '';
+                    }
                     targetTimeSpan.innerHTML = `<i class="fa-solid fa-circle-info"></i> ปลอดภัย`;
                 }
 
@@ -3114,7 +3237,28 @@
                     : '-';
                 const alertBits = [];
                 if (isMaintenance && l.alertKm > 0) {
-                    alertBits.push(`<span><i class="fa-solid fa-road text-[var(--accent)]"></i> +${l.alertKm.toLocaleString()} กม.</span>`);
+                    const targetKm = Number(l.odo) + Number(l.alertKm);
+                    const countdown = getDistanceAlertCountdown({
+                        latestOdo: getLatestOdometer(vehicleId),
+                        baseKm: l.odo,
+                        targetKm,
+                        alertKm: l.alertKm
+                    });
+                    if (countdown) {
+                        const tone = countdown.overdue || countdown.percentRemaining < 20
+                            ? 'text-rose-600'
+                            : countdown.percentRemaining < 50
+                                ? 'text-amber-600'
+                                : 'text-emerald-700';
+                        alertBits.push(
+                            `<span class="${tone}"><i class="fa-solid fa-road"></i> ${formatKmCountdown(countdown)} · ${countdown.percentRemaining.toFixed(0)}% คงเหลือ</span>`
+                        );
+                        alertBits.push(
+                            `<span class="text-slate-400">เป้า ${targetKm.toLocaleString()} กม. (+${Number(l.alertKm).toLocaleString()})</span>`
+                        );
+                    } else {
+                        alertBits.push(`<span><i class="fa-solid fa-road text-[var(--accent)]"></i> +${l.alertKm.toLocaleString()} กม.</span>`);
+                    }
                 }
                 if (isMaintenance && l.alertMonth > 0) {
                     alertBits.push(`<span><i class="fa-solid fa-calendar-check text-[var(--accent)]"></i> +${l.alertMonth} เดือน</span>`);

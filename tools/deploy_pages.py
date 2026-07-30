@@ -17,6 +17,7 @@ TRACKED = [
     'icons/icon.svg',
     'README.md',
     'lib/car-logic.js',
+    'tests/car-logic.test.js',
     'gas/Api.gs',
     'gas/Bridge.html',
     'gas/Code.gs',

@@ -13,6 +13,8 @@ const {
   calculateHealthPercent,
   calculateHealthPercentFromRange,
   getHealthBarTier,
+  isDistanceBasedAlert,
+  getDistanceAlertCountdown,
   computeFuelLogMetrics,
   computeFuelTrendBars,
   compareFamilyFuelEfficiency,
@@ -177,6 +179,34 @@ describe('health bar', () => {
     assert.equal(getHealthBarTier(19), 'critical');
     assert.equal(getHealthBarTier(49), 'warning');
     assert.equal(getHealthBarTier(50), 'healthy');
+  });
+
+  it('isDistanceBasedAlert rejects time-only sentinel targets', () => {
+    assert.equal(isDistanceBasedAlert(99999999), false);
+    assert.equal(isDistanceBasedAlert({ targetKm: 99999999 }), false);
+    assert.equal(isDistanceBasedAlert(162000), true);
+  });
+
+  it('getDistanceAlertCountdown returns remaining % and km countdown', () => {
+    const countdown = getDistanceAlertCountdown({
+      latestOdo: 15000,
+      baseKm: 10000,
+      targetKm: 20000,
+    });
+    assert.equal(countdown.absoluteRemainingKm, 5000);
+    assert.equal(countdown.percentRemaining, 50);
+    assert.equal(countdown.overdue, false);
+  });
+
+  it('getDistanceAlertCountdown marks overdue when past target', () => {
+    const countdown = getDistanceAlertCountdown({
+      latestOdo: 21000,
+      baseKm: 10000,
+      targetKm: 20000,
+    });
+    assert.equal(countdown.overdue, true);
+    assert.equal(countdown.overdueKm, 1000);
+    assert.equal(countdown.percentRemaining, 0);
   });
 });
 
