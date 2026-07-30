@@ -336,11 +336,8 @@
             .sidebar-backdrop {
                 display: none !important;
             }
-            .bottom-nav-wrap {
-                display: none !important;
-            }
             .fab-primary {
-                bottom: 1.5rem !important;
+                bottom: 5.5rem !important;
             }
         }
         @media (min-width: 768px) and (max-width: 1023px) {
@@ -998,66 +995,18 @@
 <body class="min-h-dvh bg-[var(--bg-base)]">
 <div id="app-main" class="app-shell">
 
-    <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeSidebarMenu()"></div>
-
-    <aside id="side-nav" class="side-nav">
-        <div class="side-nav-brand">
-            <div class="side-nav-logo">
-                <i class="fa-solid fa-car-side"></i>
-            </div>
-            <div class="min-w-0">
-                <div class="side-nav-title">MyHome CarCare</div>
-                <span class="version-badge text-[7px] font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.2 Complete</span>
-            </div>
-            <button type="button" class="side-nav-close" onclick="closeSidebarMenu()" title="ปิดเมนู">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <nav class="side-nav-menu">
-            <button type="button" id="side-nav-dashboard" onclick="switchTab('dashboard')" class="side-nav-item side-nav-item--active">
-                <i class="fa-solid fa-screwdriver-wrench"></i>
-                <span>บำรุงรักษา</span>
-            </button>
-            <button type="button" id="side-nav-fuelio" onclick="switchTab('fuelio')" class="side-nav-item">
-                <i class="fa-solid fa-gas-pump"></i>
-                <span>บันทึกน้ำมัน</span>
-            </button>
-            <button type="button" id="side-nav-admin" onclick="switchTab('admin')" class="side-nav-item">
-                <i class="fa-solid fa-users-gear"></i>
-                <span>แอดมินบ้าน</span>
-            </button>
-        </nav>
-        <div class="side-nav-actions">
-            <button type="button" onclick="openFuelFromHeader(); closeSidebarMenu();" class="side-nav-action side-nav-action--fuel">
-                <i class="fa-solid fa-gas-pump"></i>
-                <span>บันทึกน้ำมันด่วน</span>
-            </button>
-            <button type="button" onclick="checkLineAlerts(true); closeSidebarMenu();" class="side-nav-action">
-                <i class="fa-brands fa-line"></i>
-                <span>ตรวจสภาพด่วน LINE</span>
-            </button>
-            <button type="button" onclick="showLineLogs(); closeSidebarMenu();" class="side-nav-action">
-                <i class="fa-solid fa-terminal"></i>
-                <span>ดู LINE Log</span>
-            </button>
-        </div>
-    </aside>
-
     <div class="app-main-column flex flex-col flex-1 min-w-0 min-h-dvh">
 
     <!-- Top Navigation Header -->
     <header class="glass-header text-[var(--text-primary)] px-3 py-2.5 sticky top-0 z-50">
         <div class="flex items-center gap-2">
-            <button type="button" id="sidebar-toggle" class="sidebar-toggle" onclick="toggleSidebarMenu()" title="เปิดเมนู">
-                <i class="fa-solid fa-bars text-base"></i>
-            </button>
             <div class="flex items-center gap-2 shrink-0 min-w-0">
                 <div class="w-9 h-9 rounded-xl border border-[var(--accent)]/30 flex items-center justify-center text-[var(--accent)] shrink-0">
                     <i class="fa-solid fa-car-side text-base"></i>
                 </div>
                 <div class="min-w-0 hidden sm:block">
                     <h1 class="text-base font-semibold leading-none tracking-wide text-[var(--text-primary)] truncate">MyHome CarCare</h1>
-                    <span class="version-badge text-[7px] font-mono mt-0.5 inline-block">v3.2 Complete</span>
+                    <span class="version-badge text-[7px] font-mono mt-0.5 inline-block"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.2 Complete</span>
                 </div>
             </div>
             <button type="button" id="header-fuel-btn" onclick="openFuelFromHeader()" class="header-fuel-btn flex-1 min-w-0 mx-1" title="บันทึกและคำนวณค่าน้ำมัน">

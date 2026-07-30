@@ -283,11 +283,8 @@ PREMIUM_INLINE_STYLES = """
             .sidebar-backdrop {
                 display: none !important;
             }
-            .bottom-nav-wrap {
-                display: none !important;
-            }
             .fab-primary {
-                bottom: 1.5rem !important;
+                bottom: 5.5rem !important;
             }
         }
         @media (min-width: 768px) and (max-width: 1023px) {
