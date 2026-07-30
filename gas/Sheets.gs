@@ -258,7 +258,11 @@ function deleteRowById_(sheetName, idColName, id) {
 function getAllRowsAsObjects_(sheetName) {
   var cached = loadSheetValues_(sheetName);
   var headers = cached.headers;
-  return cached.rows.map(function (row) {
+  return cached.rows.filter(function (row) {
+    return row.some(function (value) {
+      return value !== '' && value !== null && value !== undefined;
+    });
+  }).map(function (row) {
     var obj = {};
     headers.forEach(function (h, i) {
       obj[h] = row[i];
