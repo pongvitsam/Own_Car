@@ -94,6 +94,29 @@ PREMIUM_INLINE_STYLES = """
             border-bottom: 1px solid var(--border-medium);
             box-shadow: 0 1px 3px rgba(26, 29, 36, 0.06);
         }
+        .header-fuel-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            min-height: 2.75rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+            color: #fff !important;
+            border: none;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+            transition: all var(--transition-smooth);
+            cursor: pointer;
+        }
+        .header-fuel-btn:hover {
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+            transform: translateY(-1px);
+        }
+        .header-fuel-btn--active {
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35), 0 4px 14px rgba(16, 185, 129, 0.4);
+        }
+        .header-fuel-btn.hidden { display: none !important; }
         .vehicle-strip {
             background: linear-gradient(180deg, #FFFFFF 0%, var(--bg-base) 100%);
             border-bottom: 1px solid var(--border-subtle);
