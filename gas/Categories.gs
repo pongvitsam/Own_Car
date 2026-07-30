@@ -14,13 +14,13 @@ function addCategory(data) {
       return c.name.toLowerCase() === String(data.name).toLowerCase();
     });
     if (existing) {
-      return { success: true, categoryId: existing.id, state: getAppState(null, { skipCache: true }) };
+      return { success: true, categoryId: existing.id };
     }
     upsertRow_(SHEET_NAMES.CATEGORIES, 'categoryId', id, {
       categoryId: id,
       'ชื่อ': data.name
     });
-    return { success: true, categoryId: id, state: getAppState(null, { skipCache: true }) };
+    return { success: true, categoryId: id };
   } catch (e) {
     return { success: false, error: e.message };
   }
@@ -33,7 +33,7 @@ function deleteCategory(categoryId) {
       return { success: false, error: 'จำเป็นต้องเหลือหมวดหมู่อย่างน้อย 1 ประเภท' };
     }
     deleteRowById_(SHEET_NAMES.CATEGORIES, 'categoryId', categoryId);
-    return { success: true, state: getAppState(null, { skipCache: true }) };
+    return { success: true, categoryId: categoryId };
   } catch (e) {
     return { success: false, error: e.message };
   }

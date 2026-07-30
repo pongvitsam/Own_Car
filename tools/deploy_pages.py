@@ -18,10 +18,14 @@ TRACKED = [
     'README.md',
     'lib/car-logic.js',
     'tests/car-logic.test.js',
+    'gas/Vehicles.gs',
+    'gas/Fuel.gs',
+    'gas/Maintenance.gs',
+    'gas/Odometer.gs',
+    'gas/Categories.gs',
     'gas/Api.gs',
     'gas/Bridge.html',
     'gas/Code.gs',
-    'gas/Vehicles.gs',
     'gas/README.md',
 ]
 

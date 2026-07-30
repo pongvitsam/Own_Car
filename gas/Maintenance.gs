@@ -86,7 +86,7 @@ function saveMaintenanceLog(data) {
       upsertAlertForVehicle_(vehicleId, odoVal, data.date, data.alertKm, data.alertMonth, serviceLabel, categoryId);
     }
 
-    return { success: true, state: getAppState(vehicleId, { skipCache: true }) };
+    return { success: true, logId: logId, vehicleId: vehicleId };
   } catch (e) {
     return { success: false, error: e.message };
   }
@@ -120,7 +120,7 @@ function saveEditedLog(data) {
       receiptName: existing.receiptName
     });
 
-    return { success: true, state: getAppState(vehicleId, { skipCache: true }) };
+    return { success: true, logId: logId, vehicleId: vehicleId };
   } catch (e) {
     return { success: false, error: e.message };
   }
@@ -134,7 +134,7 @@ function deleteMaintenanceLog(logId) {
       return { success: false, error: 'ไม่พบรายการ' };
     }
     deleteRowById_(SHEET_NAMES.MAINTENANCE, 'logId', logId);
-    return { success: true, state: getAppState(String(existing.vehicleId), { skipCache: true }) };
+    return { success: true, logId: logId, vehicleId: String(existing.vehicleId) };
   } catch (e) {
     return { success: false, error: e.message };
   }

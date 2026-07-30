@@ -45,7 +45,7 @@ function saveFuelLog(data) {
       'สถานี': data.station || ''
     });
 
-    return { success: true, state: getAppState(vehicleId, { includeFuel: true, skipCache: true }) };
+    return { success: true, logId: logId, vehicleId: vehicleId };
   } catch (e) {
     return { success: false, error: e.message };
   }
@@ -59,7 +59,7 @@ function deleteFuelLog(logId) {
       return { success: false, error: 'ไม่พบรายการ' };
     }
     deleteRowById_(SHEET_NAMES.FUEL, 'logId', logId);
-    return { success: true, state: getAppState(String(existing.vehicleId), { includeFuel: true, skipCache: true }) };
+    return { success: true, logId: logId, vehicleId: String(existing.vehicleId) };
   } catch (e) {
     return { success: false, error: e.message };
   }

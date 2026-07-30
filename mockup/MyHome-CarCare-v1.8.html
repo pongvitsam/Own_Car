@@ -1238,25 +1238,48 @@
             setInterval(autoPullFromGas, 120000);
         }
 
+        function restoreGasStateSnapshot(snapshotJson) {
+            if (!snapshotJson) return;
+            try {
+                const restored = JSON.parse(snapshotJson);
+                Object.keys(state).forEach(function (k) { delete state[k]; });
+                Object.assign(state, restored);
+                normalizeVehicleExpiryDates();
+                saveToLocalStorage();
+                refreshUiAfterSync();
+            } catch (e) { /* ignore rollback errors */ }
+        }
+
         async function gasMutate(action, payload, localFn) {
             if (!isGasSyncEnabled()) {
                 if (localFn) localFn();
                 return { local: true };
             }
-            const result = await gasCall(action, payload || {});
-            if (action === 'verifyAdmin' || action === 'setupTriggers' || action === 'ping') {
-                return result;
-            }
-            if (!result || result.success === false) {
-                throw new Error((result && result.error) || 'บันทึก Sheet ไม่สำเร็จ');
-            }
-            if (result.state) {
-                applyRemoteState(result.state, { keepSelected: true });
-            } else if (localFn) {
+            const snapshot = localFn ? JSON.stringify(state) : null;
+            if (localFn) {
                 localFn();
-                saveToLocalStorage();
+                refreshUiAfterSync();
             }
-            return result;
+            try {
+                const result = await gasCall(action, payload || {});
+                if (action === 'verifyAdmin' || action === 'setupTriggers' || action === 'ping') {
+                    return result;
+                }
+                if (!result || result.success === false) {
+                    throw new Error((result && result.error) || 'บันทึก Sheet ไม่สำเร็จ');
+                }
+                if (result.state) {
+                    applyRemoteState(result.state, { keepSelected: true });
+                    refreshUiAfterSync();
+                } else {
+                    saveToLocalStorage();
+                }
+                gasLastPullAt = Date.now();
+                return result;
+            } catch (err) {
+                if (snapshot) restoreGasStateSnapshot(snapshot);
+                throw err;
+            }
         }
 
         function setDefaultDates() {

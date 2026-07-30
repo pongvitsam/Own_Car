@@ -44,7 +44,7 @@ function addVehicle(data) {
       receiptName: ''
     });
 
-    return { success: true, state: getAppState(id, { skipCache: true }) };
+    return { success: true, vehicleId: id };
   } catch (e) {
     return { success: false, error: e.message };
   }
@@ -113,7 +113,7 @@ function deleteVehicle(vehicleId) {
 
     var remaining = getVehicles_();
     var selectedId = remaining.length ? remaining[0].id : '';
-    return { success: true, state: getAppState(selectedId, { skipCache: true }) };
+    return { success: true, vehicleId: vehicleId, selectedVehicleId: selectedId };
   } catch (e) {
     return { success: false, error: e.message };
   }

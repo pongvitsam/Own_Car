@@ -96,15 +96,6 @@ function getFullSyncState_(selectedVehicleId) {
   };
 }
 
-function withFullState_(result, selectedVehicleId) {
-  if (!result || result.success === false) return result;
-  var sid = selectedVehicleId
-    || (result.state && result.state.selectedVehicleId)
-    || null;
-  result.state = getFullSyncState_(sid);
-  return result;
-}
-
 function dispatchApiAction_(action, payload) {
   payload = payload || {};
   var selectedId = payload.selectedVehicleId || payload.vehicleId || null;
@@ -129,44 +120,44 @@ function dispatchApiAction_(action, payload) {
       };
 
     case 'saveFuelLog':
-      return withFullState_(saveFuelLog(payload), payload.vehicleId);
+      return saveFuelLog(payload);
 
     case 'deleteFuelLog':
-      return withFullState_(deleteFuelLog(payload.id || payload.logId), selectedId);
+      return deleteFuelLog(payload.id || payload.logId);
 
     case 'saveMaintenanceLog':
-      return withFullState_(saveMaintenanceLog(payload), payload.vehicleId);
+      return saveMaintenanceLog(payload);
 
     case 'saveEditedLog':
-      return withFullState_(saveEditedLog(payload), selectedId);
+      return saveEditedLog(payload);
 
     case 'deleteMaintenanceLog':
-      return withFullState_(deleteMaintenanceLog(payload.id || payload.logId), selectedId);
+      return deleteMaintenanceLog(payload.id || payload.logId);
 
     case 'saveOdometerOnly':
-      return withFullState_(saveOdometerOnly(payload), payload.vehicleId);
+      return saveOdometerOnly(payload);
 
     case 'addVehicle':
-      return withFullState_(addVehicle(payload), null);
+      return addVehicle(payload);
 
     case 'updateVehicle':
     case 'updateVehicleAdmin':
       return updateVehicle(payload);
 
     case 'deleteVehicle':
-      return withFullState_(deleteVehicle(payload.id || payload.vehicleId), null);
+      return deleteVehicle(payload.id || payload.vehicleId);
 
     case 'addCategory':
-      return withFullState_(addCategory(payload), selectedId);
+      return addCategory(payload);
 
     case 'deleteCategory':
-      return withFullState_(deleteCategory(payload.id || payload.categoryId), selectedId);
+      return deleteCategory(payload.id || payload.categoryId);
 
     case 'verifyAdmin':
       return verifyAdmin(payload);
 
     case 'checkLineAlerts':
-      return withFullState_(checkLineAlerts(!!payload.manual, true), selectedId);
+      return checkLineAlerts(!!payload.manual, false);
 
     case 'setupTriggers':
       return setupTriggers();
