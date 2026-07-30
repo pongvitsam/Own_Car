@@ -56,14 +56,15 @@ Expected: **113+ tests pass**.
 
 GitHub Pages connects to GAS via an **iframe Bridge** (`?bridge=1`) — the browser cannot call `google.script.run` cross-origin directly.
 
-1. Open [Apps Script](https://script.google.com/) project linked in `.clasp.json`, then `clasp push` from this repo (`rootDir: gas`).
-2. **Deploy → New deployment → Web app**
+1. Open [Apps Script](https://script.google.com/home/projects/1mCIIW3agh-B14wqqR5nsyGEKYirHXa85NkGrCZGksuSljkyuyXcveNI8/edit) project (`.clasp.json`), then `clasp push` from this repo (`rootDir: gas`).
+2. Run `ownerBootstrapOnce` once in the editor (creates Google Sheet + imports Mazda/Click/Altis).
+3. **Deploy → Manage deployments → Edit**
    - Execute as: **Me**
    - Who has access: **Anyone**
-3. Copy the `/exec` URL.
-4. On the live app → **Admin** → section **Google Sheets sync**
+4. Copy the `/exec` URL.
+5. On the live app → **Admin** → section **Google Sheets sync**
    - Paste URL → **ทดสอบการเชื่อมต่อ** → enable sync → **บันทึกการตั้งค่า**
-5. Saves (fuel / maintenance / odo / vehicles) write to the Sheet; use **ดึงจาก Sheet** to refresh across devices.
+6. Saves (fuel / maintenance / odo / vehicles) write to the Sheet; use **ดึงจาก Sheet** to refresh across devices.
 
 Default Web App URL is baked into the UI; override anytime in Admin. Without sync enabled, the app stays on localStorage + Export/Import.
 

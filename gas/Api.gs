@@ -171,6 +171,12 @@ function dispatchApiAction_(action, payload) {
     case 'setupTriggers':
       return setupTriggers();
 
+    case 'ownerBootstrapOnce':
+      return ownerBootstrapOnce();
+
+    case 'importFamilySeedData':
+      return importFamilySeedData();
+
     case 'exportReportPdf':
       return exportReportPdf(payload.vehicleId, payload.year);
 

@@ -59,25 +59,27 @@ function include(filename) {
  */
 
 function ownerBootstrapOnce() {
-
   var ss = getSpreadsheet_();
-
   ensureSheets_(ss);
-
   _execCache_.sheetsEnsured = true;
 
+  // Force family seed even if demo rows already exist
+  if (typeof importFamilySeedData === 'function') {
+    var imported = importFamilySeedData();
+    if (imported && imported.success) {
+      return imported;
+    }
+    if (imported && imported.error) {
+      return { success: false, error: imported.error, spreadsheetId: ss.getId(), spreadsheetUrl: ss.getUrl() };
+    }
+  }
+
   return {
-
     success: true,
-
     spreadsheetId: ss.getId(),
-
     spreadsheetUrl: ss.getUrl(),
-
     message: 'สร้าง/เปิดสเปรดชีตสำเร็จ — พร้อมใช้งานเว็บแอปแล้ว'
-
   };
-
 }
 
 
