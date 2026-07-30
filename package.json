@@ -1,9 +1,11 @@
 ﻿{
   "name": "myhome-carcare",
   "private": true,
-  "version": "2.0.0",
+  "version": "3.1.0",
   "description": "MyHome CarCare — GitHub Pages static app + legacy GAS; lib/car-logic.js mirrors formulas for npm tests",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "build": "python tools/build_github_pages.py",
+    "deploy": "python tools/deploy_pages.py"
   }
 }

@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="th" class="h-full bg-[#0B0D10]">
+<html lang="th" class="h-full bg-[#F7F8FA]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -7,13 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Mockup preview tokens — full design system injected by tools/premium_ui.py at build */
-        :root { --bg-base: #0B0D10; --bg-elevated: #141820; --text-primary: #F5F3EE; --accent: #C9A962; }
-        body { font-family: 'Manrope', sans-serif; background: var(--bg-base); color: var(--text-primary); }
-        .font-display { font-family: 'Cormorant Garamond', Georgia, serif; }
+        :root { --bg-base: #F7F8FA; --bg-elevated: #FFFFFF; --text-primary: #1A1D24; --text-secondary: #5C6370; --text-muted: #94A3B8; --accent: #2563EB; --border-subtle: rgba(26, 29, 36, 0.08); }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg-base); color: var(--text-primary); }
+        .font-display { font-family: 'Sarabun', sans-serif; }
     </style>
 </head>
 <body class="app-shell relative">
@@ -26,8 +26,8 @@
                     <i class="fa-solid fa-car-side text-base"></i>
                 </div>
                 <div>
-                    <h1 class="font-display text-lg font-semibold leading-none tracking-wide text-[var(--text-primary)]">MyHome CarCare</h1>
-                    <span class="version-badge text-[8px] font-mono mt-0.5 inline-block">v3.0 Dark Luxury</span>
+                    <h1 class="text-lg font-semibold leading-none tracking-wide text-[var(--text-primary)]">MyHome CarCare</h1>
+                    <span class="version-badge text-[8px] font-mono mt-0.5 inline-block">v3.1 Light Sarabun</span>
                 </div>
             </div>
             <div class="flex items-center gap-1.5">
@@ -35,7 +35,7 @@
                     <i class="fa-brands fa-line text-sm"></i>
                     <span class="sr-only">ตรวจสภาพด่วน</span>
                 </button>
-                <button onclick="showLineLogs()" class="bg-white/5 hover:bg-white/10 p-2.5 rounded-xl text-[var(--text-secondary)] transition-all active:scale-95 border border-white/10" title="ดู LINE Log">
+                <button onclick="showLineLogs()" class="bg-slate-100 hover:bg-slate-200 p-2.5 rounded-xl text-[var(--text-secondary)] transition-all active:scale-95 border border-slate-200" title="ดู LINE Log">
                     <i class="fa-solid fa-terminal text-xs"></i>
                 </button>
             </div>
@@ -177,7 +177,7 @@
                 </div>
                 <div class="relative z-10">
                     <span class="text-[9px] text-[var(--text-muted)] block uppercase tracking-wider font-bold">สรุปเงินค่าแจ้งซ่อมบำรุง</span>
-                    <span class="font-display text-3xl font-semibold tracking-tight text-[var(--accent)]" id="yearly-total-spend">฿0.00</span>
+                    <span class="text-3xl font-semibold tracking-tight text-[var(--accent)]" id="yearly-total-spend">฿0.00</span>
                 </div>
                 <div class="text-right z-10">
                     <span class="text-[9px] text-[var(--text-muted)] block font-bold">รวมเสร็จ</span>
@@ -872,7 +872,7 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             const styles = {
-                success: 'bg-gradient-to-r from-indigo-950 to-indigo-900 text-white border-indigo-700/50 shadow-indigo-900/20',
+                success: 'bg-gradient-to-r from-blue-600 to-blue-500 text-white border-blue-400/50 shadow-blue-500/20',
                 warning: 'bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 border-amber-300 shadow-amber-500/20',
                 error: 'bg-gradient-to-r from-rose-600 to-rose-700 text-white border-rose-500 shadow-rose-900/20'
             };
@@ -907,15 +907,15 @@
             state.vehicles.forEach(v => {
                 const isActive = v.id === state.selectedVehicleId;
                 const activeClasses = isActive 
-                    ? 'vehicle-card--active border-[var(--accent)]/40 bg-gradient-to-br from-[#1A1F2A] via-[#141820] to-[#0B0D10] text-[var(--text-primary)] ring-2 ring-[var(--accent)]/30' 
-                    : 'border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--accent)]/30 text-[var(--text-primary)]';
+                    ? 'vehicle-card--active border-[var(--accent)]/40 bg-gradient-to-br from-[#EFF6FF] via-[#DBEAFE] to-[#BFDBFE] text-[var(--text-primary)] ring-2 ring-[var(--accent)]/30' 
+                    : 'border-[var(--border-subtle)] bg-white hover:border-[var(--accent)]/30 text-[var(--text-primary)]';
 
                 const latestOdo = getLatestOdometer(v.id);
 
                 carousel.innerHTML += `
                     <div onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[85vw] max-w-[320px] md:w-auto p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${activeClasses}">
                         <div class="vehicle-card-license text-[9px] ${isActive ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'} font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
-                        <div class="vehicle-card-name font-display font-semibold text-sm truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
+                        <div class="vehicle-card-name font-semibold text-sm truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
                         <div class="mt-4 pt-1.5 border-t ${isActive ? 'border-[var(--accent)]/20' : 'border-[var(--border-subtle)]'} text-[10px] flex justify-between items-center font-mono">
                             <span class="${isActive ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)]'}">ไมล์ล่าสุด:</span>
                             <span class="font-bold text-right text-[var(--accent)]">${latestOdo.toLocaleString()} กม.</span>
@@ -2253,7 +2253,7 @@
                             <span>${pct}% (฿${cat.sum.toLocaleString()})</span>
                         </div>
                         <div class="w-full bg-white/5 rounded-full h-2">
-                            <div class="bg-gradient-to-r from-[#A8893E] via-[var(--accent)] to-[#E8D5A3] h-2 rounded-full" style="width: ${pct}%"></div>
+                            <div class="bg-gradient-to-r from-[#1D4ED8] via-[var(--accent)] to-[#60A5FA] h-2 rounded-full" style="width: ${pct}%"></div>
                         </div>
                     </div>
                 `;
@@ -2770,7 +2770,7 @@
                 return '<li>' + name + ': ฿' + fmtNum(sum) + ' (' + pct + '%)</li>';
             }).join('');
             const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงาน ' + vehicle.license + '</title>' +
-                '<style>body{font-family:Itim,Inter,Arial,sans-serif;padding:24px;color:#1e293b}' +
+                '<style>body{font-family:Sarabun,Inter,Arial,sans-serif;padding:24px;color:#1e293b}' +
                 'h1{font-size:20px;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:16px}' +
                 'th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px}th{background:#eef2ff}' +
                 '.summary{background:#f8fafc;padding:12px;border-radius:8px;margin-top:12px}' +

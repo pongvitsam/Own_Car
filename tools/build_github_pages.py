@@ -24,14 +24,14 @@ inline_styles = PREMIUM_INLINE_STYLES.strip()
 # Version badge (GitHub Pages)
 body = re.sub(
     r'(<span class="version-badge[^"]*"[^>]*>)(?!.*fa-github)(.*?)(</span>)',
-    r'\1<i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.0 Dark Luxury\3',
+    r'\1<i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.1 Light Sarabun\3',
     body,
     count=1,
     flags=re.DOTALL
 )
 body = re.sub(
     r'<span class="version-badge">.*?</span>',
-    '<span class="version-badge text-[8px] font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.0 Dark Luxury</span>',
+    '<span class="version-badge text-[8px] font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.1 Light Sarabun</span>',
     body,
     count=1,
     flags=re.DOTALL
@@ -378,7 +378,7 @@ EXPORT_FN = '''
                 return '<li>' + name + ': ฿' + fmtNum(sum) + ' (' + pct + '%)</li>';
             }).join('');
             const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงาน ' + vehicle.license + '</title>' +
-                '<style>body{font-family:Itim,Inter,Arial,sans-serif;padding:24px;color:#1e293b}' +
+                '<style>body{font-family:Sarabun,Inter,Arial,sans-serif;padding:24px;color:#1e293b}' +
                 'h1{font-size:20px;margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:16px}' +
                 'th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px}th{background:#eef2ff}' +
                 '.summary{background:#f8fafc;padding:12px;border-radius:8px;margin-top:12px}' +
@@ -594,7 +594,7 @@ script = re.sub(
     count=1
 )
 
-# Footer nav active indicator (dark luxury nav-tab classes)
+# Footer nav active indicator (light Sarabun nav-tab classes)
 script = script.replace(
     """            tabs.forEach(t => {
                 const navBtn = document.getElementById(`nav-${t}`);
@@ -726,7 +726,7 @@ script = re.sub(
 )
 
 index_html = f'''<!DOCTYPE html>
-<html lang="th" class="h-full min-h-full bg-[#0B0D10]">
+<html lang="th" class="h-full min-h-full bg-[#F7F8FA]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -738,24 +738,23 @@ index_html = f'''<!DOCTYPE html>
                 extend: {{
                     colors: {{
                         premium: {{
-                            gold: '#C9A962',
-                            graphite: '#0B0D10',
-                            ivory: '#F5F3EE',
-                            elevated: '#141820',
+                            blue: '#2563EB',
+                            light: '#F7F8FA',
+                            ink: '#1A1D24',
+                            elevated: '#FFFFFF',
                         }},
                     }},
                     fontFamily: {{
-                        display: ['Cormorant Garamond', 'Georgia', 'serif'],
-                        sans: ['Manrope', 'system-ui', 'sans-serif'],
+                        sans: ['Sarabun', 'system-ui', 'sans-serif'],
                     }},
                     borderRadius: {{
                         '4xl': '2rem',
                         '5xl': '2.5rem',
                     }},
                     boxShadow: {{
-                        premium: '0 4px 24px rgba(0, 0, 0, 0.35)',
-                        'premium-lg': '0 20px 60px rgba(0, 0, 0, 0.45), 0 4px 16px rgba(201, 169, 98, 0.08)',
-                        'premium-glow': '0 0 0 2px rgba(201, 169, 98, 0.35), 0 8px 32px rgba(201, 169, 98, 0.2)',
+                        premium: '0 2px 8px rgba(26, 29, 36, 0.06)',
+                        'premium-lg': '0 12px 40px rgba(26, 29, 36, 0.1)',
+                        'premium-glow': '0 0 0 2px rgba(37, 99, 235, 0.25), 0 4px 16px rgba(37, 99, 235, 0.15)',
                     }},
                 }},
                 screens: {{
@@ -771,7 +770,7 @@ index_html = f'''<!DOCTYPE html>
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
 {inline_styles}
