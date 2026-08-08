@@ -1041,7 +1041,29 @@
             <!-- Loaded dynamically by JavaScript -->
         </div>
         <div id="carousel-dots" class="carousel-dots"></div>
+        <div class="flex justify-end">
+            <button id="change-vehicle-btn" type="button" onclick="changeVehiclePick()" class="hidden text-[10px] font-bold text-indigo-600 hover:text-indigo-800 px-2 py-1 rounded-lg hover:bg-indigo-50 transition-colors">
+                <i class="fa-solid fa-arrow-rotate-left mr-1"></i>เปลี่ยนรถ
+            </button>
+        </div>
     </section>
+
+    <div id="vehicle-pick-panel" class="flex-1 flex flex-col items-center justify-center px-5 py-8 text-center">
+        <div class="premium-card p-6 max-w-sm w-full space-y-4">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl">
+                <i class="fa-solid fa-car-side"></i>
+            </div>
+            <div class="space-y-1">
+                <h2 class="text-sm font-bold text-slate-800">เลือกรถก่อนเริ่มใช้งาน</h2>
+                <p class="text-[11px] text-slate-500 leading-relaxed">แตะการ์ดรถด้านบน แล้วกดปุ่มด้านล่างเพื่อเข้าจัดการข้อมูล ไมล์ ซ่อมบำรุง และน้ำมัน</p>
+            </div>
+            <button id="vehicle-pick-confirm-btn" type="button" onclick="confirmVehiclePick()" disabled class="w-full btn-primary py-3 text-xs font-bold opacity-40 cursor-not-allowed">
+                เข้าจัดการข้อมูลรถคันนี้
+            </button>
+        </div>
+    </div>
+
+    <div id="app-workspace" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
 
     <!-- TAB 1: MAINTENANCE PAGE (หน้าบำรุงรักษาและการแจ้งเตือน) -->
     <div id="tab-dashboard" class="tab-content flex-1 overflow-y-auto p-5">
@@ -1441,6 +1463,8 @@
         </button>
         </div>
     </footer>
+
+    </div><!-- /app-workspace -->
 
     </div><!-- /app-main-column -->
 
@@ -2079,6 +2103,104 @@
         let filterLogsTimer = null;
         let gasPendingMutations = 0;
         const _odoCache = new Map();
+        let vehiclePickConfirmed = false;
+        let pendingVehiclePickId = null;
+        const VEHICLE_PICK_SESSION_KEY = 'vehicle_pick_confirmed_v1';
+        const VEHICLE_PICK_ID_KEY = 'vehicle_pick_id_v1';
+
+        function isVehiclePickReady() {
+            return vehiclePickConfirmed && !!state.selectedVehicleId;
+        }
+
+        function requireVehiclePick() {
+            if (isVehiclePickReady()) return true;
+            showToast('กรุณาเลือกรถก่อน', 'warning');
+            updateVehicleGateUi();
+            return false;
+        }
+
+        function updateVehiclePickConfirmBtn() {
+            const btn = document.getElementById('vehicle-pick-confirm-btn');
+            if (!btn) return;
+            const ready = !!pendingVehiclePickId;
+            btn.disabled = !ready;
+            btn.classList.toggle('opacity-40', !ready);
+            btn.classList.toggle('cursor-not-allowed', !ready);
+            if (ready) {
+                const v = state.vehicles.find(function (item) { return item.id === pendingVehiclePickId; });
+                btn.textContent = v ? ('เข้าจัดการ ' + v.name) : 'เข้าจัดการข้อมูลรถคันนี้';
+            } else {
+                btn.textContent = 'เข้าจัดการข้อมูลรถคันนี้';
+            }
+        }
+
+        function updateVehicleGateUi() {
+            const panel = document.getElementById('vehicle-pick-panel');
+            const workspace = document.getElementById('app-workspace');
+            const changeBtn = document.getElementById('change-vehicle-btn');
+            const headerFuelBtn = document.getElementById('header-fuel-btn');
+            const ready = isVehiclePickReady();
+
+            if (panel) panel.classList.toggle('hidden', ready);
+            if (workspace) {
+                workspace.classList.toggle('hidden', !ready);
+                workspace.classList.toggle('flex', ready);
+            }
+            if (changeBtn) changeBtn.classList.toggle('hidden', !ready);
+            if (headerFuelBtn) {
+                headerFuelBtn.classList.toggle('opacity-40', !ready);
+                headerFuelBtn.classList.toggle('pointer-events-none', !ready);
+            }
+            updateVehiclePickConfirmBtn();
+        }
+
+        function pickVehicle(id) {
+            pendingVehiclePickId = id;
+            markVehicleCarouselActive(id);
+            updateVehiclePickConfirmBtn();
+        }
+
+        function onVehicleCardClick(id) {
+            if (isVehiclePickReady()) {
+                state.selectedVehicleId = id;
+                pendingVehiclePickId = id;
+                markVehicleCarouselActive(id);
+                selectVehicle(id, { force: true });
+                try {
+                    sessionStorage.setItem(VEHICLE_PICK_ID_KEY, id);
+                } catch (e) { /* ignore */ }
+                return;
+            }
+            pickVehicle(id);
+        }
+
+        function confirmVehiclePick() {
+            if (!pendingVehiclePickId) {
+                showToast('กรุณาเลือกรถก่อน', 'warning');
+                return;
+            }
+            vehiclePickConfirmed = true;
+            state.selectedVehicleId = pendingVehiclePickId;
+            try {
+                sessionStorage.setItem(VEHICLE_PICK_SESSION_KEY, '1');
+                sessionStorage.setItem(VEHICLE_PICK_ID_KEY, pendingVehiclePickId);
+            } catch (e) { /* ignore */ }
+            updateVehicleGateUi();
+            selectVehicle(pendingVehiclePickId, { force: true });
+            switchTab('dashboard');
+        }
+
+        function changeVehiclePick() {
+            vehiclePickConfirmed = false;
+            pendingVehiclePickId = state.selectedVehicleId || null;
+            try {
+                sessionStorage.removeItem(VEHICLE_PICK_SESSION_KEY);
+            } catch (e) { /* ignore */ }
+            updateVehicleGateUi();
+            if (pendingVehiclePickId) markVehicleCarouselActive(pendingVehiclePickId);
+            switchTab('dashboard');
+            showToast('เลือกรถแล้วกดเข้าจัดการข้อมูล', 'warning');
+        }
 
         function invalidateOdometerCache() {
             _odoCache.clear();
@@ -2101,9 +2223,28 @@
 
             updateGasSyncUi();
 
+            try {
+                vehiclePickConfirmed = sessionStorage.getItem(VEHICLE_PICK_SESSION_KEY) === '1';
+                const savedPickId = sessionStorage.getItem(VEHICLE_PICK_ID_KEY);
+                if (vehiclePickConfirmed && savedPickId) {
+                    pendingVehiclePickId = savedPickId;
+                    state.selectedVehicleId = savedPickId;
+                }
+            } catch (e) {
+                vehiclePickConfirmed = false;
+            }
+
             populateDropdowns();
             renderVehiclesCarousel();
-            selectVehicle(state.selectedVehicleId, { force: true });
+            updateVehicleGateUi();
+
+            if (vehiclePickConfirmed && state.selectedVehicleId) {
+                selectVehicle(state.selectedVehicleId, { force: true });
+            } else {
+                vehiclePickConfirmed = false;
+                pendingVehiclePickId = null;
+            }
+
             initCustomCalendar();
             setDefaultDates();
             registerServiceWorker();
@@ -2644,12 +2785,12 @@
         function renderVehiclesCarousel() {
             const carousel = document.getElementById('vehicles-carousel');
             if (!carousel) return;
-            const selectedId = state.selectedVehicleId;
+            const selectedId = vehiclePickConfirmed ? state.selectedVehicleId : pendingVehiclePickId;
             const cards = state.vehicles.map(function (v) {
                 const isActive = v.id === selectedId;
                 const latestOdo = getLatestOdometer(v.id);
                 return `
-                    <div data-vehicle-id="${v.id}" onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[85vw] max-w-[320px] md:w-auto p-4 rounded-2xl cursor-pointer transition-all duration-300${isActive ? ' vehicle-card--active' : ''}">
+                    <div data-vehicle-id="${v.id}" onclick="onVehicleCardClick('${v.id}')" class="vehicle-card snap-start shrink-0 w-[85vw] max-w-[320px] md:w-auto p-4 rounded-2xl cursor-pointer transition-all duration-300${isActive ? ' vehicle-card--active' : ''}">
                         <div class="vehicle-card-license text-[9px] text-[var(--text-muted)] font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
                         <div class="vehicle-card-name font-semibold text-sm truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
                         <div class="vehicle-card-odo-wrap mt-4 pt-1.5 border-t border-[var(--border-subtle)] text-[10px] flex justify-between items-center font-mono">
@@ -3761,12 +3902,14 @@
         }
 
         function openOdometerModal() {
+            if (!requireVehiclePick()) return;
             document.getElementById('odo-vehicle-select').value = state.selectedVehicleId;
             document.getElementById('odo-mileage-input').value = getLatestOdometer(state.selectedVehicleId) || '';
             openModalPanel('odometer-modal');
         }
 
         function openRepairModal() {
+            if (!requireVehiclePick()) return;
             document.getElementById('rep-vehicle-select').value = state.selectedVehicleId;
             updateOdoPlaceholder(state.selectedVehicleId);
             
@@ -3785,10 +3928,12 @@
         }
 
         function openFuelModal() {
+            if (!requireVehiclePick()) return;
             openFuelModalWithType('oil');
         }
 
         function openFuelFromHeader() {
+            if (!requireVehiclePick()) return;
             openFuelModal();
         }
 
@@ -5096,6 +5241,10 @@
         }
 
         function switchTab(tabId) {
+            if (!isVehiclePickReady() && tabId === 'fuelio') {
+                showToast('กรุณาเลือกรถก่อน', 'warning');
+                return;
+            }
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
 
@@ -5128,6 +5277,7 @@
         }
 
         function handleFabAction() {
+            if (!requireVehiclePick()) return;
             const activeTabEl = document.querySelector('.tab-content:not(.hidden)');
             const activeTab = activeTabEl ? activeTabEl.id : 'tab-dashboard';
             if (activeTab === 'tab-fuelio') {
