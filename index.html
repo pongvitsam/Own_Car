@@ -1624,15 +1624,15 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block font-bold text-slate-500 mb-1">จำนวนลิตร (L)</label>
-                        <input type="number" step="0.01" id="fuel-liters" placeholder="เช่น 45.21" oninput="calculateFuelCostSum()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                        <input type="number" step="0.01" id="fuel-liters" placeholder="เช่น 45.21" oninput="onFuelAddInput('fuel-liters')" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-500 mb-1">บาท / ลิตร</label>
-                        <input type="number" step="0.01" id="fuel-price-liter" placeholder="เช่น 38.45" oninput="calculateFuelCostSum()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                        <input type="number" step="0.01" id="fuel-price-liter" placeholder="เช่น 38.45" oninput="onFuelAddInput('fuel-price-liter')" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-500 mb-1">ยอดเงินรวม (บาท)</label>
-                        <input type="number" step="0.01" id="fuel-total-cost" placeholder="คำนวณให้อัตโนมัติ" class="w-full bg-indigo-50/50 border border-indigo-100 rounded-xl p-2 text-xs font-black text-indigo-950" required>
+                        <input type="number" step="0.01" id="fuel-total-cost" placeholder="คำนวณอัตโนมัติ" oninput="onFuelAddInput('fuel-total-cost')" class="w-full bg-indigo-50/50 border border-indigo-100 rounded-xl p-2 text-xs font-black text-indigo-950" required>
                     </div>
                 </div>
 
@@ -1694,15 +1694,15 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block font-bold text-slate-500 mb-1">ลิตร</label>
-                        <input type="number" step="0.01" id="edit-fuel-liters" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                        <input type="number" step="0.01" id="edit-fuel-liters" oninput="onFuelEditInput('edit-fuel-liters')" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-500 mb-1">บาท/ลิตร</label>
-                        <input type="number" step="0.01" id="edit-fuel-price" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                        <input type="number" step="0.01" id="edit-fuel-price" oninput="onFuelEditInput('edit-fuel-price')" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-500 mb-1">ยอดรวม</label>
-                        <input type="number" step="0.01" id="edit-fuel-total" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
+                        <input type="number" step="0.01" id="edit-fuel-total" oninput="onFuelEditInput('edit-fuel-total')" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold" required>
                     </div>
                 </div>
                 <div>
@@ -2103,7 +2103,7 @@
 
             populateDropdowns();
             renderVehiclesCarousel();
-            selectVehicle(state.selectedVehicleId);
+            selectVehicle(state.selectedVehicleId, { force: true });
             initCustomCalendar();
             setDefaultDates();
             registerServiceWorker();
@@ -3874,17 +3874,65 @@
             document.getElementById('alert-month-offset').disabled = !monthChecked;
         }
 
-        // Calculate Cost sum for Fuel Logging dynamically
-        function calculateFuelCostSum() {
-            const liters = parseFloat(document.getElementById('fuel-liters').value) || 0;
-            const price = parseFloat(document.getElementById('fuel-price-liter').value) || 0;
-            const sumInput = document.getElementById('fuel-total-cost');
-            
-            if (liters > 0 && price > 0) {
-                sumInput.value = (liters * price).toFixed(2);
-            } else {
-                sumInput.value = '';
+        const FUEL_ADD_TRIPLE = {
+            litersId: 'fuel-liters',
+            priceId: 'fuel-price-liter',
+            totalId: 'fuel-total-cost'
+        };
+        const FUEL_EDIT_TRIPLE = {
+            litersId: 'edit-fuel-liters',
+            priceId: 'edit-fuel-price',
+            totalId: 'edit-fuel-total'
+        };
+
+        function parseFuelAmountInput(el) {
+            if (!el) return null;
+            const raw = String(el.value || '').trim();
+            if (raw === '') return null;
+            const value = parseFloat(raw);
+            return Number.isFinite(value) && value > 0 ? value : null;
+        }
+
+        function formatFuelAmount(value) {
+            return (Math.round(value * 100) / 100).toFixed(2);
+        }
+
+        function syncFuelTripleFields(ids, changedFieldId) {
+            const litersEl = document.getElementById(ids.litersId);
+            const priceEl = document.getElementById(ids.priceId);
+            const totalEl = document.getElementById(ids.totalId);
+            if (!litersEl || !priceEl || !totalEl) return;
+
+            const liters = parseFuelAmountInput(litersEl);
+            const price = parseFuelAmountInput(priceEl);
+            const total = parseFuelAmountInput(totalEl);
+
+            const setVal = (el, val) => {
+                el.value = formatFuelAmount(val);
+            };
+
+            if (changedFieldId === ids.litersId) {
+                if (liters != null && price != null) setVal(totalEl, liters * price);
+                else if (liters != null && total != null) setVal(priceEl, total / liters);
+            } else if (changedFieldId === ids.priceId) {
+                if (liters != null && price != null) setVal(totalEl, liters * price);
+                else if (price != null && total != null) setVal(litersEl, total / price);
+            } else if (changedFieldId === ids.totalId) {
+                if (liters != null && total != null) setVal(priceEl, total / liters);
+                else if (price != null && total != null) setVal(litersEl, total / price);
             }
+        }
+
+        function onFuelAddInput(changedFieldId) {
+            syncFuelTripleFields(FUEL_ADD_TRIPLE, changedFieldId);
+        }
+
+        function onFuelEditInput(changedFieldId) {
+            syncFuelTripleFields(FUEL_EDIT_TRIPLE, changedFieldId);
+        }
+
+        function calculateFuelCostSum() {
+            onFuelAddInput('fuel-liters');
         }
 
         // REUSABLE CUSTOM THAI CALENDAR INTERACTIVE POPOVER
