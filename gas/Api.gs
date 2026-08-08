@@ -72,6 +72,15 @@ function getFullSyncState(selectedVehicleId) {
 }
 
 function getFullSyncState_(selectedVehicleId) {
+  try {
+    var cached = CacheService.getScriptCache().get('fullSyncState_v1');
+    if (cached) {
+      var parsed = JSON.parse(cached);
+      parsed.selectedVehicleId = selectedVehicleId || parsed.selectedVehicleId;
+      return parsed;
+    }
+  } catch (e) { /* cache miss */ }
+
   var ss = getSpreadsheet_();
   ensureSheetsOnce_(ss);
   preloadAllSheets_();
@@ -79,7 +88,7 @@ function getFullSyncState_(selectedVehicleId) {
   var vehicles = getVehicles_();
   var selectedId = selectedVehicleId || (vehicles.length ? vehicles[0].id : '');
 
-  return {
+  var state = {
     vehicles: vehicles,
     categories: getCategories_(),
     maintenanceLogs: getMaintenanceLogs_(),
@@ -94,6 +103,12 @@ function getFullSyncState_(selectedVehicleId) {
     syncSource: 'gas',
     syncedAt: getBangkokNow_()
   };
+
+  try {
+    CacheService.getScriptCache().put('fullSyncState_v1', JSON.stringify(state), 45);
+  } catch (e) { /* cache write optional */ }
+
+  return state;
 }
 
 function dispatchApiAction_(action, payload) {

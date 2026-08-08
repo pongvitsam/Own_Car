@@ -411,14 +411,29 @@
             border-radius: var(--radius-2xl);
             transition: all var(--transition-smooth);
             box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-subtle);
+            background: #FFFFFF;
+            color: var(--text-primary);
         }
         .vehicle-card:not(.vehicle-card--active):hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-card);
+            border-color: rgba(37, 99, 235, 0.25);
         }
         .vehicle-card--active {
             box-shadow: var(--shadow-glow) !important;
             transform: scale(1.01);
+            border-color: rgba(37, 99, 235, 0.4) !important;
+            background: linear-gradient(to bottom right, #EFF6FF, #DBEAFE, #BFDBFE) !important;
+        }
+        .vehicle-card--active .vehicle-card-license {
+            color: var(--accent) !important;
+        }
+        .vehicle-card--active .vehicle-card-name {
+            color: var(--text-primary) !important;
+        }
+        .vehicle-card--active .vehicle-card-odo-wrap {
+            border-color: rgba(37, 99, 235, 0.2) !important;
         }
         .bottom-nav-wrap {
             padding: 0.5rem 1rem 0.75rem;
@@ -2059,6 +2074,15 @@
         let searchDebounceTimer = null;
         let adminVehicleEditId = null;
         let reportYearFilterVehicleId = null;
+        const MAINT_LOGS_PAGE_SIZE = 40;
+        let maintenanceLogsRenderLimit = MAINT_LOGS_PAGE_SIZE;
+        let filterLogsTimer = null;
+        let gasPendingMutations = 0;
+        const _odoCache = new Map();
+
+        function invalidateOdometerCache() {
+            _odoCache.clear();
+        }
 
         // App Initializer
         async function initApp() {
@@ -2085,20 +2109,19 @@
             registerServiceWorker();
             maybeRemindBackup();
             switchTab('dashboard');
+            startBackgroundGasSync();
+        }
 
-            if (isGasSyncEnabled()) {
-                try {
-                    await hydrateFromGas();
-                    showToast('โหลดข้อมูลจาก Google Sheet แล้ว');
-                } catch (e) {
-                    console.warn(e);
-                    showToast('ใช้ข้อมูลในเครื่องชั่วคราว: ' + (e.message || e), 'warning');
-                    checkLineAlerts(false);
-                }
-            } else {
+        function startBackgroundGasSync() {
+            if (!isGasSyncEnabled()) {
                 checkLineAlerts(false);
+                return;
             }
             setupGasAutoPull();
+            hydrateFromGas({ silent: true }).catch(function (e) {
+                console.warn('Background Sheet sync failed:', e);
+                checkLineAlerts(false);
+            });
         }
 
         function registerServiceWorker() {
@@ -2306,18 +2329,20 @@
             state.syncedAt = remote.syncedAt || new Date().toISOString();
             if (remote.lineNotifyConfigured != null) state.lineNotifyConfigured = remote.lineNotifyConfigured;
             normalizeVehicleExpiryDates();
+            invalidateOdometerCache();
             saveToLocalStorage();
         }
 
         function refreshUiAfterSync() {
             populateDropdowns();
             renderVehiclesCarousel();
-            if (state.selectedVehicleId) selectVehicle(state.selectedVehicleId);
+            if (state.selectedVehicleId) selectVehicle(state.selectedVehicleId, { force: true });
             renderAdminPanelState();
             updateGasSyncUi();
         }
 
-        async function hydrateFromGas() {
+        async function hydrateFromGas(opts) {
+            opts = opts || {};
             if (!isGasSyncEnabled()) return false;
             updateGasSyncUi();
             const result = await gasCall('getFullSyncState', {
@@ -2328,6 +2353,9 @@
             }
             applyRemoteState(result.state, { keepSelected: true });
             refreshUiAfterSync();
+            if (!opts.silent) {
+                showToast('โหลดข้อมูลจาก Google Sheet แล้ว');
+            }
             return true;
         }
 
@@ -2335,11 +2363,11 @@
         let gasLastPullAt = 0;
 
         async function autoPullFromGas() {
-            if (!isGasSyncEnabled() || gasAutoPullInFlight || document.hidden) return;
-            if (Date.now() - gasLastPullAt < 30000) return;
+            if (!isGasSyncEnabled() || gasAutoPullInFlight || document.hidden || gasPendingMutations > 0) return;
+            if (Date.now() - gasLastPullAt < 90000) return;
             gasAutoPullInFlight = true;
             try {
-                await hydrateFromGas();
+                await hydrateFromGas({ silent: true });
                 gasLastPullAt = Date.now();
             } catch (e) {
                 console.warn('Background Sheet sync failed:', e);
@@ -2356,7 +2384,7 @@
                 if (!document.hidden) autoPullFromGas();
             });
             window.addEventListener('focus', autoPullFromGas);
-            setInterval(autoPullFromGas, 120000);
+            setInterval(autoPullFromGas, 300000);
         }
 
         function restoreGasStateSnapshot(snapshotJson) {
@@ -2385,18 +2413,24 @@
             }
 
             const syncPromise = (async () => {
-                const result = await gasCall(action, payload || {});
-                if (!result || result.success === false) {
-                    throw new Error((result && result.error) || 'บันทึก Sheet ไม่สำเร็จ');
+                gasPendingMutations += 1;
+                try {
+                    const result = await gasCall(action, payload || {});
+                    if (!result || result.success === false) {
+                        throw new Error((result && result.error) || 'บันทึก Sheet ไม่สำเร็จ');
+                    }
+                    if (result.state) {
+                        applyRemoteState(result.state, { keepSelected: true });
+                        refreshUiAfterSync();
+                    } else {
+                        invalidateOdometerCache();
+                        saveToLocalStorage();
+                    }
+                    gasLastPullAt = Date.now();
+                    return result;
+                } finally {
+                    gasPendingMutations = Math.max(0, gasPendingMutations - 1);
                 }
-                if (result.state) {
-                    applyRemoteState(result.state, { keepSelected: true });
-                    refreshUiAfterSync();
-                } else {
-                    saveToLocalStorage();
-                }
-                gasLastPullAt = Date.now();
-                return result;
             })();
 
             try {
@@ -2427,6 +2461,11 @@
         function saveToLocalStorage() {
             localStorage.setItem('myhome_carcare_state_v2.2', JSON.stringify(state));
             localStorage.setItem('myhome_carcare_last_save_ts', String(Date.now()));
+        }
+
+        function touchLocalStateAfterMutation() {
+            invalidateOdometerCache();
+            saveToLocalStorage();
         }
 
         function exportAppBackup() {
@@ -2475,7 +2514,7 @@
                     localStorage.setItem('myhome_carcare_last_backup_ts', String(Date.now()));
                     populateDropdowns();
                     renderVehiclesCarousel();
-                    selectVehicle(state.selectedVehicleId);
+                    selectVehicle(state.selectedVehicleId, { force: true });
                     renderAdminPanelState();
                     updateBackupHint();
                     showToast('นำเข้าข้อมูลสำรองสำเร็จ');
@@ -2604,29 +2643,34 @@
         // Render cars selection inside header carousel
         function renderVehiclesCarousel() {
             const carousel = document.getElementById('vehicles-carousel');
-            carousel.innerHTML = '';
-            
-            state.vehicles.forEach(v => {
-                const isActive = v.id === state.selectedVehicleId;
-                const activeClasses = isActive 
-                    ? 'vehicle-card--active border-[var(--accent)]/40 bg-gradient-to-br from-[#EFF6FF] via-[#DBEAFE] to-[#BFDBFE] text-[var(--text-primary)] ring-2 ring-[var(--accent)]/30' 
-                    : 'border-[var(--border-subtle)] bg-white hover:border-[var(--accent)]/30 text-[var(--text-primary)]';
-
+            if (!carousel) return;
+            const selectedId = state.selectedVehicleId;
+            const cards = state.vehicles.map(function (v) {
+                const isActive = v.id === selectedId;
                 const latestOdo = getLatestOdometer(v.id);
-
-                carousel.innerHTML += `
-                    <div onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[85vw] max-w-[320px] md:w-auto p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${activeClasses}">
-                        <div class="vehicle-card-license text-[9px] ${isActive ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'} font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
+                return `
+                    <div data-vehicle-id="${v.id}" onclick="selectVehicle('${v.id}')" class="vehicle-card snap-start shrink-0 w-[85vw] max-w-[320px] md:w-auto p-4 rounded-2xl cursor-pointer transition-all duration-300${isActive ? ' vehicle-card--active' : ''}">
+                        <div class="vehicle-card-license text-[9px] text-[var(--text-muted)] font-bold uppercase truncate md:whitespace-normal md:overflow-visible"><i class="fa-solid fa-id-card mr-0.5"></i>${v.license}</div>
                         <div class="vehicle-card-name font-semibold text-sm truncate md:whitespace-normal md:overflow-visible mt-0.5 leading-snug">${v.name}</div>
-                        <div class="mt-4 pt-1.5 border-t ${isActive ? 'border-[var(--accent)]/20' : 'border-[var(--border-subtle)]'} text-[10px] flex justify-between items-center font-mono">
-                            <span class="${isActive ? 'text-[var(--text-secondary)]' : 'text-[var(--text-muted)]'}">ไมล์ล่าสุด:</span>
+                        <div class="vehicle-card-odo-wrap mt-4 pt-1.5 border-t border-[var(--border-subtle)] text-[10px] flex justify-between items-center font-mono">
+                            <span class="text-[var(--text-muted)]">ไมล์ล่าสุด:</span>
                             <span class="font-bold text-right text-[var(--accent)]">${latestOdo.toLocaleString()} กม.</span>
                         </div>
                     </div>
                 `;
             });
+            carousel.innerHTML = cards.join('');
             document.getElementById('total-cars-count').textContent = `${state.vehicles.length} คันในบ้าน`;
             updateCarouselDots();
+        }
+
+        function markVehicleCarouselActive(selectedId) {
+            document.querySelectorAll('#vehicles-carousel [data-vehicle-id]').forEach(function (card) {
+                card.classList.toggle('vehicle-card--active', card.dataset.vehicleId === selectedId);
+            });
+            document.querySelectorAll('#carousel-dots .carousel-dot').forEach(function (dot) {
+                dot.classList.toggle('carousel-dot--active', dot.dataset.vehicleId === selectedId);
+            });
         }
 
         function updateCarouselDots() {
@@ -2640,11 +2684,12 @@
         }
 
         function getLatestOdometer(vehicleId) {
-            // Find highest odometer between Maintenance Logs and Fuel Logs
+            if (_odoCache.has(vehicleId)) return _odoCache.get(vehicleId);
             const mainLogs = state.maintenanceLogs.filter(l => l.vehicleId === vehicleId).map(l => l.odo);
             const fuelLogs = state.fuelLogs.filter(l => l.vehicleId === vehicleId).map(l => l.odo);
-            const allOdos = [...mainLogs, ...fuelLogs, 0];
-            return Math.max(...allOdos);
+            const val = Math.max(...mainLogs, ...fuelLogs, 0);
+            _odoCache.set(vehicleId, val);
+            return val;
         }
 
         function getMaxOdometerExcluding(vehicleId, excludeLogId) {
@@ -3036,8 +3081,7 @@
             (async () => {
                 try {
                     await gasMutate('updateVehicle', payload, applyLocal);
-                    if (isGasSyncEnabled()) refreshUiAfterSync();
-                    selectVehicle(id);
+                    selectVehicle(id, { force: true });
                     closeModal('expiry-edit-modal');
                     showToast('บันทึกวันหมดอายุ พรบ./ประกัน สำเร็จ');
                 } catch (err) {
@@ -3046,11 +3090,19 @@
             })();
         }
 
-        function selectVehicle(id) {
+        function selectVehicle(id, opts) {
+            opts = opts || {};
+            if (!id) return;
+            const vehicleChanged = state.selectedVehicleId !== id;
             state.selectedVehicleId = id;
-            renderVehiclesCarousel();
-            
-            const v = state.vehicles.find(v => v.id === id);
+            if (vehicleChanged) {
+                markVehicleCarouselActive(id);
+                maintenanceLogsRenderLimit = MAINT_LOGS_PAGE_SIZE;
+            } else if (!opts.force) {
+                return;
+            }
+
+            const v = state.vehicles.find(function (item) { return item.id === id; });
             if (!v) return;
 
             // Load values for selected tab
@@ -3168,11 +3220,76 @@
             if (clearBtn) clearBtn.classList.add('hidden');
         }
 
+        function buildMaintenanceLogRowHtml(l, vehicleId, latestOdo) {
+            const isMaintenance = l.type === 'Maintenance';
+            const catObj = isMaintenance ? state.categories.find(c => c.id === l.category) : null;
+            const catName = catObj ? catObj.name : 'ไม่ได้จัดหมวดหมู่';
+            const title = isMaintenance ? l.shop : 'อัพเดทเลขไมล์ปัจจุบัน';
+            const costText = isMaintenance
+                ? '฿' + l.cost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                : '-';
+            const alertBits = [];
+            if (isMaintenance && l.alertKm > 0) {
+                const targetKm = Number(l.odo) + Number(l.alertKm);
+                const countdown = getDistanceAlertCountdown({
+                    latestOdo: latestOdo,
+                    baseKm: l.odo,
+                    targetKm,
+                    alertKm: l.alertKm
+                });
+                if (countdown) {
+                    const tone = countdown.overdue || countdown.percentRemaining < 20
+                        ? 'text-rose-600'
+                        : countdown.percentRemaining < 50
+                            ? 'text-amber-600'
+                            : 'text-emerald-700';
+                    alertBits.push(
+                        `<span class="${tone}"><i class="fa-solid fa-road"></i> ${formatKmCountdown(countdown)} · ${countdown.percentRemaining.toFixed(0)}% คงเหลือ</span>`
+                    );
+                    alertBits.push(
+                        `<span class="text-slate-400">เป้า ${targetKm.toLocaleString()} กม. (+${Number(l.alertKm).toLocaleString()})</span>`
+                    );
+                } else {
+                    alertBits.push(`<span><i class="fa-solid fa-road text-[var(--accent)]"></i> +${l.alertKm.toLocaleString()} กม.</span>`);
+                }
+            }
+            if (isMaintenance && l.alertMonth > 0) {
+                alertBits.push(`<span><i class="fa-solid fa-calendar-check text-[var(--accent)]"></i> +${l.alertMonth} เดือน</span>`);
+            }
+            const receiptBtn = l.receipt
+                ? (l.receiptBase64
+                    ? `<button type="button" onclick="viewFullReceipt('${l.receiptBase64}', '${l.receipt}')" class="log-row-icon-btn" title="ดูใบเสร็จ"><img src="${l.receiptBase64}" class="w-5 h-5 object-cover rounded border border-[var(--border-subtle)]" alt=""></button>`
+                    : `<a href="${l.fileLink}" target="_blank" class="log-row-icon-btn" title="เปิดใบเสร็จ"><i class="fa-solid fa-receipt"></i></a>`)
+                : '';
+            return `
+                <div class="log-row group">
+                    <div class="log-row-main">
+                        <div class="log-row-info min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="log-row-badge ${isMaintenance ? 'log-row-badge--accent' : 'log-row-badge--muted'}">${isMaintenance ? catName : 'ไมล์'}</span>
+                                <span class="log-row-date">${formatThaiDate(l.date)}</span>
+                            </div>
+                            <p class="log-row-title truncate" title="${title}">${title}</p>
+                        </div>
+                        <div class="log-row-meta shrink-0">
+                            <div class="log-row-cost ${isMaintenance ? '' : 'log-row-cost--muted'}">${costText}</div>
+                            <div class="log-row-odo">${l.odo.toLocaleString()} กม.</div>
+                        </div>
+                        <div class="log-row-actions shrink-0">
+                            ${receiptBtn}
+                            <button type="button" onclick="openEditLogModal('${l.id}')" class="log-row-icon-btn log-row-icon-btn--edit" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                            <button type="button" onclick="confirmDeleteLog('${l.id}')" class="log-row-icon-btn log-row-icon-btn--delete" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    ${alertBits.length ? `<div class="log-row-extra">${alertBits.join('')}</div>` : ''}
+                </div>
+            `;
+        }
+
         // Render maintenance logs inside first page tab
         function renderLogsHistory(vehicleId, filterKeyword = '') {
             const container = document.getElementById('maintenance-history-logs');
             if (!container) return;
-            container.innerHTML = '';
 
             let logs = state.maintenanceLogs
                 .filter(l => l.vehicleId === vehicleId)
@@ -3203,72 +3320,21 @@
                 return;
             }
 
-            logs.forEach(l => {
-                const isMaintenance = l.type === 'Maintenance';
-                const catObj = isMaintenance ? state.categories.find(c => c.id === l.category) : null;
-                const catName = catObj ? catObj.name : 'ไม่ได้จัดหมวดหมู่';
-                const title = isMaintenance ? l.shop : 'อัพเดทเลขไมล์ปัจจุบัน';
-                const costText = isMaintenance
-                    ? '฿' + l.cost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-                    : '-';
-                const alertBits = [];
-                if (isMaintenance && l.alertKm > 0) {
-                    const targetKm = Number(l.odo) + Number(l.alertKm);
-                    const countdown = getDistanceAlertCountdown({
-                        latestOdo: getLatestOdometer(vehicleId),
-                        baseKm: l.odo,
-                        targetKm,
-                        alertKm: l.alertKm
-                    });
-                    if (countdown) {
-                        const tone = countdown.overdue || countdown.percentRemaining < 20
-                            ? 'text-rose-600'
-                            : countdown.percentRemaining < 50
-                                ? 'text-amber-600'
-                                : 'text-emerald-700';
-                        alertBits.push(
-                            `<span class="${tone}"><i class="fa-solid fa-road"></i> ${formatKmCountdown(countdown)} · ${countdown.percentRemaining.toFixed(0)}% คงเหลือ</span>`
-                        );
-                        alertBits.push(
-                            `<span class="text-slate-400">เป้า ${targetKm.toLocaleString()} กม. (+${Number(l.alertKm).toLocaleString()})</span>`
-                        );
-                    } else {
-                        alertBits.push(`<span><i class="fa-solid fa-road text-[var(--accent)]"></i> +${l.alertKm.toLocaleString()} กม.</span>`);
-                    }
-                }
-                if (isMaintenance && l.alertMonth > 0) {
-                    alertBits.push(`<span><i class="fa-solid fa-calendar-check text-[var(--accent)]"></i> +${l.alertMonth} เดือน</span>`);
-                }
-                const receiptBtn = l.receipt
-                    ? (l.receiptBase64
-                        ? `<button type="button" onclick="viewFullReceipt('${l.receiptBase64}', '${l.receipt}')" class="log-row-icon-btn" title="ดูใบเสร็จ"><img src="${l.receiptBase64}" class="w-5 h-5 object-cover rounded border border-[var(--border-subtle)]" alt=""></button>`
-                        : `<a href="${l.fileLink}" target="_blank" class="log-row-icon-btn" title="เปิดใบเสร็จ"><i class="fa-solid fa-receipt"></i></a>`)
-                    : '';
+            const latestOdo = getLatestOdometer(vehicleId);
+            const visibleLogs = logs.slice(0, maintenanceLogsRenderLimit);
+            const rowsHtml = visibleLogs.map(function (l) {
+                return buildMaintenanceLogRowHtml(l, vehicleId, latestOdo);
+            }).join('');
+            const moreHtml = logs.length > visibleLogs.length
+                ? `<button type="button" onclick="loadMoreMaintenanceLogs()" class="w-full mt-2 py-2.5 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-indigo-700 hover:bg-indigo-50">แสดงเพิ่ม (${visibleLogs.length}/${logs.length})</button>`
+                : '';
+            container.innerHTML = rowsHtml + moreHtml;
+        }
 
-                container.innerHTML += `
-                    <div class="log-row group">
-                        <div class="log-row-main">
-                            <div class="log-row-info min-w-0 flex-1">
-                                <div class="flex items-center gap-1.5 min-w-0">
-                                    <span class="log-row-badge ${isMaintenance ? 'log-row-badge--accent' : 'log-row-badge--muted'}">${isMaintenance ? catName : 'ไมล์'}</span>
-                                    <span class="log-row-date">${formatThaiDate(l.date)}</span>
-                                </div>
-                                <p class="log-row-title truncate" title="${title}">${title}</p>
-                            </div>
-                            <div class="log-row-meta shrink-0">
-                                <div class="log-row-cost ${isMaintenance ? '' : 'log-row-cost--muted'}">${costText}</div>
-                                <div class="log-row-odo">${l.odo.toLocaleString()} กม.</div>
-                            </div>
-                            <div class="log-row-actions shrink-0">
-                                ${receiptBtn}
-                                <button type="button" onclick="openEditLogModal('${l.id}')" class="log-row-icon-btn log-row-icon-btn--edit" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
-                                <button type="button" onclick="confirmDeleteLog('${l.id}')" class="log-row-icon-btn log-row-icon-btn--delete" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
-                            </div>
-                        </div>
-                        ${alertBits.length ? `<div class="log-row-extra">${alertBits.join('')}</div>` : ''}
-                    </div>
-                `;
-            });
+        function loadMoreMaintenanceLogs() {
+            maintenanceLogsRenderLimit += MAINT_LOGS_PAGE_SIZE;
+            const searchVal = document.getElementById('log-search-input')?.value || '';
+            renderLogsHistory(state.selectedVehicleId, searchVal);
         }
 
         // Search Filter for History (debounced 300ms)
@@ -3636,7 +3702,6 @@
             (async () => {
                 try {
                     await gasMutate('saveFuelLog', payload, applyLocal);
-                    if (isGasSyncEnabled()) refreshUiAfterSync();
                     closeModal('edit-fuel-modal');
                     showToast('แก้ไขบันทึกเติมเชื้อเพลิงแล้ว');
                     renderFuelLogs();
@@ -4044,10 +4109,9 @@
 
             try {
                 await gasMutate('saveOdometerOnly', { id: newLog.id, vehicleId: vId, odo: odoVal }, applyLocal);
-                if (isGasSyncEnabled()) refreshUiAfterSync();
                 closeModal('odometer-modal');
                 showToast("อัพเดทเลขไมล์ปัจจุบันเรียบร้อยแล้ว");
-                selectVehicle(vId);
+                selectVehicle(vId, { force: true });
                 renderReports();
                 if (!isGasSyncEnabled()) checkLineAlerts(true);
             } catch (err) {
@@ -4166,7 +4230,6 @@
 
             try {
                 await gasMutate('saveMaintenanceLog', gasPayload, applyLocal);
-                if (isGasSyncEnabled()) refreshUiAfterSync();
                 closeModal('repair-modal');
                 showToast(odoVal > lastOdo
                     ? `บันทึกการซ่อมบำรุงเรียบร้อย — อัพเดทเลขไมล์เป็น ${odoVal.toLocaleString()} กม.`
@@ -4179,7 +4242,7 @@
                 `;
                 toggleAlertInputs();
                 setDefaultDates();
-                selectVehicle(vId);
+                selectVehicle(vId, { force: true });
                 renderReports();
             } catch (err) {
                 showToast(String(err.message || err), 'error');
@@ -4227,7 +4290,6 @@
 
             try {
                 await gasMutate('saveFuelLog', newFuelEntry, applyLocal);
-                if (isGasSyncEnabled()) refreshUiAfterSync();
                 closeModal('fuel-modal');
                 const segment = computeFuelSegmentAfterSave(vId, newFuelEntry.id);
                 const typeLabelText = fuelType === 'gas' ? 'แก๊ส' : 'น้ำมัน';
@@ -4236,7 +4298,7 @@
                 } else {
                     showToast(`บันทึก${typeLabelText} ${liters.toFixed(1)} ล. เรียบร้อย — ดูสรุปที่แท็บน้ำมัน`);
                 }
-                selectVehicle(vId);
+                selectVehicle(vId, { force: true });
                 switchTab('fuelio');
             } catch (err) {
                 showToast(String(err.message || err), 'error');
@@ -4251,7 +4313,6 @@
             };
             try {
                 await gasMutate('deleteFuelLog', { id: id, selectedVehicleId: state.selectedVehicleId }, applyLocal);
-                if (isGasSyncEnabled()) refreshUiAfterSync();
                 showToast("ลบบันทึกเติมน้ำมันสำเร็จ", "warning");
                 renderFuelLogs();
             } catch (err) {
@@ -4636,12 +4697,11 @@
                 try {
                     await gasMutate('updateVehicle', payload, applyLocal);
                     adminVehicleEditId = null;
-                    if (isGasSyncEnabled()) refreshUiAfterSync();
                     else {
                         renderAdminVehicles();
                         populateDropdowns();
                         renderVehiclesCarousel();
-                        if (state.selectedVehicleId === id) selectVehicle(id);
+                        if (state.selectedVehicleId === id) selectVehicle(id, { force: true });
                     }
                     showToast('บันทึกข้อมูลรถสำเร็จ');
                 } catch (err) {
@@ -4697,7 +4757,6 @@
                     document.getElementById('add-car-license').value = '';
                     setThaiDatePicker('add-car-prb-expiry', 'add-car-prb-expiry-text', '');
                     setThaiDatePicker('add-car-insurance-expiry', 'add-car-insurance-expiry-text', '');
-                    if (isGasSyncEnabled()) refreshUiAfterSync();
                     else {
                         renderAdminVehicles();
                         populateDropdowns();
@@ -4726,12 +4785,11 @@
             (async () => {
                 try {
                     await gasMutate('deleteVehicle', { id: id }, applyLocal);
-                    if (isGasSyncEnabled()) refreshUiAfterSync();
                     else {
                         renderAdminVehicles();
                         populateDropdowns();
                         renderVehiclesCarousel();
-                        selectVehicle(state.selectedVehicleId);
+                        selectVehicle(state.selectedVehicleId, { force: true });
                     }
                     showToast("ลบรถสำเร็จ");
                 } catch (err) {
@@ -4774,7 +4832,6 @@
                 try {
                     await gasMutate('addCategory', { id: newId, name: name, selectedVehicleId: state.selectedVehicleId }, applyLocal);
                     document.getElementById('add-cat-name').value = '';
-                    if (isGasSyncEnabled()) refreshUiAfterSync();
                     else {
                         renderAdminCategories();
                         populateDropdowns();
@@ -4798,7 +4855,6 @@
             (async () => {
                 try {
                     await gasMutate('deleteCategory', { id: id, selectedVehicleId: state.selectedVehicleId }, applyLocal);
-                    if (isGasSyncEnabled()) refreshUiAfterSync();
                     else {
                         renderAdminCategories();
                         populateDropdowns();
@@ -4852,9 +4908,8 @@
             (async () => {
                 try {
                     await gasMutate('deleteMaintenanceLog', { id: logId, selectedVehicleId: state.selectedVehicleId }, applyLocal);
-                    if (isGasSyncEnabled()) refreshUiAfterSync();
                     showToast('ลบรายการออกจากบันทึกสำเร็จ', 'warning');
-                    selectVehicle(state.selectedVehicleId);
+                    selectVehicle(state.selectedVehicleId, { force: true });
                     renderReports();
                 } catch (err) {
                     showToast(String(err.message || err), 'error');
@@ -4903,10 +4958,9 @@
 
             try {
                 await gasMutate('saveEditedLog', payload, applyLocal);
-                if (isGasSyncEnabled()) refreshUiAfterSync();
                 closeModal('edit-log-modal');
                 showToast("แก้ไขข้อมูลการซ่อมบำรุงสำเร็จ");
-                selectVehicle(state.selectedVehicleId);
+                selectVehicle(state.selectedVehicleId, { force: true });
                 renderReports();
             } catch (err) {
                 showToast(String(err.message || err), 'error');
@@ -4922,10 +4976,9 @@
             };
             try {
                 await gasMutate('deleteMaintenanceLog', { id: logId, selectedVehicleId: state.selectedVehicleId }, applyLocal);
-                if (isGasSyncEnabled()) refreshUiAfterSync();
                 closeModal('edit-log-modal');
                 showToast("ลบรายการออกจากบันทึกสำเร็จ", "warning");
-                selectVehicle(state.selectedVehicleId);
+                selectVehicle(state.selectedVehicleId, { force: true });
                 renderReports();
             } catch (err) {
                 showToast(String(err.message || err), 'error');
@@ -5005,7 +5058,7 @@
             updateHeaderFuelBtn(tabId);
 
             if (tabId === 'dashboard') {
-                selectVehicle(state.selectedVehicleId);
+                selectVehicle(state.selectedVehicleId, { force: true });
             } else if (tabId === 'fuelio') {
                 renderFuelLogs();
             } else if (tabId === 'admin') {

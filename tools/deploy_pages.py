@@ -24,6 +24,7 @@ TRACKED = [
     'gas/Odometer.gs',
     'gas/Categories.gs',
     'gas/Api.gs',
+    'gas/Sheets.gs',
     'gas/Bridge.html',
     'gas/Code.gs',
     'gas/README.md',

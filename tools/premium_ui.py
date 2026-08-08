@@ -358,14 +358,29 @@ PREMIUM_INLINE_STYLES = """
             border-radius: var(--radius-2xl);
             transition: all var(--transition-smooth);
             box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-subtle);
+            background: #FFFFFF;
+            color: var(--text-primary);
         }
         .vehicle-card:not(.vehicle-card--active):hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-card);
+            border-color: rgba(37, 99, 235, 0.25);
         }
         .vehicle-card--active {
             box-shadow: var(--shadow-glow) !important;
             transform: scale(1.01);
+            border-color: rgba(37, 99, 235, 0.4) !important;
+            background: linear-gradient(to bottom right, #EFF6FF, #DBEAFE, #BFDBFE) !important;
+        }
+        .vehicle-card--active .vehicle-card-license {
+            color: var(--accent) !important;
+        }
+        .vehicle-card--active .vehicle-card-name {
+            color: var(--text-primary) !important;
+        }
+        .vehicle-card--active .vehicle-card-odo-wrap {
+            border-color: rgba(37, 99, 235, 0.2) !important;
         }
         .bottom-nav-wrap {
             padding: 0.5rem 1rem 0.75rem;

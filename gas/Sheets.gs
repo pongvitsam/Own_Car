@@ -25,6 +25,7 @@ function invalidateExecCache_(sheetName) {
 
 function invalidateAppStateCache_() {
   try {
+    CacheService.getScriptCache().remove('fullSyncState_v1');
     CacheService.getScriptCache().removeAll(
       CacheService.getScriptCache().getKeys().filter(function (k) {
         return k.indexOf(APP_STATE_CACHE_PREFIX_) === 0;
