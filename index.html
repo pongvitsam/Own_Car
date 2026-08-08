@@ -5255,7 +5255,7 @@
             updateHeaderFuelBtn(tabId);
 
             if (tabId === 'dashboard') {
-                selectVehicle(state.selectedVehicleId, { force: true });
+                if (isVehiclePickReady()) selectVehicle(state.selectedVehicleId, { force: true });
             } else if (tabId === 'fuelio') {
                 renderFuelLogs();
             } else if (tabId === 'admin') {
