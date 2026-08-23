@@ -1211,7 +1211,11 @@
                 }
             } else {
                 vehiclePickConfirmed = false;
-                pendingVehiclePickId = null;
+                if (state.vehicles.length) {
+                    pendingVehiclePickId = state.vehicles[0].id;
+                } else {
+                    pendingVehiclePickId = null;
+                }
             }
 
             initCustomCalendar();
