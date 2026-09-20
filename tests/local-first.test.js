@@ -97,6 +97,8 @@ describe('built app script', () => {
     assert.doesNotMatch(html, /vehiclePickConfirmed = !!pickMemory\.confirmed/);
     assert.match(html, /vehiclePickConfirmed = false;/);
     assert.match(html, /กรุณาเลือกรถก่อน/);
+    assert.doesNotMatch(html, /w-\[85vw\]/);
+    assert.match(html, /header-bar/);
   });
 
   it('ships a multi-device installable PWA', () => {

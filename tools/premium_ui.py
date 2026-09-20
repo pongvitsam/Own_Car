@@ -30,22 +30,28 @@ PREMIUM_INLINE_STYLES = """
         html {
             -webkit-text-size-adjust: 100%;
             width: 100%;
+            max-width: 100%;
             min-height: 100vh;
             min-height: 100dvh;
             margin: 0;
             padding: 0;
             background: var(--bg-base);
+            overflow-x: clip;
+            box-sizing: border-box;
         }
+        *, *::before, *::after { box-sizing: inherit; }
         body {
             font-family: system-ui, 'Leelawadee UI', 'Sarabun', sans-serif;
             letter-spacing: 0.01em;
             color: var(--text-primary);
             width: 100%;
+            max-width: 100%;
             min-height: 100vh;
             min-height: 100dvh;
             margin: 0;
             padding: 0;
             background: transparent;
+            overflow-x: clip;
         }
         .font-display {
             font-family: system-ui, 'Leelawadee UI', 'Sarabun', sans-serif;
@@ -270,7 +276,8 @@ PREMIUM_INLINE_STYLES = """
         }
         @media (min-width: 1024px) {
             .app-shell {
-                max-width: 72rem;
+                width: calc(100% - 2rem);
+                max-width: 64rem;
                 margin: 1rem auto;
                 border-radius: var(--radius-3xl);
                 overflow: hidden;
@@ -292,11 +299,20 @@ PREMIUM_INLINE_STYLES = """
             border-bottom: 1px solid var(--border-medium);
             box-shadow: 0 1px 3px rgba(26, 29, 36, 0.06);
         }
+        .header-bar {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 0.5rem;
+        }
         .header-fuel-btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.375rem;
+            width: 100%;
+            max-width: 16.5rem;
+            justify-self: center;
             min-height: 2.75rem;
             padding: 0.5rem 0.75rem;
             border-radius: var(--radius-xl);
@@ -306,6 +322,9 @@ PREMIUM_INLINE_STYLES = """
             box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
             transition: all var(--transition-smooth);
             cursor: pointer;
+        }
+        @media (max-width: 639px) {
+            .header-fuel-btn { max-width: none; }
         }
         .header-fuel-btn:hover {
             box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
@@ -355,6 +374,9 @@ PREMIUM_INLINE_STYLES = """
             opacity: 0.6;
         }
         .vehicle-card {
+            flex: 0 0 min(78%, 18rem);
+            width: min(78%, 18rem);
+            max-width: 100%;
             border-radius: var(--radius-2xl);
             transition: all var(--transition-smooth);
             box-shadow: var(--shadow-soft);
@@ -735,7 +757,11 @@ PREMIUM_INLINE_STYLES = """
             border-radius: var(--radius-2xl) !important;
             box-shadow: var(--shadow-lift);
             border: 1px solid var(--border-medium);
+            width: 100%;
+            max-width: 28rem;
+            box-sizing: border-box;
             max-height: min(90dvh, 100%);
+            overflow-x: hidden;
             overflow-y: auto;
             overscroll-behavior: contain;
             -webkit-overflow-scrolling: touch;
@@ -888,32 +914,88 @@ PREMIUM_INLINE_STYLES = """
             scroll-snap-type: x mandatory;
         }
         #vehicles-carousel > * { scroll-snap-align: start; }
+        .dashboard-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .dashboard-grid.space-y-5 > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0 !important;
+        }
+        #vehicle-pick-panel .premium-card {
+            width: 100%;
+            max-width: 28rem;
+        }
+        #repair-form .grid.grid-cols-2,
+        #fuel-form .grid.grid-cols-2,
+        #odometer-form .grid.grid-cols-2,
+        #admin-unlocked-container .grid.grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        #fuel-form .grid.grid-cols-3,
+        #edit-fuel-modal .grid.grid-cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        #repair-form .grid > *,
+        #fuel-form .grid > *,
+        #edit-fuel-modal .grid > *,
+        #admin-unlocked-container .grid > * {
+            min-width: 0;
+        }
+        #repair-form input,
+        #repair-form select,
+        #repair-form button,
+        #fuel-form input,
+        #fuel-form select,
+        #fuel-form button,
+        #edit-fuel-modal input,
+        #edit-fuel-modal select,
+        #edit-fuel-modal button {
+            max-width: 100%;
+            min-width: 0;
+        }
+        @media (max-width: 430px) {
+            #repair-form .grid.grid-cols-2,
+            #fuel-form .grid.grid-cols-2,
+            #fuel-form .grid.grid-cols-3,
+            #edit-fuel-modal .grid.grid-cols-3,
+            #admin-unlocked-container .grid.grid-cols-2 {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
         @media (min-width: 768px) {
             #vehicles-carousel {
                 display: grid !important;
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
                 overflow: visible !important;
                 scroll-snap-type: none;
                 padding-bottom: 0;
                 gap: 0.875rem;
             }
+            #vehicles-carousel .vehicle-card {
+                flex: none;
+                width: 100%;
+                max-width: none;
+            }
             .carousel-dots { display: none; }
+            #vehicle-pick-panel .premium-card { max-width: 44rem; }
+            #vehicle-pick-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+                gap: 0.75rem;
+            }
         }
-        @media (min-width: 1024px) {
-            #vehicles-carousel { grid-template-columns: repeat(3, 1fr); }
+        @media (min-width: 1100px) {
             .dashboard-grid {
                 display: grid;
                 grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-                gap: 1.5rem 2rem;
-                align-items: start;
+                gap: 1.5rem;
+                align-items: stretch;
             }
-            .dashboard-grid > section { margin-bottom: 0 !important; }
+            .dashboard-grid > section { margin-top: 0 !important; margin-bottom: 0 !important; }
             .dashboard-span-full {
                 grid-column: 1 / -1;
             }
-        }
-        @media (min-width: 1280px) {
-            #vehicles-carousel { grid-template-columns: repeat(4, 1fr); }
         }
         @keyframes fade-in {
             from { opacity: 0; transform: translateY(6px); }
@@ -932,6 +1014,7 @@ PREMIUM_INLINE_STYLES = """
         html.carcare-picking #header-fuel-btn,
         html.carcare-picking #header-ops,
         html.carcare-picking #fab-primary { display: none !important; }
+        html.carcare-picking .header-bar { grid-template-columns: 1fr; }
         #app-login-screen {
             position: fixed;
             inset: 0;
@@ -945,6 +1028,7 @@ PREMIUM_INLINE_STYLES = """
         }
         .pwa-install-banner {
             padding: 0 1rem 0.35rem;
+            flex-shrink: 0;
         }
         .pwa-install-card {
             display: flex;
@@ -994,7 +1078,11 @@ BODY_REPLACEMENTS = [
 
 SCRIPT_REPLACEMENTS = [
     ('vehicle-card snap-start shrink-0 w-[150px] md:w-auto p-3.5 rounded-2xl border cursor-pointer transition-all duration-300',
-     'vehicle-card snap-start shrink-0 w-[85vw] max-w-[320px] md:w-auto p-4 rounded-2xl border cursor-pointer transition-all duration-300'),
+     'vehicle-card snap-start shrink-0 p-4 rounded-2xl cursor-pointer transition-all duration-300'),
+    ('vehicle-card snap-start shrink-0 w-[85vw] max-w-[320px] md:w-auto p-4 rounded-2xl cursor-pointer transition-all duration-300',
+     'vehicle-card snap-start shrink-0 p-4 rounded-2xl cursor-pointer transition-all duration-300'),
+    ('vehicle-card snap-start shrink-0 w-[85vw] max-w-[320px] md:w-auto p-4 rounded-2xl border cursor-pointer transition-all duration-300',
+     'vehicle-card snap-start shrink-0 p-4 rounded-2xl cursor-pointer transition-all duration-300'),
     ("? 'vehicle-card vehicle-card--active border-indigo-400/50 bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 text-white ring-2 ring-indigo-400/40' ",
      "? 'vehicle-card vehicle-card--active border-[var(--accent)]/40 bg-gradient-to-br from-[#EFF6FF] via-[#DBEAFE] to-[#BFDBFE] text-[var(--text-primary)] ring-2 ring-[var(--accent)]/30' "),
     ("? 'vehicle-card--active border-[var(--accent)]/40 bg-gradient-to-br from-[#1A1F2A] via-[#141820] to-[#0B0D10] text-[var(--text-primary)] ring-2 ring-[var(--accent)]/30' ",
