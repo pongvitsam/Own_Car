@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="th" class="h-full bg-[#F7F8FA]">
+<html lang="th" class="h-full bg-[#F7F8FA] carcare-picking">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -12,6 +12,11 @@
         .font-display { font-family: system-ui, 'Leelawadee UI', 'Sarabun', sans-serif; }
         html:not(.carcare-authed) #app-main { display: none !important; }
         html.carcare-authed #app-login-screen { display: none !important; }
+        html.carcare-picking .vehicle-strip,
+        html.carcare-picking .bottom-nav-wrap,
+        html.carcare-picking #header-fuel-btn,
+        html.carcare-picking #header-ops,
+        html.carcare-picking #fab-primary { display: none !important; }
     </style>
 </head>
 <body class="min-h-dvh bg-[var(--bg-base)]">
@@ -64,7 +69,7 @@
                 <i class="fa-solid fa-gas-pump text-sm shrink-0"></i>
                 <span class="truncate font-bold text-xs">บันทึกน้ำมัน</span>
             </button>
-            <div class="flex items-center gap-1 shrink-0">
+            <div id="header-ops" class="flex items-center gap-1 shrink-0">
                 <button type="button" onclick="checkLineAlerts(true)" class="btn-emerald text-[10px] text-white font-bold p-2.5 rounded-xl flex items-center justify-center transition-all active:scale-95" title="ตรวจสภาพด่วน">
                     <i class="fa-brands fa-line text-sm"></i>
                     <span class="sr-only">ตรวจสภาพด่วน</span>
@@ -118,16 +123,19 @@
             </div>
             <div class="space-y-1">
                 <h2 class="text-sm font-bold text-slate-800">เลือกรถก่อนเริ่มใช้งาน</h2>
-                <p class="text-[11px] text-slate-500 leading-relaxed">แตะรถคันที่ต้องการเพื่อเข้าใช้งานทันที ไม่ต้องรอโหลดข้อมูล</p>
+                <p class="text-[11px] text-slate-500 leading-relaxed">แตะรถคันที่ต้องการก่อน จึงจะบันทึกซ่อม น้ำมัน หรือเปิดแอดมินได้</p>
             </div>
             <div id="vehicle-pick-loading" class="hidden text-[11px] text-indigo-600 font-bold py-6">
                 <i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังโหลดรายการรถ...
             </div>
             <div id="vehicle-pick-list" class="grid grid-cols-1 gap-2 w-full text-left"></div>
             <div id="vehicle-pick-empty" class="hidden space-y-3 text-[11px] text-slate-500">
-                <p>ยังไม่พบรถในระบบ — ลองซิงค์ข้อมูลหรือไปเพิ่มรถที่แท็บแอดมิน</p>
+                <p>ยังไม่พบรถในระบบ — ซิงค์ข้อมูลหรือเพิ่มรถที่แอดมินก่อน แล้วค่อยเลือกรถคันที่จะใช้งาน</p>
                 <button type="button" onclick="retryVehicleLoad()" class="w-full py-2.5 rounded-xl border border-indigo-200 text-indigo-700 font-bold bg-indigo-50 hover:bg-indigo-100 transition-colors">
                     <i class="fa-solid fa-rotate mr-1"></i> โหลดข้อมูลอีกครั้ง
+                </button>
+                <button type="button" onclick="openAdminToAddVehicle()" class="w-full py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold bg-white hover:bg-slate-50 transition-colors">
+                    <i class="fa-solid fa-users-gear mr-1"></i> ไปเพิ่มรถที่แอดมิน
                 </button>
             </div>
             <button id="vehicle-pick-confirm-btn" type="button" onclick="confirmVehiclePick()" disabled class="w-full btn-primary py-3 text-xs font-bold opacity-40 cursor-not-allowed">
@@ -1277,11 +1285,24 @@
             return vehiclePickConfirmed && !!state.selectedVehicleId;
         }
 
+        function canOpenAppWithoutVehicle() {
+            return !Array.isArray(state.vehicles) || state.vehicles.length === 0;
+        }
+
         function requireVehiclePick() {
             if (isVehiclePickReady()) return true;
             showToast('กรุณาเลือกรถก่อน', 'warning');
             updateVehicleGateUi();
             return false;
+        }
+
+        function openAdminToAddVehicle() {
+            if (!canOpenAppWithoutVehicle()) {
+                showToast('กรุณาเลือกรถก่อน', 'warning');
+                updateVehicleGateUi();
+                return;
+            }
+            switchTab('admin');
         }
 
         function updateVehiclePickConfirmBtn() {
@@ -1354,9 +1375,11 @@
             const changeBtn = document.getElementById('change-vehicle-btn');
             const headerFuelBtn = document.getElementById('header-fuel-btn');
             const ready = isVehiclePickReady();
+            document.documentElement.classList.toggle('carcare-vehicle-ready', ready);
+            document.documentElement.classList.toggle('carcare-picking', !ready);
             const adminTab = document.getElementById('tab-admin');
             const adminActive = adminTab && !adminTab.classList.contains('hidden');
-            const showWorkspace = ready || adminActive;
+            const showWorkspace = ready || (canOpenAppWithoutVehicle() && adminActive);
 
             if (panel) panel.classList.toggle('hidden', showWorkspace);
             if (workspace) {
@@ -1455,36 +1478,12 @@
 
             updateGasSyncUi();
 
-            const pickMemory = readVehiclePickMemory();
-            vehiclePickConfirmed = !!pickMemory.confirmed;
-            if (vehiclePickConfirmed && pickMemory.id) {
-                pendingVehiclePickId = pickMemory.id;
-                state.selectedVehicleId = pickMemory.id;
-            }
+            vehiclePickConfirmed = false;
+            pendingVehiclePickId = null;
+            clearVehiclePickMemory();
 
             renderVehiclesCarousel();
             updateVehicleGateUi();
-
-            if (vehiclePickConfirmed && state.selectedVehicleId) {
-                const stillExists = state.vehicles.some(function (v) { return v.id === state.selectedVehicleId; });
-                if (stillExists) {
-                    selectVehicle(state.selectedVehicleId, { force: true });
-                } else {
-                    vehiclePickConfirmed = false;
-                    pendingVehiclePickId = state.vehicles.length ? state.vehicles[0].id : null;
-                    clearVehiclePickMemory();
-                    updateVehicleGateUi();
-                }
-            } else {
-                vehiclePickConfirmed = false;
-                pendingVehiclePickId = state.vehicles.length ? state.vehicles[0].id : null;
-            }
-
-            if (isVehiclePickReady()) {
-                switchTab('dashboard', { skipRefresh: true });
-            } else {
-                updateVehicleGateUi();
-            }
             runWhenIdle(loadDeferredAssets, 1);
             registerServiceWorker();
             setupPwaInstall();
@@ -2009,7 +2008,9 @@
                     localStorage.setItem('myhome_carcare_last_backup_ts', String(Date.now()));
                     populateDropdowns();
                     renderVehiclesCarousel();
-                    selectVehicle(state.selectedVehicleId, { force: true });
+                    vehiclePickConfirmed = false;
+                    pendingVehiclePickId = null;
+                    updateVehicleGateUi();
                     renderAdminPanelState();
                     updateBackupHint();
                     showToast('นำเข้าข้อมูลสำรองสำเร็จ');
@@ -3648,6 +3649,7 @@
 
         // Show LINE API logs modal
         function showLineLogs() {
+            if (!requireVehiclePick()) return;
             const logConsole = document.getElementById('line-api-console-log');
             if (logConsole) {
                 logConsole.innerHTML = (state.lineLogs || []).map(function (log) {
@@ -4085,6 +4087,7 @@
 
         // Check Line Alerts Simulator / GAS
         async function checkLineAlerts(isManual = false) {
+            if (isManual && !requireVehiclePick()) return;
             ensureStateShape();
             if (isManual) {
                 state.lineLogs.push(`⚡ [${new Date().toLocaleTimeString()}] สแกนระยะซ่อมบำรุง...`);
@@ -4540,7 +4543,13 @@
                     renderAdminVehicles();
                     populateDropdowns();
                     renderVehiclesCarousel();
-                    showToast("เพิ่มข้อมูลรถยนต์คันใหม่สำเร็จ");
+                    if (!isVehiclePickReady()) {
+                        pendingVehiclePickId = newId;
+                        updateVehicleGateUi();
+                        showToast('เพิ่มรถแล้ว — แตะคันที่ต้องการเพื่อเข้าใช้งาน');
+                    } else {
+                        showToast("เพิ่มข้อมูลรถยนต์คันใหม่สำเร็จ");
+                    }
                 } catch (err) {
                     showToast(String(err.message || err), 'error');
                 }
@@ -4859,7 +4868,7 @@
 
         function switchTab(tabId, opts) {
             opts = opts || {};
-            if (!isVehiclePickReady() && tabId !== 'admin') {
+            if (!isVehiclePickReady() && !(tabId === 'admin' && canOpenAppWithoutVehicle())) {
                 if (!opts.silent) showToast('กรุณาเลือกรถก่อน', 'warning');
                 updateVehicleGateUi();
                 return;

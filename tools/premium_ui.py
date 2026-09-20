@@ -927,6 +927,11 @@ PREMIUM_INLINE_STYLES = """
         #loading-overlay.hidden { display: none !important; }
         html:not(.carcare-authed) #app-main { display: none !important; }
         html.carcare-authed #app-login-screen { display: none !important; }
+        html.carcare-picking .vehicle-strip,
+        html.carcare-picking .bottom-nav-wrap,
+        html.carcare-picking #header-fuel-btn,
+        html.carcare-picking #header-ops,
+        html.carcare-picking #fab-primary { display: none !important; }
         #app-login-screen {
             position: fixed;
             inset: 0;

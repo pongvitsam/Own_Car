@@ -88,6 +88,17 @@ describe('built app script', () => {
     assert.match(html, /carcare-authed/);
   });
 
+  it('requires choosing a vehicle before any workspace action', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../mockup/MyHome-CarCare-v1.8.html'), 'utf8');
+    assert.match(html, /carcare-picking/);
+    assert.match(html, /function canOpenAppWithoutVehicle/);
+    assert.match(html, /tabId === 'admin' && canOpenAppWithoutVehicle\(\)/);
+    assert.doesNotMatch(html, /showWorkspace = ready \|\| adminActive/);
+    assert.doesNotMatch(html, /vehiclePickConfirmed = !!pickMemory\.confirmed/);
+    assert.match(html, /vehiclePickConfirmed = false;/);
+    assert.match(html, /กรุณาเลือกรถก่อน/);
+  });
+
   it('ships a multi-device installable PWA', () => {
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     const manifest = fs.readFileSync(path.join(__dirname, '../manifest.webmanifest'), 'utf8');
