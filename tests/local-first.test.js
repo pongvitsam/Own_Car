@@ -63,4 +63,45 @@ describe('built app script', () => {
     fs.unlinkSync(tmp);
     assert.equal(result.status, 0, result.stderr || result.stdout);
   });
+
+  it('starts on DOMContentLoaded instead of waiting for window.onload', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.match(html, /DOMContentLoaded/);
+    assert.doesNotMatch(html, /window\.onload\s*=/);
+    assert.match(html, /skipRefresh/);
+    assert.match(html, /runWhenIdle/);
+  });
+
+  it('does not compile Tailwind in the browser', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.doesNotMatch(html, /cdn\.tailwindcss\.com/);
+    const cssPath = path.join(__dirname, '../assets/tailwind.min.css');
+    assert.equal(fs.existsSync(cssPath), true);
+    assert.ok(fs.statSync(cssPath).size > 500);
+  });
+
+  it('gates the app behind a remembered device login', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.match(html, /id="app-login-screen"/);
+    assert.match(html, /myhome_carcare_device_login_v1/);
+    assert.match(html, /submitAppLogin/);
+    assert.match(html, /carcare-authed/);
+  });
+
+  it('ships a multi-device installable PWA', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    const manifest = fs.readFileSync(path.join(__dirname, '../manifest.webmanifest'), 'utf8');
+    assert.match(html, /beforeinstallprompt/);
+    assert.match(html, /installPwaApp/);
+    assert.match(html, /apple-touch-icon/);
+    assert.match(manifest, /icon-192\.png/);
+    assert.match(manifest, /icon-512\.png/);
+    assert.match(manifest, /"display": "standalone"/);
+    assert.doesNotMatch(manifest, /portrait-primary/);
+    ['icon-180.png', 'icon-192.png', 'icon-512.png'].forEach((name) => {
+      const iconPath = path.join(__dirname, '../icons', name);
+      assert.equal(fs.existsSync(iconPath), true, name);
+      assert.ok(fs.statSync(iconPath).size > 1000, name);
+    });
+  });
 });

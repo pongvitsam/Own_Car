@@ -37,7 +37,7 @@ PREMIUM_INLINE_STYLES = """
             background: var(--bg-base);
         }
         body {
-            font-family: 'Sarabun', system-ui, sans-serif;
+            font-family: system-ui, 'Leelawadee UI', 'Sarabun', sans-serif;
             letter-spacing: 0.01em;
             color: var(--text-primary);
             width: 100%;
@@ -48,7 +48,7 @@ PREMIUM_INLINE_STYLES = """
             background: transparent;
         }
         .font-display {
-            font-family: 'Sarabun', system-ui, sans-serif;
+            font-family: system-ui, 'Leelawadee UI', 'Sarabun', sans-serif;
         }
         .app-shell {
             width: 100%;
@@ -925,6 +925,33 @@ PREMIUM_INLINE_STYLES = """
         }
         button:active { transform: scale(0.97); }
         #loading-overlay.hidden { display: none !important; }
+        html:not(.carcare-authed) #app-main { display: none !important; }
+        html.carcare-authed #app-login-screen { display: none !important; }
+        #app-login-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100dvh;
+            padding: 1.25rem;
+            background: var(--bg-base);
+        }
+        .pwa-install-banner {
+            padding: 0 1rem 0.35rem;
+        }
+        .pwa-install-card {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+            padding: 0.7rem 0.8rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-card);
+        }
 """
 
 BODY_REPLACEMENTS = [

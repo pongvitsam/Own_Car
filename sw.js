@@ -1,10 +1,15 @@
 /* MyHome CarCare service worker — offline shell for GitHub Pages */
-const CACHE = 'carcare-v3.3.4';
+const CACHE = 'carcare-v3.3.9';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icons/icon.svg'
+  './icons/icon.svg',
+  './icons/icon-180.png',
+  './icons/icon-192.png',
+  './icons/icon-192-maskable.png',
+  './icons/icon-512.png',
+  './icons/icon-512-maskable.png'
 ];
 
 self.addEventListener('install', (event) => {

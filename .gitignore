@@ -1,4 +1,5 @@
 node_modules/
+tools/_sharp/
 test.html
 test-prod.html
 .clasp.json

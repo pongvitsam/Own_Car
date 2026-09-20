@@ -13,7 +13,8 @@ OUT = os.path.join(ROOT, 'index.html')
 with open(MOCKUP, 'r', encoding='utf-8') as f:
     mockup = f.read()
 
-script_match = re.search(r'<script>(.*?)</script>', mockup, re.DOTALL)
+script_matches = list(re.finditer(r'<script>(.*?)</script>', mockup, re.DOTALL))
+script_match = max(script_matches, key=lambda m: len(m.group(1))) if script_matches else None
 script = script_match.group(1) if script_match else ''
 
 body_match = re.search(r'<body[^>]*>(.*?)(?=\s*<script>)', mockup, re.DOTALL)
@@ -725,6 +726,11 @@ script = re.sub(
     count=1,
 )
 
+AUTH_BOOT_SCRIPT = (
+    "<script>try{if(localStorage.getItem('myhome_carcare_device_login_v1')==='admin')"
+    "document.documentElement.classList.add('carcare-authed')}catch(e){}</script>"
+)
+
 index_html = f'''<!DOCTYPE html>
 <html lang="th" class="h-full min-h-full bg-[#F7F8FA]">
 <head>
@@ -732,54 +738,16 @@ index_html = f'''<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#2563EB">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CarCare">
     <meta name="description" content="บำรุงรักษารถครอบครัวและบันทึกน้ำมันสไตล์ Fuelio">
     <link rel="manifest" href="./manifest.webmanifest">
-    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="./icons/icon.svg">
+    <link rel="icon" href="./icons/icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="./icons/icon-180.png">
     <title>MyHome CarCare - ระบบบำรุงรักษาและบันทึกน้ำมันสไตล์ Fuelio</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {{
-            theme: {{
-                extend: {{
-                    colors: {{
-                        premium: {{
-                            blue: '#2563EB',
-                            light: '#F7F8FA',
-                            ink: '#1A1D24',
-                            elevated: '#FFFFFF',
-                        }},
-                    }},
-                    fontFamily: {{
-                        sans: ['Sarabun', 'system-ui', 'sans-serif'],
-                    }},
-                    borderRadius: {{
-                        '4xl': '2rem',
-                        '5xl': '2.5rem',
-                    }},
-                    boxShadow: {{
-                        premium: '0 2px 8px rgba(26, 29, 36, 0.06)',
-                        'premium-lg': '0 12px 40px rgba(26, 29, 36, 0.1)',
-                        'premium-glow': '0 0 0 2px rgba(37, 99, 235, 0.25), 0 4px 16px rgba(37, 99, 235, 0.15)',
-                    }},
-                }},
-                screens: {{
-                    xs: '400px',
-                    sm: '640px',
-                    md: '768px',
-                    lg: '1024px',
-                    xl: '1280px',
-                    '2xl': '1536px',
-                }},
-            }},
-        }};
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {AUTH_BOOT_SCRIPT}
+    <link rel="stylesheet" href="./assets/tailwind.min.css">
     <style>
 {inline_styles}
     </style>
@@ -795,6 +763,86 @@ index_html = f'''<!DOCTYPE html>
 
 with open(OUT, 'w', encoding='utf-8') as f:
     f.write(index_html)
+
+def compile_tailwind():
+    import subprocess
+    assets_dir = os.path.join(ROOT, 'assets')
+    os.makedirs(assets_dir, exist_ok=True)
+    out_css = os.path.join(assets_dir, 'tailwind.min.css')
+    cmd = (
+        'npx --yes tailwindcss@3.4.17 '
+        '-c "tools/tailwind.config.js" '
+        '-i "tools/tailwind.input.css" '
+        '-o "assets/tailwind.min.css" '
+        '--minify'
+    )
+    subprocess.run(cmd, cwd=ROOT, check=True, shell=True)
+    if not os.path.isfile(out_css) or os.path.getsize(out_css) < 500:
+        raise RuntimeError('compiled CSS missing or too small')
+    print(f'Compiled {out_css} ({os.path.getsize(out_css):,} bytes)')
+    return out_css
+
+def minify_js(source):
+    import subprocess
+    src_path = os.path.join(ROOT, 'tools', '_app.tmp.js')
+    out_path = os.path.join(ROOT, 'tools', '_app.min.js')
+    try:
+        with open(src_path, 'w', encoding='utf-8') as tmp:
+            tmp.write(source)
+        cmd = (
+            'npx --yes terser tools/_app.tmp.js '
+            '--compress unused=false,dead_code=false '
+            '--comments false '
+            '--output tools/_app.min.js'
+        )
+        subprocess.run(cmd, cwd=ROOT, check=True, shell=True)
+        with open(out_path, 'r', encoding='utf-8') as tmp:
+            minified = tmp.read()
+        if minified and len(minified) > 1000:
+            print(f'Minified JS {len(source):,} -> {len(minified):,} chars')
+            return minified
+        print('WARN: terser output too small, keeping original script')
+    except Exception as exc:
+        print('WARN: terser failed, keeping original script:', exc)
+    finally:
+        for path in (src_path, out_path):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+    return source
+
+def inline_css_and_minify_js(html, css_path):
+    with open(css_path, 'r', encoding='utf-8') as css_file:
+        tw_css = css_file.read().strip()
+    html = html.replace(
+        '<link rel="stylesheet" href="./assets/tailwind.min.css">',
+        f'<style>{tw_css}</style>',
+        1,
+    )
+    start = html.rfind('\n    <script>')
+    if start < 0:
+        start = html.rfind('<script>')
+    end = html.rfind('</script>')
+    if start >= 0 and end > start:
+        open_tag_end = html.find('>', start) + 1
+        html = html[:open_tag_end] + minify_js(html[open_tag_end:end]) + html[end:]
+    return html
+
+try:
+    css_file = compile_tailwind()
+    index_html = inline_css_and_minify_js(index_html, css_file)
+    with open(OUT, 'w', encoding='utf-8') as f:
+        f.write(index_html)
+except Exception as exc:
+    print('WARN: Tailwind compile failed, falling back to CDN:', exc)
+    index_html = index_html.replace(
+        '<link rel="stylesheet" href="./assets/tailwind.min.css">',
+        '<script src="https://cdn.tailwindcss.com"></script>',
+        1,
+    )
+    with open(OUT, 'w', encoding='utf-8') as f:
+        f.write(index_html)
 
 # Verify no raw CSS outside style tags
 raw_css_pattern = re.compile(r'body\s*\{\s*font-family', re.IGNORECASE)
