@@ -1055,7 +1055,7 @@
             </div>
             <div class="space-y-1">
                 <h2 class="text-sm font-bold text-slate-800">เลือกรถก่อนเริ่มใช้งาน</h2>
-                <p class="text-[11px] text-slate-500 leading-relaxed">แตะรถที่ต้องการใช้งานด้านล่าง หรือเลือกจากแถบด้านบน</p>
+                <p class="text-[11px] text-slate-500 leading-relaxed">แตะรถคันที่ต้องการเพื่อเข้าใช้งานทันที ไม่ต้องรอโหลดข้อมูล</p>
             </div>
             <div id="vehicle-pick-loading" class="hidden text-[11px] text-indigo-600 font-bold py-6">
                 <i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังโหลดรายการรถ...
@@ -2112,11 +2112,89 @@
         let maintenanceLogsRenderLimit = MAINT_LOGS_PAGE_SIZE;
         let filterLogsTimer = null;
         let gasPendingMutations = 0;
+        let gasRetryQueue = [];
+        let gasRetryInFlight = false;
         const _odoCache = new Map();
         let vehiclePickConfirmed = false;
         let pendingVehiclePickId = null;
         const VEHICLE_PICK_SESSION_KEY = 'vehicle_pick_confirmed_v1';
         const VEHICLE_PICK_ID_KEY = 'vehicle_pick_id_v1';
+        const GAS_CALL_TIMEOUT_MS = 10000;
+
+        function rememberVehiclePick(id) {
+            try {
+                if (id) {
+                    localStorage.setItem(VEHICLE_PICK_SESSION_KEY, '1');
+                    localStorage.setItem(VEHICLE_PICK_ID_KEY, id);
+                    sessionStorage.setItem(VEHICLE_PICK_SESSION_KEY, '1');
+                    sessionStorage.setItem(VEHICLE_PICK_ID_KEY, id);
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        function clearVehiclePickMemory() {
+            try {
+                localStorage.removeItem(VEHICLE_PICK_SESSION_KEY);
+                sessionStorage.removeItem(VEHICLE_PICK_SESSION_KEY);
+            } catch (e) { /* ignore */ }
+        }
+
+        function readVehiclePickMemory() {
+            try {
+                const confirmed = localStorage.getItem(VEHICLE_PICK_SESSION_KEY) === '1'
+                    || sessionStorage.getItem(VEHICLE_PICK_SESSION_KEY) === '1';
+                const id = localStorage.getItem(VEHICLE_PICK_ID_KEY) || sessionStorage.getItem(VEHICLE_PICK_ID_KEY);
+                return { confirmed: confirmed, id: id || null };
+            } catch (e) {
+                return { confirmed: false, id: null };
+            }
+        }
+
+        function mergeRecordsById(localArr, remoteArr, preferLocal) {
+            const map = new Map();
+            const put = function (item) {
+                if (!item || item.id == null) return;
+                map.set(String(item.id), item);
+            };
+            if (preferLocal) {
+                (remoteArr || []).forEach(put);
+                (localArr || []).forEach(put);
+            } else {
+                (localArr || []).forEach(put);
+                (remoteArr || []).forEach(put);
+            }
+            return Array.from(map.values());
+        }
+
+        function restoreSeedIfEmpty(current, seed) {
+            if (!current || !seed) return current;
+            const vehiclesEmpty = !Array.isArray(current.vehicles) || !current.vehicles.length;
+            if (vehiclesEmpty) {
+                current.vehicles = (seed.vehicles || []).slice();
+                if (!Array.isArray(current.categories) || !current.categories.length) {
+                    current.categories = (seed.categories || []).slice();
+                }
+                if (!Array.isArray(current.maintenanceLogs) || !current.maintenanceLogs.length) {
+                    current.maintenanceLogs = (seed.maintenanceLogs || []).slice();
+                }
+                if (!Array.isArray(current.fuelLogs) || !current.fuelLogs.length) {
+                    current.fuelLogs = (seed.fuelLogs || []).slice();
+                }
+                if (!Array.isArray(current.alerts) || !current.alerts.length) {
+                    current.alerts = (seed.alerts || []).slice();
+                }
+            } else {
+                if (!Array.isArray(current.categories)) current.categories = (seed.categories || []).slice();
+                if (!Array.isArray(current.maintenanceLogs)) current.maintenanceLogs = [];
+                if (!Array.isArray(current.fuelLogs)) current.fuelLogs = [];
+                if (!Array.isArray(current.alerts)) current.alerts = [];
+            }
+            return current;
+        }
+
+        function shouldSkipRemoteApply(pendingMutations, retryQueueLength) {
+            return (pendingMutations || 0) > 0 || (retryQueueLength || 0) > 0;
+        }
 
         function isVehiclePickReady() {
             return vehiclePickConfirmed && !!state.selectedVehicleId;
@@ -2228,42 +2306,24 @@
                 pendingVehiclePickId = id;
                 markVehicleCarouselActive(id);
                 selectVehicle(id, { force: true });
-                try {
-                    sessionStorage.setItem(VEHICLE_PICK_ID_KEY, id);
-                } catch (e) { /* ignore */ }
+                rememberVehiclePick(id);
                 return;
             }
             pickVehicle(id);
+            confirmVehiclePick();
         }
 
         async function retryVehicleLoad() {
-            setVehiclePickLoading(true);
-            try {
-                if (isGasSyncEnabled()) {
-                    await hydrateFromGas({ silent: true });
-                }
-            } catch (e) {
-                console.warn('Vehicle reload failed:', e);
-                showToast('โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง', 'error');
-            } finally {
-                setVehiclePickLoading(false);
-                renderVehiclesCarousel();
-                updateVehicleGateUi();
-            }
-        }
-
-        async function ensureVehiclesForPick() {
-            if (Array.isArray(state.vehicles) && state.vehicles.length) return true;
-            if (!isGasSyncEnabled()) return false;
-            setVehiclePickLoading(true);
-            try {
-                await hydrateFromGas({ silent: true });
-                return Array.isArray(state.vehicles) && state.vehicles.length > 0;
-            } catch (e) {
-                console.warn('Initial vehicle sync failed:', e);
-                return false;
-            } finally {
-                setVehiclePickLoading(false);
+            renderVehiclesCarousel();
+            updateVehicleGateUi();
+            if (isGasSyncEnabled()) {
+                hydrateFromGas({ silent: true }).then(function () {
+                    renderVehiclesCarousel();
+                    updateVehicleGateUi();
+                }).catch(function (e) {
+                    console.warn('Vehicle reload failed:', e);
+                    showToast('ใช้ข้อมูลในเครื่องไปก่อน — ซิงค์ Sheet ไม่สำเร็จ', 'warning');
+                });
             }
         }
 
@@ -2274,10 +2334,7 @@
             }
             vehiclePickConfirmed = true;
             state.selectedVehicleId = pendingVehiclePickId;
-            try {
-                sessionStorage.setItem(VEHICLE_PICK_SESSION_KEY, '1');
-                sessionStorage.setItem(VEHICLE_PICK_ID_KEY, pendingVehiclePickId);
-            } catch (e) { /* ignore */ }
+            rememberVehiclePick(pendingVehiclePickId);
             updateVehicleGateUi();
             selectVehicle(pendingVehiclePickId, { force: true });
             switchTab('dashboard');
@@ -2286,25 +2343,31 @@
         function changeVehiclePick() {
             vehiclePickConfirmed = false;
             pendingVehiclePickId = state.selectedVehicleId || null;
-            try {
-                sessionStorage.removeItem(VEHICLE_PICK_SESSION_KEY);
-            } catch (e) { /* ignore */ }
+            clearVehiclePickMemory();
             updateVehicleGateUi();
             if (pendingVehiclePickId) markVehicleCarouselActive(pendingVehiclePickId);
-            showToast('เลือกรถแล้วกดเข้าจัดการข้อมูล', 'warning');
+            showToast('แตะรถคันที่ต้องการเพื่อเข้าใช้งานทันที', 'warning');
         }
 
         function invalidateOdometerCache() {
             _odoCache.clear();
         }
 
-        // App Initializer
-        async function initApp() {
+        // App Initializer — local-first, never wait for Sheet
+        function initApp() {
             setupGasBridgeListener();
+            const seedSnapshot = {
+                vehicles: (state.vehicles || []).slice(),
+                categories: (state.categories || []).slice(),
+                maintenanceLogs: (state.maintenanceLogs || []).slice(),
+                fuelLogs: (state.fuelLogs || []).slice(),
+                alerts: (state.alerts || []).slice()
+            };
             const savedState = localStorage.getItem('myhome_carcare_state_v2.2');
             if (savedState) {
                 try {
-                    state = JSON.parse(savedState);
+                    const parsed = JSON.parse(savedState);
+                    state = restoreSeedIfEmpty(parsed, seedSnapshot);
                     normalizeVehicleExpiryDates();
                 } catch (e) {
                     console.error("Failed to load persistent state, resetting...");
@@ -2315,23 +2378,14 @@
 
             updateGasSyncUi();
 
-            try {
-                vehiclePickConfirmed = sessionStorage.getItem(VEHICLE_PICK_SESSION_KEY) === '1';
-                const savedPickId = sessionStorage.getItem(VEHICLE_PICK_ID_KEY);
-                if (vehiclePickConfirmed && savedPickId) {
-                    pendingVehiclePickId = savedPickId;
-                    state.selectedVehicleId = savedPickId;
-                }
-            } catch (e) {
-                vehiclePickConfirmed = false;
+            const pickMemory = readVehiclePickMemory();
+            vehiclePickConfirmed = !!pickMemory.confirmed;
+            if (vehiclePickConfirmed && pickMemory.id) {
+                pendingVehiclePickId = pickMemory.id;
+                state.selectedVehicleId = pickMemory.id;
             }
 
             populateDropdowns();
-
-            if (!vehiclePickConfirmed) {
-                await ensureVehiclesForPick();
-            }
-
             renderVehiclesCarousel();
             updateVehicleGateUi();
 
@@ -2341,17 +2395,13 @@
                     selectVehicle(state.selectedVehicleId, { force: true });
                 } else {
                     vehiclePickConfirmed = false;
-                    pendingVehiclePickId = null;
-                    try { sessionStorage.removeItem(VEHICLE_PICK_SESSION_KEY); } catch (e) { /* ignore */ }
+                    pendingVehiclePickId = state.vehicles.length ? state.vehicles[0].id : null;
+                    clearVehiclePickMemory();
                     updateVehicleGateUi();
                 }
             } else {
                 vehiclePickConfirmed = false;
-                if (state.vehicles.length) {
-                    pendingVehiclePickId = state.vehicles[0].id;
-                } else {
-                    pendingVehiclePickId = null;
-                }
+                pendingVehiclePickId = state.vehicles.length ? state.vehicles[0].id : null;
             }
 
             initCustomCalendar();
@@ -2367,15 +2417,9 @@
         }
 
         function startBackgroundGasSync() {
-            if (!isGasSyncEnabled()) {
-                checkLineAlerts(false);
-                return;
-            }
+            checkLineAlerts(false);
+            if (!isGasSyncEnabled()) return;
             setupGasAutoPull();
-            hydrateFromGas({ silent: true }).catch(function (e) {
-                console.warn('Background Sheet sync failed:', e);
-                checkLineAlerts(false);
-            });
         }
 
         function registerServiceWorker() {
@@ -2406,7 +2450,7 @@
             const status = document.getElementById('gas-sync-status');
             const pill = document.getElementById('header-sync-pill');
             if (status) {
-                status.textContent = GasBridge.ready ? 'เชื่อมต่อแล้ว' : 'กำลังเชื่อม...';
+                status.textContent = GasBridge.ready ? 'ซิงค์พื้นหลัง' : 'ใช้ข้อมูลในเครื่อง';
                 status.className = 'text-[9px] font-bold text-emerald-600';
             }
             if (pill) pill.classList.add('hidden');
@@ -2475,7 +2519,7 @@
                 return Promise.reject(new Error('GAS sync ยังไม่เปิด'));
             }
             ensureGasBridge();
-            return waitGasReady(20000).then((ok) => {
+            return waitGasReady(4000).then((ok) => {
                 if (!ok || !GasBridge.iframe || !GasBridge.iframe.contentWindow) {
                     throw new Error('เชื่อมต่อ GAS Bridge ไม่สำเร็จ — ตรวจ Web App URL และการ Deploy');
                 }
@@ -2484,7 +2528,7 @@
                     const timer = setTimeout(() => {
                         GasBridge.pending.delete(id);
                         reject(new Error('หมดเวลารอ GAS (' + action + ')'));
-                    }, 90000);
+                    }, GAS_CALL_TIMEOUT_MS);
                     GasBridge.pending.set(id, {
                         resolve: (v) => { clearTimeout(timer); resolve(v); },
                         reject: (e) => { clearTimeout(timer); reject(e); }
@@ -2528,7 +2572,7 @@
                     settled = true;
                     cleanup();
                     reject(new Error('หมดเวลารอ Google Sheet (' + action + ')'));
-                }, 120000);
+                }, GAS_CALL_TIMEOUT_MS);
 
                 window[callbackName] = (result) => {
                     if (settled) return;
@@ -2566,20 +2610,31 @@
 
         function applyRemoteState(remote, opts) {
             if (!remote) return;
+            opts = opts || {};
+            if (shouldSkipRemoteApply(gasPendingMutations, gasRetryQueue.length) && !opts.force) return;
             const keepAdmin = state.adminAuthenticated;
-            const preferSelected = (opts && opts.keepSelected) ? state.selectedVehicleId : null;
+            const preferSelected = opts.keepSelected ? state.selectedVehicleId : null;
+            const preferLocal = !!opts.preferLocal;
             const remoteVehicles = Array.isArray(remote.vehicles) ? remote.vehicles : [];
             if (remoteVehicles.length) {
-                state.vehicles = remoteVehicles;
+                state.vehicles = mergeRecordsById(state.vehicles, remoteVehicles, preferLocal);
             } else if (!Array.isArray(state.vehicles)) {
                 state.vehicles = [];
             }
-            state.categories = (remote.categories && remote.categories.length)
-                ? remote.categories
-                : (state.categories || []);
-            state.maintenanceLogs = Array.isArray(remote.maintenanceLogs) ? remote.maintenanceLogs : (state.maintenanceLogs || []);
-            state.fuelLogs = Array.isArray(remote.fuelLogs) ? remote.fuelLogs : (state.fuelLogs || []);
-            state.alerts = Array.isArray(remote.alerts) ? remote.alerts : (state.alerts || []);
+            if (remote.categories && remote.categories.length) {
+                state.categories = mergeRecordsById(state.categories, remote.categories, preferLocal);
+            } else if (!Array.isArray(state.categories)) {
+                state.categories = [];
+            }
+            if (Array.isArray(remote.maintenanceLogs)) {
+                state.maintenanceLogs = mergeRecordsById(state.maintenanceLogs, remote.maintenanceLogs, preferLocal);
+            }
+            if (Array.isArray(remote.fuelLogs)) {
+                state.fuelLogs = mergeRecordsById(state.fuelLogs, remote.fuelLogs, preferLocal);
+            }
+            if (Array.isArray(remote.alerts) && remote.alerts.length && !preferLocal) {
+                state.alerts = remote.alerts;
+            }
             if (Array.isArray(remote.lineLogs)) state.lineLogs = remote.lineLogs;
             const nextSelected = preferSelected
                 || remote.selectedVehicleId
@@ -2616,6 +2671,7 @@
         async function hydrateFromGas(opts) {
             opts = opts || {};
             if (!isGasSyncEnabled()) return false;
+            if (shouldSkipRemoteApply(gasPendingMutations, gasRetryQueue.length)) return false;
             updateGasSyncUi();
             const result = await gasCall('getFullSyncState', {
                 selectedVehicleId: state.selectedVehicleId || null
@@ -2623,7 +2679,7 @@
             if (!result || result.success === false) {
                 throw new Error((result && result.error) || 'ดึงข้อมูลจาก Sheet ไม่สำเร็จ');
             }
-            applyRemoteState(result.state, { keepSelected: true });
+            applyRemoteState(result.state, { keepSelected: true, preferLocal: true });
             refreshUiAfterSync();
             if (!opts.silent) {
                 showToast('โหลดข้อมูลจาก Google Sheet แล้ว');
@@ -2635,7 +2691,7 @@
         let gasLastPullAt = 0;
 
         async function autoPullFromGas() {
-            if (!isGasSyncEnabled() || gasAutoPullInFlight || document.hidden || gasPendingMutations > 0) return;
+            if (!isGasSyncEnabled() || gasAutoPullInFlight || document.hidden || shouldSkipRemoteApply(gasPendingMutations, gasRetryQueue.length)) return;
             if (Date.now() - gasLastPullAt < 90000) return;
             gasAutoPullInFlight = true;
             try {
@@ -2659,65 +2715,47 @@
             setInterval(autoPullFromGas, 300000);
         }
 
-        function restoreGasStateSnapshot(snapshotJson) {
-            if (!snapshotJson) return;
-            try {
-                const restored = JSON.parse(snapshotJson);
-                Object.keys(state).forEach(function (k) { delete state[k]; });
-                Object.assign(state, restored);
-                normalizeVehicleExpiryDates();
-                saveToLocalStorage();
-                refreshUiAfterSync();
-            } catch (e) { /* ignore rollback errors */ }
+        function enqueueGasRetry(action, payload) {
+            gasRetryQueue.push({ action: action, payload: payload, tries: 0 });
+            flushGasRetryQueue();
         }
 
-        const GAS_BLOCKING_ACTIONS = new Set(['verifyAdmin', 'setupTriggers', 'ping', 'checkLineAlerts']);
+        async function flushGasRetryQueue() {
+            if (gasRetryInFlight || !gasRetryQueue.length || !isGasSyncEnabled()) return;
+            gasRetryInFlight = true;
+            const job = gasRetryQueue.shift();
+            gasPendingMutations += 1;
+            try {
+                const result = await gasCall(job.action, job.payload || {});
+                if (!result || result.success === false) {
+                    throw new Error((result && result.error) || 'บันทึก Sheet ไม่สำเร็จ');
+                }
+                gasLastPullAt = Date.now();
+            } catch (err) {
+                job.tries += 1;
+                if (job.tries < 3) {
+                    gasRetryQueue.push(job);
+                } else {
+                    console.warn('Sheet sync dropped after retries:', job.action, err);
+                }
+            } finally {
+                gasPendingMutations = Math.max(0, gasPendingMutations - 1);
+                gasRetryInFlight = false;
+                if (gasRetryQueue.length) {
+                    setTimeout(flushGasRetryQueue, 4000);
+                }
+            }
+        }
 
         async function gasMutate(action, payload, localFn) {
-            if (!isGasSyncEnabled()) {
-                if (localFn) localFn();
-                return { local: true };
-            }
-            const snapshot = localFn ? JSON.stringify(state) : null;
             if (localFn) {
                 localFn();
+                invalidateOdometerCache();
                 refreshUiAfterSync();
             }
-
-            const syncPromise = (async () => {
-                gasPendingMutations += 1;
-                try {
-                    const result = await gasCall(action, payload || {});
-                    if (!result || result.success === false) {
-                        throw new Error((result && result.error) || 'บันทึก Sheet ไม่สำเร็จ');
-                    }
-                    if (result.state) {
-                        applyRemoteState(result.state, { keepSelected: true });
-                        refreshUiAfterSync();
-                    } else {
-                        invalidateOdometerCache();
-                        saveToLocalStorage();
-                    }
-                    gasLastPullAt = Date.now();
-                    return result;
-                } finally {
-                    gasPendingMutations = Math.max(0, gasPendingMutations - 1);
-                }
-            })();
-
-            try {
-                if (GAS_BLOCKING_ACTIONS.has(action)) {
-                    return await syncPromise;
-                }
-                syncPromise.catch(function (err) {
-                    if (snapshot) restoreGasStateSnapshot(snapshot);
-                    showToast(String(err.message || err), 'error');
-                });
-                return { success: true, pending: true };
-            } catch (err) {
-                if (snapshot) restoreGasStateSnapshot(snapshot);
-                throw err;
-            }
+            if (!isGasSyncEnabled()) return { local: true };
+            enqueueGasRetry(action, payload || {});
+            return { success: true, pending: true };
         }
 
         function setDefaultDates() {
@@ -4661,25 +4699,6 @@
 
         // Check Line Alerts Simulator / GAS
         async function checkLineAlerts(isManual = false) {
-            if (isGasSyncEnabled()) {
-                try {
-                    const result = await gasMutate('checkLineAlerts', {
-                        manual: !!isManual,
-                        selectedVehicleId: state.selectedVehicleId
-                    });
-                    refreshUiAfterSync();
-                    if (result && result.notificationTriggered && result.messages && result.messages.length) {
-                        showLineBubble(result.messages.join('\n'));
-                        showToast("LINE แจ้งเตือนครอบครัวเรียบร้อย!", "warning");
-                    } else if (isManual) {
-                        showToast("รถทุกคันอยู่ในสภาพปกติและปลอดภัย");
-                    }
-                } catch (err) {
-                    showToast(String(err.message || err), 'error');
-                }
-                return;
-            }
-
             state.lineLogs.push(`⚡ [${new Date().toLocaleTimeString()}] สแกนระยะซ่อมบำรุง...`);
             let notificationTriggered = false;
             let alertedVehicleNames = [];
@@ -5036,12 +5055,10 @@
                 try {
                     await gasMutate('updateVehicle', payload, applyLocal);
                     adminVehicleEditId = null;
-                    else {
-                        renderAdminVehicles();
-                        populateDropdowns();
-                        renderVehiclesCarousel();
-                        if (state.selectedVehicleId === id) selectVehicle(id, { force: true });
-                    }
+                    renderAdminVehicles();
+                    populateDropdowns();
+                    renderVehiclesCarousel();
+                    if (state.selectedVehicleId === id) selectVehicle(id, { force: true });
                     showToast('บันทึกข้อมูลรถสำเร็จ');
                 } catch (err) {
                     showToast(String(err.message || err), 'error');
@@ -5096,11 +5113,9 @@
                     document.getElementById('add-car-license').value = '';
                     setThaiDatePicker('add-car-prb-expiry', 'add-car-prb-expiry-text', '');
                     setThaiDatePicker('add-car-insurance-expiry', 'add-car-insurance-expiry-text', '');
-                    else {
-                        renderAdminVehicles();
-                        populateDropdowns();
-                        renderVehiclesCarousel();
-                    }
+                    renderAdminVehicles();
+                    populateDropdowns();
+                    renderVehiclesCarousel();
                     showToast("เพิ่มข้อมูลรถยนต์คันใหม่สำเร็จ");
                 } catch (err) {
                     showToast(String(err.message || err), 'error');
@@ -5124,12 +5139,10 @@
             (async () => {
                 try {
                     await gasMutate('deleteVehicle', { id: id }, applyLocal);
-                    else {
-                        renderAdminVehicles();
-                        populateDropdowns();
-                        renderVehiclesCarousel();
-                        selectVehicle(state.selectedVehicleId, { force: true });
-                    }
+                    renderAdminVehicles();
+                    populateDropdowns();
+                    renderVehiclesCarousel();
+                    selectVehicle(state.selectedVehicleId, { force: true });
                     showToast("ลบรถสำเร็จ");
                 } catch (err) {
                     showToast(String(err.message || err), 'error');
@@ -5171,10 +5184,8 @@
                 try {
                     await gasMutate('addCategory', { id: newId, name: name, selectedVehicleId: state.selectedVehicleId }, applyLocal);
                     document.getElementById('add-cat-name').value = '';
-                    else {
-                        renderAdminCategories();
-                        populateDropdowns();
-                    }
+                    renderAdminCategories();
+                    populateDropdowns();
                     showToast("เพิ่มประเภทงานบริการสำเร็จ");
                 } catch (err) {
                     showToast(String(err.message || err), 'error');
@@ -5194,10 +5205,8 @@
             (async () => {
                 try {
                     await gasMutate('deleteCategory', { id: id, selectedVehicleId: state.selectedVehicleId }, applyLocal);
-                    else {
-                        renderAdminCategories();
-                        populateDropdowns();
-                    }
+                    renderAdminCategories();
+                    populateDropdowns();
                     showToast("ลบประเภทเรียบร้อย");
                 } catch (err) {
                     showToast(String(err.message || err), 'error');
@@ -5540,7 +5549,13 @@
         }
 
         window.onload = function () {
-            initApp();
+            try {
+                Promise.resolve(initApp()).catch(function (err) {
+                    console.error('initApp failed', err);
+                });
+            } catch (err) {
+                console.error('initApp failed', err);
+            }
         }
     
     </script>
