@@ -88,6 +88,14 @@ describe('built app script', () => {
     assert.match(html, /carcare-authed/);
   });
 
+  it('ships no hardcoded login credentials and hashes the device password', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.doesNotMatch(html, /pass\s*===\s*['"]1234['"]/);
+    assert.doesNotMatch(html, /user\s*===\s*['"]admin['"]/);
+    assert.match(html, /PBKDF2/);
+    assert.match(html, /myhome_carcare_credential_v1/);
+  });
+
   it('requires choosing a vehicle before any workspace action', () => {
     const html = fs.readFileSync(path.join(__dirname, '../mockup/MyHome-CarCare-v1.8.html'), 'utf8');
     assert.match(html, /carcare-picking/);

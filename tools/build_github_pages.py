@@ -322,31 +322,6 @@ script = script.replace(
                         <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">"""
 )
 
-body = body.replace(
-    'รหัสแอดมินเริ่มต้น: <strong>1234</strong>',
-    'บัญชีแอดมินเริ่มต้น: <strong>admin</strong> / รหัสผ่าน <strong>1234</strong>'
-)
-
-script = re.sub(
-    r'function authenticateAdmin\(\) \{[\s\S]*?\n        \}',
-    """function authenticateAdmin() {
-            const user = document.getElementById('admin-username').value.trim();
-            const pass = document.getElementById('admin-passcode').value;
-            if (user === 'admin' && pass === '1234') {
-                state.adminAuthenticated = true;
-                showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
-                renderAdminPanelState();
-            } else {
-                showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง! (admin / 1234)", "error");
-            }
-        }""",
-    script,
-    count=1
-)
-script = script.replace(
-    '// ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมินรหัส 1234)',
-    '// ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมิน admin / 1234)'
-)
 script = re.sub(
     r"function logoutAdmin\(\) \{[\s\S]*?showToast\(\"ออกจากระบบแอดมินเรียบร้อย\"\);\s*\n        \}",
     """function logoutAdmin() {
@@ -459,7 +434,7 @@ script = re.sub(
 )
 
 AUTH_BOOT_SCRIPT = (
-    "<script>try{if(localStorage.getItem('myhome_carcare_device_login_v1')==='admin')"
+    "<script>try{if(localStorage.getItem('myhome_carcare_device_login_v1')==='ok')"
     "document.documentElement.classList.add('carcare-authed')}catch(e){}</script>"
 )
 

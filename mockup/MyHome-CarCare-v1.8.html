@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>MyHome CarCare - ระบบบำรุงรักษาและบันทึกน้ำมันสไตล์ Fuelio</title>
-    <script>try{if(localStorage.getItem('myhome_carcare_device_login_v1')==='admin')document.documentElement.classList.add('carcare-authed')}catch(e){}</script>
+    <script>try{if(localStorage.getItem('myhome_carcare_device_login_v1')==='ok')document.documentElement.classList.add('carcare-authed')}catch(e){}</script>
     <style>
         /* Mockup preview tokens — full design system injected by tools/premium_ui.py at build */
         :root { --bg-base: #F7F8FA; --bg-elevated: #FFFFFF; --text-primary: #1A1D24; --text-secondary: #5C6370; --text-muted: #94A3B8; --accent: #2563EB; --border-subtle: rgba(26, 29, 36, 0.08); }
@@ -30,16 +30,18 @@
                     <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 0 0-5.25 5.25v3a3 3 0 0 0-3 3v6.75a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3v-6.75a3 3 0 0 0-3-3v-3A5.25 5.25 0 0 0 12 1.5Zm3.75 8.25v-3a3.75 3.75 0 1 0-7.5 0v3h7.5Z" clip-rule="evenodd" />
                 </svg>
             </div>
-            <h1 class="text-base font-bold text-slate-900">เข้าสู่ระบบ</h1>
-            <p class="text-[11px] text-slate-500 leading-relaxed">MyHome CarCare — เครื่องนี้จะจำการเข้าสู่ระบบไว้ ไม่ต้องกรอกอีก</p>
+            <h1 id="app-login-title" class="text-base font-bold text-slate-900">เข้าสู่ระบบ</h1>
+            <p id="app-login-hint" class="text-[11px] text-slate-500 leading-relaxed">MyHome CarCare — เครื่องนี้จะจำการเข้าสู่ระบบไว้ ไม่ต้องกรอกอีก</p>
         </div>
         <div class="space-y-2">
             <label class="sr-only" for="app-login-user">ชื่อผู้ใช้</label>
             <input type="text" id="app-login-user" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ชื่อผู้ใช้" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" required autofocus>
             <label class="sr-only" for="app-login-pass">รหัสผ่าน</label>
             <input type="password" id="app-login-pass" name="password" autocomplete="current-password" placeholder="รหัสผ่าน" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" required>
+            <label class="sr-only hidden" for="app-login-confirm">ยืนยันรหัสผ่าน</label>
+            <input type="password" id="app-login-confirm" name="new-password" autocomplete="new-password" placeholder="ยืนยันรหัสผ่านอีกครั้ง" class="hidden w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500">
             <p id="app-login-error" class="hidden text-[11px] font-bold text-rose-600 text-center"></p>
-            <button type="submit" class="btn-primary w-full text-white font-bold py-3 px-4 text-xs transition-all active:scale-95">
+            <button type="submit" id="app-login-submit" class="btn-primary w-full text-white font-bold py-3 px-4 text-xs transition-all active:scale-95">
                 เข้าสู่ระบบ
             </button>
             <button type="button" id="login-pwa-install-btn" onclick="installPwaApp()" class="hidden w-full text-[11px] font-bold text-indigo-700 py-2.5 rounded-xl border border-indigo-100 bg-indigo-50/70 hover:bg-indigo-50">
@@ -419,7 +421,7 @@
                     <p class="text-[10px] text-slate-500">กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>
                 </div>
                 <div class="space-y-2">
-                    <input type="text" id="admin-username" name="carcare-admin-user" autocomplete="username" placeholder="ชื่อผู้ใช้ (เริ่มต้น: admin)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="admin-username" name="carcare-admin-user" autocomplete="username" placeholder="ชื่อผู้ใช้" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                     <input type="password" id="admin-passcode" placeholder="รหัสผ่าน" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                     <button onclick="authenticateAdmin()" class="btn-primary w-full text-white font-bold py-3 px-4 text-xs transition-all active:scale-95">
                         เข้าสู่ระบบแอดมิน
@@ -1055,9 +1057,63 @@
         const DEVICE_LOGIN_KEY = 'myhome_carcare_device_login_v1';
         const GAS_CALL_TIMEOUT_MS = 10000;
 
+        // ---- Device credential: chosen by the owner on first run, stored only as a salted PBKDF2 hash ----
+        const CREDENTIAL_KEY = 'myhome_carcare_credential_v1';
+        const PBKDF2_ITERATIONS = 150000;
+        const MIN_PASSWORD_LENGTH = 6;
+
+        function bytesToHex(buf) {
+            return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+        }
+
+        function hexToBytes(hex) {
+            const out = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
+            return out;
+        }
+
+        async function derivePasswordHash(password, saltHex, iterations) {
+            const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+            const bits = await crypto.subtle.deriveBits(
+                { name: 'PBKDF2', hash: 'SHA-256', salt: hexToBytes(saltHex), iterations: iterations },
+                key,
+                256
+            );
+            return bytesToHex(bits);
+        }
+
+        function readCredential() {
+            try {
+                const raw = localStorage.getItem(CREDENTIAL_KEY);
+                const parsed = raw ? JSON.parse(raw) : null;
+                return parsed && parsed.user && parsed.salt && parsed.hash ? parsed : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function saveCredential(user, password) {
+            const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+            const hash = await derivePasswordHash(password, salt, PBKDF2_ITERATIONS);
+            localStorage.setItem(CREDENTIAL_KEY, JSON.stringify({
+                user: String(user).trim(), salt: salt, hash: hash, iterations: PBKDF2_ITERATIONS
+            }));
+        }
+
+        async function verifyCredential(user, password) {
+            const cred = readCredential();
+            if (!cred || !window.crypto || !crypto.subtle) return false;
+            if (String(user).trim() !== cred.user) return false;
+            const hash = await derivePasswordHash(password, cred.salt, cred.iterations || PBKDF2_ITERATIONS);
+            let diff = hash.length ^ cred.hash.length;
+            for (let i = 0; i < hash.length; i++) diff |= hash.charCodeAt(i) ^ (cred.hash.charCodeAt(i) || 0);
+            return diff === 0;
+        }
+
         function isDeviceLoggedIn() {
             try {
-                return localStorage.getItem(DEVICE_LOGIN_KEY) === 'admin';
+                // A login flag only counts while a credential exists on this device.
+                return localStorage.getItem(DEVICE_LOGIN_KEY) === 'ok' && !!readCredential();
             } catch (e) {
                 return false;
             }
@@ -1065,8 +1121,29 @@
 
         function rememberDeviceLogin() {
             try {
-                localStorage.setItem(DEVICE_LOGIN_KEY, 'admin');
+                localStorage.setItem(DEVICE_LOGIN_KEY, 'ok');
             } catch (e) { /* ignore */ }
+        }
+
+        function renderLoginMode() {
+            const setup = !readCredential();
+            const title = el('app-login-title');
+            const hint = el('app-login-hint');
+            const confirmEl = el('app-login-confirm');
+            const submit = el('app-login-submit');
+            const passEl = el('app-login-pass');
+            if (title) title.textContent = setup ? 'ตั้งรหัสผ่านสำหรับเครื่องนี้' : 'เข้าสู่ระบบ';
+            if (hint) {
+                hint.textContent = setup
+                    ? 'ตั้งชื่อผู้ใช้และรหัสผ่านอย่างน้อย ' + MIN_PASSWORD_LENGTH + ' ตัวอักษร ระบบจะเก็บเฉพาะค่าที่เข้ารหัสไว้บนเครื่องนี้'
+                    : 'MyHome CarCare — เครื่องนี้จะจำการเข้าสู่ระบบไว้ ไม่ต้องกรอกอีก';
+            }
+            if (confirmEl) {
+                confirmEl.classList.toggle('hidden', !setup);
+                if (confirmEl.previousElementSibling) confirmEl.previousElementSibling.classList.toggle('hidden', !setup);
+            }
+            if (submit) submit.textContent = setup ? 'ตั้งรหัสผ่านและเข้าใช้งาน' : 'เข้าสู่ระบบ';
+            if (passEl) passEl.setAttribute('autocomplete', setup ? 'new-password' : 'current-password');
         }
 
         function applyDeviceLoginGate() {
@@ -1075,6 +1152,7 @@
                 return true;
             }
             document.documentElement.classList.remove('carcare-authed');
+            renderLoginMode();
             const userEl = el('app-login-user');
             if (userEl) {
                 try { userEl.focus(); } catch (e) { /* ignore */ }
@@ -1082,32 +1160,58 @@
             return false;
         }
 
-        function submitAppLogin(event) {
-            if (event) event.preventDefault();
-            const userEl = el('app-login-user');
-            const passEl = el('app-login-pass');
+        function showLoginError(message) {
             const errEl = el('app-login-error');
-            if (!userEl || !passEl) return false;
-            const user = String(userEl.value || '').trim();
-            const pass = String(passEl.value || '');
-            if (user === 'admin' && pass === '1234') {
-                rememberDeviceLogin();
-                if (errEl) {
-                    errEl.textContent = '';
-                    errEl.classList.add('hidden');
-                }
-                applyDeviceLoginGate();
-                bootApp();
-                return false;
-            }
+            const passEl = el('app-login-pass');
+            const confirmEl = el('app-login-confirm');
             if (errEl) {
-                errEl.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+                errEl.textContent = message;
                 errEl.classList.remove('hidden');
             }
             if (passEl) {
                 passEl.value = '';
                 try { passEl.focus(); } catch (e) { /* ignore */ }
             }
+            if (confirmEl) confirmEl.value = '';
+        }
+
+        async function submitAppLogin(event) {
+            if (event) event.preventDefault();
+            const userEl = el('app-login-user');
+            const passEl = el('app-login-pass');
+            const confirmEl = el('app-login-confirm');
+            const errEl = el('app-login-error');
+            if (!userEl || !passEl) return false;
+            if (!window.crypto || !crypto.subtle) {
+                showLoginError('เบราว์เซอร์นี้ไม่รองรับการเข้ารหัส กรุณาเปิดผ่าน https');
+                return false;
+            }
+            const user = String(userEl.value || '').trim();
+            const pass = String(passEl.value || '');
+            const setup = !readCredential();
+            try {
+                if (setup) {
+                    if (!user) { showLoginError('กรุณากรอกชื่อผู้ใช้'); return false; }
+                    if (pass.length < MIN_PASSWORD_LENGTH) { showLoginError('รหัสผ่านต้องมีอย่างน้อย ' + MIN_PASSWORD_LENGTH + ' ตัวอักษร'); return false; }
+                    if (!confirmEl || pass !== confirmEl.value) { showLoginError('รหัสผ่านทั้งสองช่องไม่ตรงกัน'); return false; }
+                    await saveCredential(user, pass);
+                } else if (!(await verifyCredential(user, pass))) {
+                    showLoginError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                    return false;
+                }
+            } catch (e) {
+                showLoginError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+                return false;
+            }
+            rememberDeviceLogin();
+            if (errEl) {
+                errEl.textContent = '';
+                errEl.classList.add('hidden');
+            }
+            passEl.value = '';
+            if (confirmEl) confirmEl.value = '';
+            applyDeviceLoginGate();
+            bootApp();
             return false;
         }
 
@@ -4343,7 +4447,9 @@
             if (!userEl || !passEl) return;
             const user = userEl.value.trim();
             const pass = passEl.value;
-            if (user === 'admin' && pass === '1234') {
+            let ok = false;
+            try { ok = await verifyCredential(user, pass); } catch (e) { ok = false; }
+            if (ok) {
                 state.adminAuthenticated = true;
                 saveToLocalStorage();
                 showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
