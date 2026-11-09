@@ -78,7 +78,7 @@ describe('runtime guards: inline copies in the app match lib', () => {
 
   const ctx = { state: { vehicles: [], maintenanceLogs: [], fuelLogs: [] } };
   vm.createContext(ctx);
-  ['ensureStateShape', 'parseRequiredNumber', 'nextEntityId', 'odometerBoundsForDate'].forEach((n) => {
+  ['ensureStateShape', 'parseRequiredNumber', 'nextEntityId', 'odometerBoundsForDate', 'findPreviousSameTypeFullTank', 'enrichFuelLogsWithMetrics'].forEach((n) => {
     vm.runInContext(extract(n), ctx);
   });
 
@@ -102,5 +102,24 @@ describe('runtime guards: inline copies in the app match lib', () => {
     const fromApp = JSON.parse(JSON.stringify(ctx.odometerBoundsForDate('V', 'F1', '2026-02-01')));
     assert.deepEqual(fromApp, odometerBoundsForDate('V', 'F1', '2026-02-01', maint, fuel));
     assert.deepEqual(fromApp, { min: 1000, max: 2000 });
+  });
+
+  it('fuel segment metrics match lib/car-logic computeFuelLogMetrics', () => {
+    const { computeFuelLogMetrics } = require('../lib/car-logic');
+    const logs = [
+      { id: 'a', vehicleId: 'V', date: '2026-01-01', odo: 1000, liters: 30, totalCost: 900, fullTank: true, fuelType: 'oil' },
+      { id: 'b', vehicleId: 'V', date: '2026-01-10', odo: 1400, liters: 35, totalCost: 1050, fullTank: true, fuelType: 'oil' },
+      { id: 'c', vehicleId: 'V', date: '2026-01-20', odo: 1900, liters: 0, totalCost: 0, fullTank: true, fuelType: 'oil' },
+      { id: 'd', vehicleId: 'V', date: '2026-02-01', odo: 2300, liters: 40, totalCost: 1200, fullTank: true, fuelType: 'oil' },
+    ];
+    const fromApp = JSON.parse(JSON.stringify(ctx.enrichFuelLogsWithMetrics(logs)));
+    const fromLib = computeFuelLogMetrics('V', logs).enriched || computeFuelLogMetrics('V', logs).logs;
+    assert.ok(Array.isArray(fromLib), 'lib must expose the enriched logs');
+    fromApp.forEach((row) => {
+      const ref = fromLib.find((l) => l.id === row.id);
+      assert.equal(row.segmentDistance, ref.segmentDistance, row.id);
+      assert.equal(row.costPerKm, ref.costPerKm, row.id);
+      assert.equal(row.calculatedEfficiency, ref.calculatedEfficiency, row.id);
+    });
   });
 });

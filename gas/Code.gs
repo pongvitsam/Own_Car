@@ -23,30 +23,16 @@ function doGet(e) {
     return handleHttpApi_(e);
   }
 
-  return HtmlService.createTemplateFromFile('Index')
-    .evaluate()
-    .setTitle('MyHome CarCare')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  // The UI lives on GitHub Pages; this Web App is the API / Sheets backend only.
+  return jsonOutput_({
+    success: true,
+    service: 'MyHome CarCare API',
+    ui: 'https://pongvitsam.github.io/Own_Car/'
+  });
 }
 
 
 
-/**
-
- * Include HTML fragments (Scripts.html). Do NOT use for CSS — GAS strips
-
- * <style> tags from included files, leaving raw CSS as visible page text.
-
- * Custom styles must live inline in Index.html <head>.
-
- */
-
-function include(filename) {
-
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
-
-}
 
 
 

@@ -4,7 +4,6 @@
 var CONFIG = {
   DRIVE_FOLDER_ID: '1R-dpki8-nS17XAma6tyiQMEH66kEcf7U',
   DEFAULT_ADMIN_USER: 'admin',
-  DEFAULT_ADMIN_PASS: '1234',
   SPREADSHEET_PROP: 'SPREADSHEET_ID',
   LINE_TOKEN_PROP: 'LINE_NOTIFY_TOKEN',
   LINE_LOGS_PROP: 'LINE_LOGS_JSON',
@@ -36,7 +35,8 @@ function getAdminUser_() {
 }
 
 function getAdminPass_() {
-  return getScriptProp_(CONFIG.ADMIN_PASS_PROP) || CONFIG.DEFAULT_ADMIN_PASS;
+  // No built-in default: run setAdminCredentials() once in the Apps Script editor.
+  return getScriptProp_(CONFIG.ADMIN_PASS_PROP) || '';
 }
 
 function getLineNotifyToken_() {

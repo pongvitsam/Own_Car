@@ -7,6 +7,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // One accent family (ink navy): legacy indigo-* and blue-* classes render as the app's navy.
+        indigo: {
+          50: '#F4F5F8', 100: '#E8EBF1', 200: '#CDD3E0', 300: '#A3ADC4', 400: '#6F7C9C',
+          500: '#44527A', 600: '#1E2A4A', 700: '#18223D', 800: '#121A30', 900: '#0D1324', 950: '#090E1B',
+        },
+        blue: {
+          50: '#F4F5F8', 100: '#E8EBF1', 200: '#CDD3E0', 300: '#A3ADC4', 400: '#6F7C9C',
+          500: '#44527A', 600: '#1E2A4A', 700: '#18223D', 800: '#121A30', 900: '#0D1324', 950: '#090E1B',
+        },
         premium: {
           blue: '#2563EB',
           light: '#F7F8FA',

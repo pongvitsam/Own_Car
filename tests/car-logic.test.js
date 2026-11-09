@@ -175,7 +175,7 @@ describe('health bar', () => {
     assert.equal(result.percent, 50);
   });
 
-  it('getHealthBarTier maps thresholds from Scripts.html', () => {
+  it('getHealthBarTier maps thresholds from the app', () => {
     assert.equal(getHealthBarTier(19), 'critical');
     assert.equal(getHealthBarTier(49), 'warning');
     assert.equal(getHealthBarTier(50), 'healthy');

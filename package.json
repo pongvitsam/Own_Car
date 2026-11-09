@@ -1,7 +1,7 @@
 ﻿{
   "name": "myhome-carcare",
   "private": true,
-  "version": "3.2.0",
+  "version": "3.4.0",
   "description": "MyHome CarCare — GitHub Pages PWA + Fuelio fuel logging; lib/car-logic.js mirrors formulas for npm tests",
   "scripts": {
     "test": "node --test tests/*.test.js",

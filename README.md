@@ -1,6 +1,6 @@
 # MyHome CarCare
 
-Family vehicle maintenance and Fuelio-style fuel logging — **static PWA on GitHub Pages (v3.2.0)**.
+Family vehicle maintenance and Fuelio-style fuel logging — **static PWA on GitHub Pages (v3.4.0)**.
 
 ## Live
 
@@ -12,7 +12,7 @@ Family vehicle maintenance and Fuelio-style fuel logging — **static PWA on Git
 | **Admin** 
 | **PWA** | Installable (`manifest.webmanifest` + `sw.js`) |
 
-## Features (v3.2)
+## Features (v3.4)
 
 - Maintenance dashboard, Fuelio fuel tab, Admin
 - Side navigation (drawer on mobile, persistent sidebar on tablet/desktop)

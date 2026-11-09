@@ -22,17 +22,13 @@ body = body_match.group(1).strip() if body_match else ''
 
 inline_styles = PREMIUM_INLINE_STYLES.strip()
 
-# Version badge (GitHub Pages)
+# Version badge: single source of truth is package.json
+import json
+with open(os.path.join(ROOT, 'package.json'), 'r', encoding='utf-8-sig') as _pkg:
+    APP_VERSION = json.load(_pkg)['version']
 body = re.sub(
-    r'(<span class="version-badge[^"]*"[^>]*>)(?!.*fa-github)(.*?)(</span>)',
-    r'\1<i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.2 Complete\3',
-    body,
-    count=1,
-    flags=re.DOTALL
-)
-body = re.sub(
-    r'<span class="version-badge">.*?</span>',
-    '<span class="version-badge text-[8px] font-mono"><i class="fa-brands fa-github text-[8px] opacity-80"></i> v3.2 Complete</span>',
+    r'(<span class="version-badge[^"]*"[^>]*>)(.*?)(</span>)',
+    lambda m: m.group(1) + 'v' + APP_VERSION + m.group(3),
     body,
     count=1,
     flags=re.DOTALL
@@ -64,147 +60,6 @@ body = re.sub(
     flags=re.DOTALL
 )
 
-# Per-vehicle annual stats: reset year dropdown when carousel vehicle changes
-if 'reportYearFilterVehicleId' not in script:
-    script = script.replace(
-        'let searchDebounceTimer = null;',
-        'let searchDebounceTimer = null;\n        let reportYearFilterVehicleId = null;'
-    )
-    script = script.replace(
-        "const activeTab = document.querySelector('.tab-content:not(.hidden)').id;",
-        "const activeTabEl = document.querySelector('.tab-content:not(.hidden)');\n"
-        "            const activeTab = activeTabEl ? activeTabEl.id : '';"
-    )
-    script = script.replace(
-        """                calculateVehicleMetrics(id);
-                renderLogsHistory(id);
-                renderReports();
-            } else if (activeTab === 'tab-fuelio') {
-                renderFuelLogs();
-            }
-        }""",
-        """                calculateVehicleMetrics(id);
-                clearLogSearch();
-                refreshVehicleAnnualReport(id);
-                renderLogsHistory(id);
-            } else if (activeTab === 'tab-fuelio') {
-                reportYearFilterVehicleId = null;
-                renderFuelLogs();
-            } else {
-                reportYearFilterVehicleId = null;
-            }
-        }
-
-        function clearLogSearch() {
-            const searchInput = document.getElementById('log-search-input');
-            const clearBtn = document.getElementById('clear-search-btn');
-            if (searchInput) searchInput.value = '';
-            if (clearBtn) clearBtn.classList.add('hidden');
-        }"""
-    )
-    script = script.replace(
-        'function populateReportYearFilter(vehicleId) {',
-        'function populateReportYearFilter(vehicleId, resetYear) {'
-    )
-    script = script.replace(
-        """            const previousValue = yearFilterEl.value;
-            yearFilterEl.innerHTML = years.map(y =>
-                `<option value="${y}">พ.ศ. ${y + 543}</option>`
-            ).join('');
-
-            const currentYear = new Date().getFullYear();
-            let selectedYear;
-            if (previousValue && years.includes(parseInt(previousValue, 10))) {
-                selectedYear = parseInt(previousValue, 10);
-            } else if (yearCounts[currentYear]) {
-                selectedYear = currentYear;
-            } else {
-                selectedYear = years.reduce((best, y) =>
-                    (yearCounts[y] > (yearCounts[best] || 0)) ? y : best, years[0]);
-            }
-            yearFilterEl.value = String(selectedYear);
-            return selectedYear;
-        }
-
-        // Render Reports (Annual spending visualization inside tab 1)
-        function renderReports() {
-            const yearFilterEl = document.getElementById('report-year-filter');
-            if (!yearFilterEl) return;
-
-            const targetVehicle = state.selectedVehicleId;
-            if (!targetVehicle) return;
-
-            populateReportYearFilter(targetVehicle);
-            const targetYear = yearFilterEl.value;
-
-            const yearLogs = state.maintenanceLogs.filter(l => {""",
-        """            const preserveYear = !resetYear && reportYearFilterVehicleId === vehicleId;
-            const previousValue = preserveYear ? yearFilterEl.value : null;
-            yearFilterEl.innerHTML = years.map(y =>
-                `<option value="${y}">พ.ศ. ${y + 543}</option>`
-            ).join('');
-
-            const currentYear = new Date().getFullYear();
-            let selectedYear;
-            const prev = previousValue != null ? parseInt(previousValue, 10) : NaN;
-            if (!Number.isNaN(prev) && years.includes(prev)) {
-                selectedYear = prev;
-            } else if (yearCounts[currentYear]) {
-                selectedYear = currentYear;
-            } else {
-                selectedYear = years.reduce((best, y) =>
-                    (yearCounts[y] > (yearCounts[best] || 0)) ? y : best, years[0]);
-            }
-            yearFilterEl.value = String(selectedYear);
-            reportYearFilterVehicleId = vehicleId;
-            return selectedYear;
-        }
-
-        function refreshVehicleAnnualReport(vehicleId) {
-            populateReportYearFilter(vehicleId, true);
-            renderReportStats();
-        }
-
-        function renderReportStats() {
-            const yearFilterEl = document.getElementById('report-year-filter');
-            if (!yearFilterEl) return;
-
-            const targetVehicle = state.selectedVehicleId;
-            if (!targetVehicle) return;
-
-            const targetYear = yearFilterEl.value;
-
-            const yearLogs = state.maintenanceLogs.filter(l => {"""
-    )
-    script = script.replace(
-        """            if (total === 0) {
-                barContainer.innerHTML = `
-                    <div class="text-center py-6 text-slate-400 text-[10px] font-bold bg-slate-50 border border-slate-200 border-dashed rounded-xl">
-                        ไม่พบประวัติการใช้จ่ายในปี พ.ศ. ${parseInt(targetYear) + 543} ของรถคันนี้
-                    </div>
-                `;
-            }
-        }
-
-        // ADMIN TAB STATE MANAGEMENT""",
-        """            if (total === 0) {
-                barContainer.innerHTML = `
-                    <div class="text-center py-6 text-slate-400 text-[10px] font-bold bg-slate-50 border border-slate-200 border-dashed rounded-xl">
-                        ไม่พบประวัติการใช้จ่ายในปี พ.ศ. ${parseInt(targetYear) + 543} ของรถคันนี้
-                    </div>
-                `;
-            }
-        }
-
-        function renderReports() {
-            const targetVehicle = state.selectedVehicleId;
-            if (!targetVehicle) return;
-            populateReportYearFilter(targetVehicle, false);
-            renderReportStats();
-        }
-
-        // ADMIN TAB STATE MANAGEMENT"""
-    )
 
 # --- Patch JavaScript for v2.0 GitHub Pages ---
 script = script.replace(
@@ -407,11 +262,6 @@ EXPORT_FN = '''
         }
 '''
 
-if 'function exportReportPdf' not in script:
-    script = script.replace(
-        'window.onload = function () {',
-        EXPORT_FN + '\n        window.onload = function () {'
-    )
 
 # Ensure setupDailyTrigger exists for GitHub Pages (simulation)
 SETUP_TRIGGER_FN = '''
@@ -427,12 +277,6 @@ SETUP_TRIGGER_FN = '''
             showToast('จำลองสร้าง Daily Trigger 08:00 น. สำเร็จ (GitHub Pages)');
         }
 '''
-if 'function setupDailyTrigger' not in script:
-    script = script.replace(
-        '        // Tab routing helper',
-        SETUP_TRIGGER_FN + '\n        // Tab routing helper',
-        1
-    )
 
 # Fix search matching "admin" inside "Maintenance" type string
 script = script.replace(
@@ -446,71 +290,7 @@ script = script.replace(
     "const shopMatch = (l.shop || '').toLowerCase().includes(kw);"
 )
 
-# Admin login: username + password (admin / 1234)
-if 'id="admin-username"' not in body:
-    body = body.replace(
-        """                    <p class="text-[10px] text-slate-500">กรุณากรอกรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>""",
-        """                    <p class="text-[10px] text-slate-500">กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>"""
-    )
-    body = body.replace(
-        """                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="new-password" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="authenticateAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all active:scale-95 shadow-md">
-                        ยืนยันรหัสผ่านเพื่อเข้าใช้งาน
-                    </button>""",
-        """                    <input type="text" id="admin-username" name="carcare-admin-user" autocomplete="username" placeholder="ชื่อผู้ใช้ (เริ่มต้น: admin)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="current-password" placeholder="รหัสผ่าน (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="authenticateAdmin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all active:scale-95 shadow-md">
-                        เข้าสู่ระบบแอดมิน
-                    </button>"""
-    )
-    body = body.replace(
-        """                        <li>รหัสแอดมินเริ่มต้น: <strong>1234</strong></li>""",
-        """                        <li>บัญชีแอดมินเริ่มต้น: <strong>admin</strong> / รหัสผ่าน <strong>1234</strong></li>"""
-    )
 
-if "user === 'admin' && pass === '1234'" not in script:
-    script = script.replace(
-        """        function authenticateAdmin() {
-            const pass = document.getElementById('admin-passcode').value;
-            if (pass === '1234') {
-                state.adminAuthenticated = true;
-                showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
-                renderAdminPanelState();
-            } else {
-                showToast("รหัสผ่านไม่ถูกต้อง! ลองใส่ 1234", "error");
-            }
-        }""",
-        """        function authenticateAdmin() {
-            const user = document.getElementById('admin-username').value.trim();
-            const pass = document.getElementById('admin-passcode').value;
-            if (user === 'admin' && pass === '1234') {
-                state.adminAuthenticated = true;
-                showToast("ยินดีต้อนรับแอดมินบ้าน เข้าสู่โหมดควบคุมแล้ว");
-                renderAdminPanelState();
-            } else {
-                showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง! (admin / 1234)", "error");
-            }
-        }"""
-    )
-    script = script.replace(
-        """        function logoutAdmin() {
-            state.adminAuthenticated = false;
-            document.getElementById('admin-passcode').value = '';
-            renderAdminPanelState();
-            showToast("ออกจากระบบแอดมินเรียบร้อย");
-        }""",
-        """        function logoutAdmin() {
-            state.adminAuthenticated = false;
-            document.getElementById('admin-username').value = '';
-            document.getElementById('admin-passcode').value = '';
-            renderAdminPanelState();
-            showToast("ออกจากระบบแอดมินเรียบร้อย");
-        }"""
-    )
-    script = script.replace(
-        '// ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมินรหัส 1234)',
-        '// ADMIN TAB STATE MANAGEMENT (Rule: แผงแอดมิน admin / 1234)'
-    )
 
 # Vehicle admin edit (ชื่อรถ + ทะเบียน) — mockup is source; verify after other patches
 if 'function saveVehicleEditAdmin' not in script:
@@ -542,21 +322,6 @@ script = script.replace(
                         <button onclick="deleteCategoryAdmin('${c.id}')" class="text-rose-500 hover:text-rose-700 p-1 shrink-0">"""
 )
 
-# Admin login: username admin + password 1234
-if 'admin-username' not in body:
-    body = body.replace(
-        '<p class="text-[10px] text-slate-500">กรุณากรอกรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>',
-        '<p class="text-[10px] text-slate-500">กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อแก้ไขชื่อและประเภทรถในครอบครัว</p>'
-    )
-    body = body.replace(
-        '<input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="new-password" placeholder="ใส่รหัสผ่านเข้าสู่ระบบ (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">',
-        '<input type="text" id="admin-username" name="carcare-admin-user" autocomplete="username" placeholder="ชื่อผู้ใช้ (เริ่มต้น: admin)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">\n'
-        '                    <input type="password" id="admin-passcode" name="carcare-admin-pass" autocomplete="current-password" placeholder="รหัสผ่าน (เริ่มต้น: 1234)" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">'
-    )
-    body = body.replace(
-        'ยืนยันรหัสผ่านเพื่อเข้าใช้งาน',
-        'เข้าสู่ระบบแอดมิน'
-    )
 body = body.replace(
     'รหัสแอดมินเริ่มต้น: <strong>1234</strong>',
     'บัญชีแอดมินเริ่มต้น: <strong>admin</strong> / รหัสผ่าน <strong>1234</strong>'
@@ -618,40 +383,7 @@ script = script.replace(
 body = apply_premium_html(body)
 script = apply_premium_script(script)
 
-# Next maintenance plan: show service type (serviceLabel on alerts)
-if 'target-service-val' not in body:
-    body = body.replace(
-        '<div class="text-[10px] text-slate-400 font-bold">แผนการเปลี่ยนระยะถัดไป</div>\n'
-        '                    <div class="text-xs font-bold text-slate-700 mt-1.5" id="target-odometer-val">-</div>',
-        '<div class="text-[10px] text-slate-400 font-bold">แผนการเปลี่ยนระยะถัดไป</div>\n'
-        '                    <div class="text-[10px] text-indigo-700 font-bold mt-1" id="target-service-val">-</div>\n'
-        '                    <div class="text-xs font-bold text-slate-700 mt-1" id="target-odometer-val">-</div>',
-        1,
-    )
 
-if 'function resolveAlertServiceLabel' not in script:
-    script = script.replace(
-        '        function selectVehicle(id) {',
-        """        function resolveAlertServiceLabel(alert) {
-            if (!alert) return 'บำรุงรักษาตามกำหนด';
-            if (alert.serviceLabel) return alert.serviceLabel;
-            if (alert.categoryId) {
-                const cat = state.categories.find(c => c.id === alert.categoryId);
-                if (cat) return cat.name;
-            }
-            const logs = state.maintenanceLogs.filter(
-                l => l.vehicleId === alert.vehicleId && l.date === alert.lastUpdated && (l.alertKm > 0 || l.alertMonth > 0)
-            );
-            if (logs.length > 0) {
-                const cat = state.categories.find(c => c.id === logs[0].category);
-                if (cat) return cat.name;
-            }
-            return 'บำรุงรักษาตามกำหนด';
-        }
-
-        function selectVehicle(id) {""",
-        1,
-    )
 
 script = script.replace(
     """                const alertObj = state.alerts.find(a => a.vehicleId === id && a.status === 'Active');
@@ -736,7 +468,7 @@ index_html = f'''<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#2563EB">
+    <meta name="theme-color" content="#1E2A4A">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">

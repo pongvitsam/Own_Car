@@ -187,7 +187,6 @@ function seedDefaultSettings_(ss) {
   var sheet = ss.getSheetByName(SHEET_NAMES.SETTINGS);
   var defaults = {
     driveFolderId: CONFIG.DRIVE_FOLDER_ID,
-    adminPass: CONFIG.DEFAULT_ADMIN_PASS,
     lineNotifyToken: ''
   };
   Object.keys(defaults).forEach(function (key) {
