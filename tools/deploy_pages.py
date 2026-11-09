@@ -22,6 +22,8 @@ TRACKED = [
     'icons/icon-512-maskable.png',
     'README.md',
     'lib/car-logic.js',
+    'lib/runtime-guards.js',
+    'tests/runtime-guards.test.js',
     'tests/car-logic.test.js',
     'gas/Vehicles.gs',
     'gas/Fuel.gs',

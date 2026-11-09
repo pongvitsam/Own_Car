@@ -2,7 +2,14 @@
 
 const fs = require('fs');
 const path = require('path');
-const sharp = require(path.join(__dirname, '_sharp', 'node_modules', 'sharp'));
+// Setup: cd tools/_sharp && npm init -y && npm i sharp   (not committed)
+let sharp;
+try {
+  sharp = require(path.join(__dirname, '_sharp', 'node_modules', 'sharp'));
+} catch (e) {
+  console.error('sharp not installed. Run: cd tools/_sharp && npm init -y && npm i sharp');
+  process.exit(1);
+}
 
 const root = path.join(__dirname, '..');
 const svg = fs.readFileSync(path.join(root, 'icons', 'icon.svg'));

@@ -9,6 +9,7 @@ const {
   nextEntityId,
   latestOdometerSafe,
   canComputeFuelSegment,
+  odometerBoundsForDate,
 } = require('../lib/runtime-guards');
 
 describe('runtime guards: corrupted state', () => {
@@ -55,5 +56,51 @@ describe('runtime guards: ids and odometer', () => {
   it('does not divide fuel efficiency by zero liters', () => {
     assert.equal(canComputeFuelSegment(400, 0), false);
     assert.equal(canComputeFuelSegment(400, 35), true);
+  });
+});
+
+describe('runtime guards: inline copies in the app match lib', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const vm = require('node:vm');
+  const html = fs.readFileSync(path.join(__dirname, '../mockup/MyHome-CarCare-v1.8.html'), 'utf8');
+
+  function extract(name) {
+    const start = html.indexOf('function ' + name + '(');
+    assert.ok(start >= 0, name + ' missing from app');
+    let depth = 0;
+    for (let i = html.indexOf('{', start); i < html.length; i++) {
+      if (html[i] === '{') depth++;
+      else if (html[i] === '}' && --depth === 0) return html.slice(start, i + 1);
+    }
+    throw new Error('unterminated ' + name);
+  }
+
+  const ctx = { state: { vehicles: [], maintenanceLogs: [], fuelLogs: [] } };
+  vm.createContext(ctx);
+  ['ensureStateShape', 'parseRequiredNumber', 'nextEntityId', 'odometerBoundsForDate'].forEach((n) => {
+    vm.runInContext(extract(n), ctx);
+  });
+
+  it('parseRequiredNumber and nextEntityId agree', () => {
+    const cases = [['', { integer: true, min: 0 }], ['12', { integer: true, min: 0 }], ['-1', { min: 0 }], ['0', { gt: 0 }]];
+    cases.forEach(([raw, opts]) => {
+      assert.deepEqual(JSON.parse(JSON.stringify(ctx.parseRequiredNumber(raw, 'x', opts))), parseRequiredNumber(raw, 'x', opts));
+    });
+    const items = [{ id: 'V-001' }, { id: 'V-003' }];
+    assert.equal(ctx.nextEntityId('V-', items), nextEntityId('V-', items));
+  });
+
+  it('odometer bounds keep an entry between its dated neighbours', () => {
+    const maint = [{ vehicleId: 'V', odo: 1000, date: '2026-01-01' }];
+    const fuel = [
+      { id: 'F1', vehicleId: 'V', odo: 1500, date: '2026-02-01' },
+      { id: 'F2', vehicleId: 'V', odo: 2000, date: '2026-03-01' },
+    ];
+    ctx.state.maintenanceLogs = maint;
+    ctx.state.fuelLogs = fuel;
+    const fromApp = JSON.parse(JSON.stringify(ctx.odometerBoundsForDate('V', 'F1', '2026-02-01')));
+    assert.deepEqual(fromApp, odometerBoundsForDate('V', 'F1', '2026-02-01', maint, fuel));
+    assert.deepEqual(fromApp, { min: 1000, max: 2000 });
   });
 });

@@ -1,5 +1,5 @@
 /* MyHome CarCare service worker — offline shell for GitHub Pages */
-const CACHE = 'carcare-v3.3.11';
+const CACHE = 'carcare-29996d120e';
 const ASSETS = [
   './',
   './index.html',

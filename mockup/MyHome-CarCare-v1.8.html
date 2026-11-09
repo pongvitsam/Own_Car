@@ -2216,13 +2216,48 @@
             return max;
         }
 
+        function maxOdometerOfLogs(vehicleId, excludeFuelId) {
+            ensureStateShape();
+            let max = 0;
+            state.maintenanceLogs.forEach(l => {
+                if (l && l.vehicleId === vehicleId) max = Math.max(max, Number(l.odo) || 0);
+            });
+            state.fuelLogs.forEach(l => {
+                if (l && l.vehicleId === vehicleId && l.id !== excludeFuelId) max = Math.max(max, Number(l.odo) || 0);
+            });
+            return max;
+        }
+
+        // Odometer must stay between neighbouring entries by date (no array spread, so large histories are safe).
+        function odometerBoundsForDate(vehicleId, excludeFuelId, date) {
+            ensureStateShape();
+            let min = 0;
+            let max = null;
+            const consider = (l) => {
+                if (!l || l.vehicleId !== vehicleId) return;
+                const odo = Number(l.odo) || 0;
+                const d = String(l.date || '');
+                if (!date || !d || d <= date) {
+                    if (odo > min) min = odo;
+                } else if (max == null || odo < max) {
+                    max = odo;
+                }
+            };
+            state.maintenanceLogs.forEach(consider);
+            state.fuelLogs.forEach(l => { if (l && l.id !== excludeFuelId) consider(l); });
+            return { min, max };
+        }
+
         function getMaxOdometerExcluding(vehicleId, excludeLogId) {
             ensureStateShape();
-            const mainLogs = state.maintenanceLogs
-                .filter(l => l && l.vehicleId === vehicleId && l.id !== excludeLogId)
-                .map(l => Number(l.odo) || 0);
-            const fuelLogs = state.fuelLogs.filter(l => l && l.vehicleId === vehicleId).map(l => Number(l.odo) || 0);
-            return Math.max(0, ...mainLogs, ...fuelLogs);
+            let max = 0;
+            state.maintenanceLogs.forEach(l => {
+                if (l && l.vehicleId === vehicleId && l.id !== excludeLogId) max = Math.max(max, Number(l.odo) || 0);
+            });
+            state.fuelLogs.forEach(l => {
+                if (l && l.vehicleId === vehicleId) max = Math.max(max, Number(l.odo) || 0);
+            });
+            return max;
         }
 
         function getLatestOdometerRecord(vehicleId) {
@@ -3263,13 +3298,14 @@
             if (!priceParsed.ok) { showToast(priceParsed.error, 'error'); return; }
             if (!totalParsed.ok) { showToast(totalParsed.error, 'error'); return; }
             const newOdo = odoParsed.value;
-            const prevMax = Math.max(
-                ...state.maintenanceLogs.filter(l => l && l.vehicleId === log.vehicleId).map(l => Number(l.odo) || 0),
-                ...state.fuelLogs.filter(l => l && l.vehicleId === log.vehicleId && l.id !== id).map(l => Number(l.odo) || 0),
-                0
-            );
-            if (newOdo < prevMax) {
-                showToast('เลขไมล์ต่ำกว่าระยะสะสมล่าสุดของรถ!', 'error');
+            const prevMax = maxOdometerOfLogs(log.vehicleId, id);
+            const bounds = odometerBoundsForDate(log.vehicleId, id, dateEl.value);
+            if (newOdo < bounds.min) {
+                showToast('เลขไมล์ต่ำกว่ารายการก่อนหน้าของรถ!', 'error');
+                return;
+            }
+            if (bounds.max != null && newOdo > bounds.max) {
+                showToast('เลขไมล์สูงกว่ารายการถัดไปของรถ!', 'error');
                 return;
             }
             const payload = {

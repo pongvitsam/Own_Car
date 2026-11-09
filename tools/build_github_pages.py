@@ -755,7 +755,7 @@ index_html = f'''<!DOCTYPE html>
 <body class="min-h-dvh bg-[var(--bg-base)]">
 {body}
     <script>
-{script}
+/*__APP_JS_BEGIN__*/{script}/*__APP_JS_END__*/
     </script>
 </body>
 </html>
@@ -769,18 +769,22 @@ def compile_tailwind():
     assets_dir = os.path.join(ROOT, 'assets')
     os.makedirs(assets_dir, exist_ok=True)
     out_css = os.path.join(assets_dir, 'tailwind.min.css')
-    cmd = (
-        'npx --yes tailwindcss@3.4.17 '
-        '-c "tools/tailwind.config.js" '
-        '-i "tools/tailwind.input.css" '
-        '-o "assets/tailwind.min.css" '
-        '--minify'
+    subprocess.run(
+        ['npx', '--yes', 'tailwindcss@3.4.17',
+         '-c', 'tools/tailwind.config.js',
+         '-i', 'tools/tailwind.input.css',
+         '-o', 'assets/tailwind.min.css',
+         '--minify'],
+        cwd=ROOT, check=True, shell=(os.name == 'nt'),
     )
-    subprocess.run(cmd, cwd=ROOT, check=True, shell=True)
     if not os.path.isfile(out_css) or os.path.getsize(out_css) < 500:
         raise RuntimeError('compiled CSS missing or too small')
     print(f'Compiled {out_css} ({os.path.getsize(out_css):,} bytes)')
     return out_css
+
+APP_JS_BEGIN = '/*__APP_JS_BEGIN__*/'
+APP_JS_END = '/*__APP_JS_END__*/'
+TERSER_SPEC = 'terser@5.36.0'
 
 def minify_js(source):
     import subprocess
@@ -789,60 +793,59 @@ def minify_js(source):
     try:
         with open(src_path, 'w', encoding='utf-8') as tmp:
             tmp.write(source)
-        cmd = (
-            'npx --yes terser tools/_app.tmp.js '
-            '--compress unused=false,dead_code=false '
-            '--comments false '
-            '--output tools/_app.min.js'
+        subprocess.run(
+            ['npx', '--yes', TERSER_SPEC, 'tools/_app.tmp.js',
+             '--compress', 'unused=false,dead_code=false',
+             '--comments', 'false',
+             '--output', 'tools/_app.min.js'],
+            cwd=ROOT, check=True, shell=(os.name == 'nt'),
         )
-        subprocess.run(cmd, cwd=ROOT, check=True, shell=True)
         with open(out_path, 'r', encoding='utf-8') as tmp:
             minified = tmp.read()
-        if minified and len(minified) > 1000:
-            print(f'Minified JS {len(source):,} -> {len(minified):,} chars')
-            return minified
-        print('WARN: terser output too small, keeping original script')
-    except Exception as exc:
-        print('WARN: terser failed, keeping original script:', exc)
+        if len(minified) < 1000:
+            raise RuntimeError('terser output too small')
+        print(f'Minified JS {len(source):,} -> {len(minified):,} chars')
+        return minified
     finally:
         for path in (src_path, out_path):
             try:
                 os.remove(path)
             except OSError:
                 pass
-    return source
 
 def inline_css_and_minify_js(html, css_path):
     with open(css_path, 'r', encoding='utf-8') as css_file:
         tw_css = css_file.read().strip()
-    html = html.replace(
-        '<link rel="stylesheet" href="./assets/tailwind.min.css">',
-        f'<style>{tw_css}</style>',
-        1,
-    )
-    start = html.rfind('\n    <script>')
-    if start < 0:
-        start = html.rfind('<script>')
-    end = html.rfind('</script>')
-    if start >= 0 and end > start:
-        open_tag_end = html.find('>', start) + 1
-        html = html[:open_tag_end] + minify_js(html[open_tag_end:end]) + html[end:]
-    return html
+    link = '<link rel="stylesheet" href="./assets/tailwind.min.css">'
+    if link not in html:
+        raise RuntimeError('tailwind stylesheet link not found in template')
+    html = html.replace(link, f'<style>{tw_css}</style>', 1)
+    start = html.find(APP_JS_BEGIN)
+    end = html.find(APP_JS_END)
+    if start < 0 or end < start:
+        raise RuntimeError('app script markers not found')
+    inner = html[start + len(APP_JS_BEGIN):end]
+    return html[:start] + minify_js(inner) + html[end + len(APP_JS_END):]
 
-try:
-    css_file = compile_tailwind()
-    index_html = inline_css_and_minify_js(index_html, css_file)
-    with open(OUT, 'w', encoding='utf-8') as f:
-        f.write(index_html)
-except Exception as exc:
-    print('WARN: Tailwind compile failed, falling back to CDN:', exc)
-    index_html = index_html.replace(
-        '<link rel="stylesheet" href="./assets/tailwind.min.css">',
-        '<script src="https://cdn.tailwindcss.com"></script>',
-        1,
-    )
-    with open(OUT, 'w', encoding='utf-8') as f:
-        f.write(index_html)
+# Any failure here aborts the build: shipping the CDN fallback or an unminified
+# page would silently break offline use.
+css_file = compile_tailwind()
+index_html = inline_css_and_minify_js(index_html, css_file)
+with open(OUT, 'w', encoding='utf-8') as f:
+    f.write(index_html)
+
+# Stamp the service-worker cache name with a content hash so every rebuilt
+# index.html invalidates old caches without a manual version bump.
+import hashlib
+SW_PATH = os.path.join(ROOT, 'sw.js')
+with open(SW_PATH, 'r', encoding='utf-8') as f:
+    sw_src = f.read()
+digest = hashlib.sha256(index_html.encode('utf-8')).hexdigest()[:10]
+sw_src, n_sub = re.subn(r"const CACHE = '[^']*';", f"const CACHE = 'carcare-{digest}';", sw_src, count=1)
+if n_sub != 1:
+    raise SystemExit('FAIL: CACHE constant not found in sw.js')
+with open(SW_PATH, 'w', encoding='utf-8') as f:
+    f.write(sw_src)
 
 # Verify no raw CSS outside style tags
 raw_css_pattern = re.compile(r'body\s*\{\s*font-family', re.IGNORECASE)
