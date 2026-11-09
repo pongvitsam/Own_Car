@@ -434,7 +434,7 @@ script = re.sub(
 )
 
 AUTH_BOOT_SCRIPT = (
-    "<script>try{if(localStorage.getItem('myhome_carcare_device_login_v1')==='ok')"
+    "<script>try{if(localStorage.getItem('myhome_carcare_device_login_v1')==='ok'||localStorage.getItem('myhome_carcare_device_login_v1')==='admin')"
     "document.documentElement.classList.add('carcare-authed')}catch(e){}</script>"
 )
 

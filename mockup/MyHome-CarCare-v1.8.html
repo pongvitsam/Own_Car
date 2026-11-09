@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>MyHome CarCare - ระบบบำรุงรักษาและบันทึกน้ำมันสไตล์ Fuelio</title>
-    <script>try{if(localStorage.getItem('myhome_carcare_device_login_v1')==='ok')document.documentElement.classList.add('carcare-authed')}catch(e){}</script>
+    <script>try{if(localStorage.getItem('myhome_carcare_device_login_v1')==='ok'||localStorage.getItem('myhome_carcare_device_login_v1')==='admin')document.documentElement.classList.add('carcare-authed')}catch(e){}</script>
     <style>
         /* Mockup preview tokens — full design system injected by tools/premium_ui.py at build */
         :root { --bg-base: #F7F8FA; --bg-elevated: #FFFFFF; --text-primary: #1A1D24; --text-secondary: #5C6370; --text-muted: #94A3B8; --accent: #2563EB; --border-subtle: rgba(26, 29, 36, 0.08); }
@@ -38,8 +38,6 @@
             <input type="text" id="app-login-user" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ชื่อผู้ใช้" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" required autofocus>
             <label class="sr-only" for="app-login-pass">รหัสผ่าน</label>
             <input type="password" id="app-login-pass" name="password" autocomplete="current-password" placeholder="รหัสผ่าน" class="w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" required>
-            <label class="sr-only hidden" for="app-login-confirm">ยืนยันรหัสผ่าน</label>
-            <input type="password" id="app-login-confirm" name="new-password" autocomplete="new-password" placeholder="ยืนยันรหัสผ่านอีกครั้ง" class="hidden w-full text-center bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500">
             <p id="app-login-error" class="hidden text-[11px] font-bold text-rose-600 text-center"></p>
             <button type="submit" id="app-login-submit" class="btn-primary w-full text-white font-bold py-3 px-4 text-xs transition-all active:scale-95">
                 เข้าสู่ระบบ
@@ -432,6 +430,18 @@
             <!-- Admin actual panel (Hidden by default until passcode is correct) -->
             <div id="admin-tab-controls" class="hidden space-y-4">
                 
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm space-y-3" id="admin-change-password-card">
+                    <h3 class="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                        <i class="fa-solid fa-lock text-indigo-600"></i> เปลี่ยนชื่อผู้ใช้และรหัสผ่าน
+                    </h3>
+                    <p class="text-[10px] text-slate-500">ตั้งค่าใหม่เฉพาะเครื่องนี้ ระบบเก็บเป็นค่าที่เข้ารหัสไว้ ไม่เก็บรหัสจริง</p>
+                    <input type="password" id="chg-current-pass" autocomplete="current-password" placeholder="รหัสผ่านปัจจุบัน" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none">
+                    <input type="text" id="chg-new-user" autocomplete="username" placeholder="ชื่อผู้ใช้ใหม่" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none">
+                    <input type="password" id="chg-new-pass" autocomplete="new-password" placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none">
+                    <input type="password" id="chg-new-pass2" autocomplete="new-password" placeholder="ยืนยันรหัสผ่านใหม่" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none">
+                    <button type="button" onclick="changeAppPassword()" class="btn-primary w-full text-white font-bold py-3 px-4 text-xs transition-all active:scale-95">บันทึกรหัสผ่านใหม่</button>
+                </div>
+
                 <div class="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm space-y-4">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                         <h3 class="text-xs font-black text-indigo-950 flex items-center gap-1.5">
@@ -1061,6 +1071,9 @@
         const CREDENTIAL_KEY = 'myhome_carcare_credential_v1';
         const PBKDF2_ITERATIONS = 150000;
         const MIN_PASSWORD_LENGTH = 6;
+        // Default login used until the owner changes it from the admin panel.
+        const DEFAULT_LOGIN_USER = 'admin';
+        const DEFAULT_LOGIN_PASS = '1234';
 
         function bytesToHex(buf) {
             return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
@@ -1102,7 +1115,10 @@
 
         async function verifyCredential(user, password) {
             const cred = readCredential();
-            if (!cred || !window.crypto || !crypto.subtle) return false;
+            if (!cred) {
+                return String(user).trim() === DEFAULT_LOGIN_USER && String(password) === DEFAULT_LOGIN_PASS;
+            }
+            if (!window.crypto || !crypto.subtle) return false;
             if (String(user).trim() !== cred.user) return false;
             const hash = await derivePasswordHash(password, cred.salt, cred.iterations || PBKDF2_ITERATIONS);
             let diff = hash.length ^ cred.hash.length;
@@ -1112,8 +1128,8 @@
 
         function isDeviceLoggedIn() {
             try {
-                // A login flag only counts while a credential exists on this device.
-                return localStorage.getItem(DEVICE_LOGIN_KEY) === 'ok' && !!readCredential();
+                const flag = localStorage.getItem(DEVICE_LOGIN_KEY);
+                return flag === 'ok' || flag === 'admin';
             } catch (e) {
                 return false;
             }
@@ -1125,34 +1141,12 @@
             } catch (e) { /* ignore */ }
         }
 
-        function renderLoginMode() {
-            const setup = !readCredential();
-            const title = el('app-login-title');
-            const hint = el('app-login-hint');
-            const confirmEl = el('app-login-confirm');
-            const submit = el('app-login-submit');
-            const passEl = el('app-login-pass');
-            if (title) title.textContent = setup ? 'ตั้งรหัสผ่านสำหรับเครื่องนี้' : 'เข้าสู่ระบบ';
-            if (hint) {
-                hint.textContent = setup
-                    ? 'ตั้งชื่อผู้ใช้และรหัสผ่านอย่างน้อย ' + MIN_PASSWORD_LENGTH + ' ตัวอักษร ระบบจะเก็บเฉพาะค่าที่เข้ารหัสไว้บนเครื่องนี้'
-                    : 'MyHome CarCare — เครื่องนี้จะจำการเข้าสู่ระบบไว้ ไม่ต้องกรอกอีก';
-            }
-            if (confirmEl) {
-                confirmEl.classList.toggle('hidden', !setup);
-                if (confirmEl.previousElementSibling) confirmEl.previousElementSibling.classList.toggle('hidden', !setup);
-            }
-            if (submit) submit.textContent = setup ? 'ตั้งรหัสผ่านและเข้าใช้งาน' : 'เข้าสู่ระบบ';
-            if (passEl) passEl.setAttribute('autocomplete', setup ? 'new-password' : 'current-password');
-        }
-
         function applyDeviceLoginGate() {
             if (isDeviceLoggedIn()) {
                 document.documentElement.classList.add('carcare-authed');
                 return true;
             }
             document.documentElement.classList.remove('carcare-authed');
-            renderLoginMode();
             const userEl = el('app-login-user');
             if (userEl) {
                 try { userEl.focus(); } catch (e) { /* ignore */ }
@@ -1163,7 +1157,6 @@
         function showLoginError(message) {
             const errEl = el('app-login-error');
             const passEl = el('app-login-pass');
-            const confirmEl = el('app-login-confirm');
             if (errEl) {
                 errEl.textContent = message;
                 errEl.classList.remove('hidden');
@@ -1172,30 +1165,18 @@
                 passEl.value = '';
                 try { passEl.focus(); } catch (e) { /* ignore */ }
             }
-            if (confirmEl) confirmEl.value = '';
         }
 
         async function submitAppLogin(event) {
             if (event) event.preventDefault();
             const userEl = el('app-login-user');
             const passEl = el('app-login-pass');
-            const confirmEl = el('app-login-confirm');
             const errEl = el('app-login-error');
             if (!userEl || !passEl) return false;
-            if (!window.crypto || !crypto.subtle) {
-                showLoginError('เบราว์เซอร์นี้ไม่รองรับการเข้ารหัส กรุณาเปิดผ่าน https');
-                return false;
-            }
             const user = String(userEl.value || '').trim();
             const pass = String(passEl.value || '');
-            const setup = !readCredential();
             try {
-                if (setup) {
-                    if (!user) { showLoginError('กรุณากรอกชื่อผู้ใช้'); return false; }
-                    if (pass.length < MIN_PASSWORD_LENGTH) { showLoginError('รหัสผ่านต้องมีอย่างน้อย ' + MIN_PASSWORD_LENGTH + ' ตัวอักษร'); return false; }
-                    if (!confirmEl || pass !== confirmEl.value) { showLoginError('รหัสผ่านทั้งสองช่องไม่ตรงกัน'); return false; }
-                    await saveCredential(user, pass);
-                } else if (!(await verifyCredential(user, pass))) {
+                if (!(await verifyCredential(user, pass))) {
                     showLoginError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
                     return false;
                 }
@@ -1209,7 +1190,6 @@
                 errEl.classList.add('hidden');
             }
             passEl.value = '';
-            if (confirmEl) confirmEl.value = '';
             applyDeviceLoginGate();
             bootApp();
             return false;
@@ -4457,6 +4437,34 @@
                 return;
             }
             showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง", "error");
+        }
+
+        async function changeAppPassword() {
+            const cur = el('chg-current-pass');
+            const nu = el('chg-new-user');
+            const np = el('chg-new-pass');
+            const np2 = el('chg-new-pass2');
+            if (!cur || !nu || !np || !np2) return;
+            if (!window.crypto || !crypto.subtle) {
+                showToast('เบราว์เซอร์นี้ไม่รองรับการเข้ารหัส กรุณาเปิดผ่าน https', 'error');
+                return;
+            }
+            const stored = readCredential();
+            const currentUser = stored ? stored.user : DEFAULT_LOGIN_USER;
+            let ok = false;
+            try { ok = await verifyCredential(currentUser, cur.value); } catch (e) { ok = false; }
+            if (!ok) { showToast('รหัสผ่านปัจจุบันไม่ถูกต้อง', 'error'); return; }
+            const newUser = nu.value.trim() || currentUser;
+            if (np.value.length < MIN_PASSWORD_LENGTH) { showToast('รหัสผ่านใหม่ต้องมีอย่างน้อย ' + MIN_PASSWORD_LENGTH + ' ตัวอักษร', 'error'); return; }
+            if (np.value !== np2.value) { showToast('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน', 'error'); return; }
+            try {
+                await saveCredential(newUser, np.value);
+            } catch (e) {
+                showToast('บันทึกไม่สำเร็จ กรุณาลองใหม่', 'error');
+                return;
+            }
+            cur.value = ''; nu.value = ''; np.value = ''; np2.value = '';
+            showToast('เปลี่ยนรหัสผ่านเรียบร้อย');
         }
 
         function logoutAdmin() {
