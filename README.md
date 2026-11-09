@@ -9,7 +9,7 @@ Family vehicle maintenance and Fuelio-style fuel logging — **static PWA on Git
 | **Live URL** | https://pongvitsam.github.io/Own_Car/ |
 | **Repo** | https://github.com/pongvitsam/Own_Car |
 | **Storage** | `localStorage` key `myhome_carcare_state_v2.2` (browser-only) |
-| **Admin** | `admin` / `1234` |
+| **Admin** 
 | **PWA** | Installable (`manifest.webmanifest` + `sw.js`) |
 
 ## Features (v3.2)
