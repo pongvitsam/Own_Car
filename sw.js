@@ -1,10 +1,13 @@
 /* MyHome CarCare service worker — offline shell for GitHub Pages */
-const CACHE = 'carcare-29996d120e';
+const CACHE = 'carcare-3d8716f99c';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icons/icon.svg',
+  './assets/fa-subset.css',
+  './assets/webfonts/fa-solid-900.woff2',
+  './assets/webfonts/fa-regular-400.woff2',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-192-maskable.png',

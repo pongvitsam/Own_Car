@@ -748,6 +748,7 @@ index_html = f'''<!DOCTYPE html>
     <title>MyHome CarCare - ระบบบำรุงรักษาและบันทึกน้ำมันสไตล์ Fuelio</title>
     {AUTH_BOOT_SCRIPT}
     <link rel="stylesheet" href="./assets/tailwind.min.css">
+    <link rel="stylesheet" href="./assets/fa-subset.css">
     <style>
 {inline_styles}
     </style>

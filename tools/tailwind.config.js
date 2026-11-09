@@ -4,9 +4,6 @@ module.exports = {
     './index.html',
     './mockup/**/*.html',
   ],
-  corePlugins: {
-    preflight: false,
-  },
   theme: {
     extend: {
       colors: {
